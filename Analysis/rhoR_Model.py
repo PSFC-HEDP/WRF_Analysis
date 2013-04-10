@@ -3,15 +3,15 @@
 # including fuel, shell, and ablated mass
 #
 # Author: Alex Zylstra
-# Date: 2013/03/12
+# Date: 2013/04/02
 
 import math
 import numpy
 import scipy.interpolate
 import scipy.integrate
 import os
-import StopPowLP
 from Constants import *
+from StopPow import *
 
 ## Class to encapsulate rhoR model calculations
 #
@@ -336,7 +336,6 @@ class rhoR_Model(object):
 	# ----------------------------------------------------------------
 	#         Calculators for stopping power
 	# ----------------------------------------------------------------
-
 	## Calculate gas stopping power for protons
 	# @param Ep = proton energy [MeV]
 	# @param Rcm = shell radius at shock BT [cm]
@@ -345,12 +344,30 @@ class rhoR_Model(object):
 	def dEdr_Gas(self, Ep, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
-	    Af = [2,3,me/mp] # D , 3He, e-
-	    Zf = [1,2,1]
-	    Tf = [self.Te_Gas,self.Te_Gas,self.Te_Gas]
+
+	    # Set up FloatVectors for stopping power
+	    mf = FloatVector(3)
+	    mf[0] = 2
+	    mf[1] = 3
+	    mf[2] = me/mp
+	    Zf = FloatVector(3)
+	    Zf[0] = 1
+	    Zf[1] = 2
+	    Zf[2] = -1
+	    Tf = FloatVector(3)
+	    Tf[0] = self.Te_Gas
+	    Tf[1] = self.Te_Gas
+	    Tf[2] = self.Te_Gas
+	    nf = FloatVector(3)
 	    ni , ne = self.n_Gas(Rcm,Tshell)
-	    nf = [ni*self.fD , ni*self.f3He , ne]
-	    return StopPowLP.dEdr(mt,Zt,Ep,Af,Zf,Tf,nf)
+	    nf[0] = ni*self.fD
+	    nf[1] = ni*self.f3He
+	    nf[2] = ne
+	    # Use Li-Petrasso:
+	    if ne>0:
+	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
+	    	return 1e4*model.dEdx(Ep)
+	    return 0
 
 	## Calculate mix stopping power for protons
 	# @param Ep = proton energy [MeV]
@@ -360,14 +377,29 @@ class rhoR_Model(object):
 	def dEdr_Mix(self, Ep, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
-	    Af = [1,12,me/mp] # H , C, e-
-	    Zf = [1,6,1]
-	    Tf = [self.Te_Mix,self.Te_Mix,self.Te_Mix]
+	    # Set up FloatVectors for stopping power
+	    mf = FloatVector(3)
+	    mf[0] = 1
+	    mf[1] = 12
+	    mf[2] = me/mp
+	    Zf = FloatVector(3)
+	    Zf[0] = 1
+	    Zf[1] = 6
+	    Zf[2] = -1
+	    Tf = FloatVector(3)
+	    Tf[0] = self.Te_Mix
+	    Tf[1] = self.Te_Mix
+	    Tf[2] = self.Te_Mix
+	    nf = FloatVector(3)
 	    ni , ne = self.n_Mix(Rcm,Tshell,Mrem)
-	    nf = [ni/2 , ni/2 , ne]
-	    if ni == 0 or ne == 0:
-	    	return 0
-	    return StopPowLP.dEdr(mt,Zt,Ep,Af,Zf,Tf,nf)
+	    nf[0] = ni/2
+	    nf[1] = ni/2
+	    nf[2] = ne
+	    # Use Li-Petrasso:
+	    if ne>0:
+	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
+	    	return 1e4*model.dEdx(Ep)
+	    return 0
 
 	## Calculate shell stopping power for protons
 	# @param Ep = proton energy [MeV]
@@ -377,12 +409,29 @@ class rhoR_Model(object):
 	def dEdr_Shell(self, Ep, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
-	    Af = [1,12,me/mp] # H , C, e-
-	    Zf = [1,6,1]
-	    Tf = [self.Te_Shell,self.Te_Shell,self.Te_Shell]
+	    mf = FloatVector(3)
+	    mf[0] = 1
+	    mf[1] = 12
+	    mf[2] = me/mp
+	    Zf = FloatVector(3)
+	    Zf[0] = 1
+	    Zf[1] = 6
+	    Zf[2] = -1
+	    Tf = FloatVector(3)
+	    Tf[0] = self.Te_Shell
+	    Tf[1] = self.Te_Shell
+	    Tf[2] = self.Te_Shell
+	    nf = FloatVector(3)
 	    ni , ne = self.n_Shell(Rcm,Tshell,Mrem)
-	    nf = [ni/2 , ni/2 , ne]
-	    return StopPowLP.dEdr(mt,Zt,Ep,Af,Zf,Tf,nf)
+	    nf[0] = ni/2
+	    nf[1] = ni/2
+	    nf[2] = ne
+	    # Use Li-Petrasso:
+	    if ne>0:
+	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
+	    	return 1e4*model.dEdx(Ep)
+	    return 0
+
 
 	## Calculate ablated mass stopping power for protons
 	# @param Ep = proton energy [MeV]
@@ -393,11 +442,26 @@ class rhoR_Model(object):
 	def dEdr_Abl(self, Ep, r, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
-	    Af = [1,12,me/mp] # H , C, e-
-	    Zf = [1,6,1]
-	    Tf = [self.Te_Abl,self.Te_Abl,self.Te_Abl]
+	    
+	    mf = FloatVector(3)
+	    mf[0] = 1
+	    mf[1] = 12
+	    mf[2] = me/mp
+	    Zf = FloatVector(3)
+	    Zf[0] = 1
+	    Zf[1] = 6
+	    Zf[2] = -1
+	    Tf = FloatVector(3)
+	    Tf[0] = self.Te_Abl
+	    Tf[1] = self.Te_Abl
+	    Tf[2] = self.Te_Abl
+	    nf = FloatVector(3)
 	    ni , ne = self.n_Abl(r,Rcm,Tshell,Mrem)
-	    nf = [ni/2 , ni/2 , ne]
-	    if ni == 0 or ne == 0:
-	    	return 0
-	    return StopPowLP.dEdr(mt,Zt,Ep,Af,Zf,Tf,nf)
+	    nf[0] = ni/2
+	    nf[1] = ni/2
+	    nf[2] = ne
+	    # Use Li-Petrasso:
+	    if ne>0:
+	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
+	    	return 1e4*model.dEdx(Ep)
+	    return 0
