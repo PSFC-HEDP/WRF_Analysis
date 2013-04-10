@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 
 ## Plot a model's curve for rhoR versus energy
 # @param analysis the rhoR analysis model to plot
-def plot_rhoR_v_Energy(analysis):
+# @param file_prefix (optional) pre-pended to file name (can include directories, file pre-name, ...)
+def plot_rhoR_v_Energy(analysis, file_prefix=""):
 	"""Plot rhoR model's curve versus energy."""
 
 	#sanity check:
@@ -58,7 +59,7 @@ def plot_rhoR_v_Energy(analysis):
 	#ax.set_title(r'$\rho$R Model')
 
 	#plt.show()
-	fig.savefig('rhoR_vs_energy.eps')
+	fig.savefig(file_prefix+'rhoR_vs_energy.eps')
 
 
 
@@ -67,7 +68,8 @@ def plot_rhoR_v_Energy(analysis):
 
 ## Plot a model's curve for Rcm versus energy
 # @param analysis the rhoR analysis model to plot
-def plot_Rcm_v_Energy(analysis):
+# @param file_prefix (optional) pre-pended to file name (can include directories, file pre-name, ...)
+def plot_Rcm_v_Energy(analysis, file_prefix=""):
 	"""Plot rhoR model's curve of Rcm versus energy."""
 
 	#sanity check:
@@ -123,7 +125,7 @@ def plot_Rcm_v_Energy(analysis):
 	#ax.set_title(r'$\rho$R Model')
 
 	#plt.show()
-	fig.savefig('Rcm_vs_energy.eps')
+	fig.savefig(file_prefix+'Rcm_vs_energy.eps')
 
 
 
@@ -135,7 +137,8 @@ def plot_Rcm_v_Energy(analysis):
 ## Make a plot of rhoR vs center-of-mass radius
 ## Plot a model's curve for rhoR versus energy
 # @param analysis the rhoR analysis model to plot
-def plot_rhoR_v_Rcm(analysis):
+# @param file_prefix (optional) pre-pended to file name (can include directories, file pre-name, ...)
+def plot_rhoR_v_Rcm(analysis, file_prefix=""):
 	"""Plot rhoR model's curve versus center-of-mass radius."""
 
 	#sanity check:
@@ -152,7 +155,7 @@ def plot_rhoR_v_Rcm(analysis):
 
 	# energies:
 	dr = 10e-4 #step for plot points
-	Rmin = 100e-4 # Minimum radius to plot
+	Rmin = 150e-4 # Minimum radius to plot
 	for i in arange(Rmin,Rcm,dr):
 		RcmList.append(i*1e4)
 		# get result, then add it to the appropriate lists, for total error bar:
@@ -179,7 +182,7 @@ def plot_rhoR_v_Rcm(analysis):
 	#ax.set_title(r'$\rho$R Model')
 
 	#plt.show()
-	fig.savefig('rhoR_vs_Rcm.eps')
+	fig.savefig(file_prefix+'rhoR_vs_Rcm.eps')
 
 
 
@@ -193,7 +196,8 @@ def plot_rhoR_v_Rcm(analysis):
 ## Plot the mass profile for a given center-of-mass radius
 # @param analysis the model to use for the plot
 # @param Rcm the CM radius in cm
-def plot_profile(analysis, Rcm):
+# @param file_prefix (optional) pre-pended to file name (can include directories, file pre-name, ...)
+def plot_profile(analysis, Rcm, file_prefix=""):
 	"""Plot the mass profile for a given center-of-mass radius"""
 
 	#sanity check:
@@ -241,4 +245,4 @@ def plot_profile(analysis, Rcm):
 
 	#show the plot:
 	#plt.show()
-	fig.savefig('rhoR_model_profile.eps')
+	fig.savefig(file_prefix+'rhoR_model_profile.eps')
