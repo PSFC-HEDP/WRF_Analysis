@@ -1,0 +1,30 @@
+Database scheme, descriptions of all tables:
+
+
+shot =========================================
+Holds meta-data about a NIF shot, e.g. target info, laser info,
+and results from other diagnostics
+
+hohlraum =====================================
+Thickness profiles for every type of hohlraum used
+
+snout ========================================
+r,theta,phi coordinates for WRF locations
+
+wrf_setup ====================================
+Information on the fielding of WRF modules
+serial numbers used on shots, vac time, etc
+
+wrf_inventory ================================
+For keeping track of WRF usage and current status
+
+
+TODO:
+
+wrf_spectra_raw
+
+wrf_spectra_corr
+
+wrf_analysis_raw
+
+wrf_analysis
