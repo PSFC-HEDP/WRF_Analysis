@@ -4,6 +4,8 @@
 from rhoR_Analysis import *
 from rhoR_Model_plots import *
 from GaussFit import *
+from CSV import *
+from Hohlraum import *
 import os
 import csv
 import math
@@ -12,31 +14,62 @@ def diff(a,b):
 	return max(a,b) - min(a,b)
 
 def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True,verbose=True):
-	OutputDir = 'SpectrumAnalysis'
+	OutputDir = 'AnalysisOutputs'
 	# check to see if OutputDir exists:
 	if not os.path.isdir(OutputDir):
-		# TODO
-		print("directory problem!")
-
+		# create it:
+		os.makedirs(OutputDir)
 	# if we are in verbose mode, then we spit out data to a file:
 	if verbose:
 		log_file = csv.writer(open(os.path.join(OutputDir,name+'_Analysis.csv'),'w'))
+	
+	# ----------------------------
+	# 		Hohlraum Correction
+	# ----------------------------
+	print(name + ' hohlraum correction...')
+	hohl_wall = read_csv('AAA12-119365_AA.csv',crop=0,cols=[2,4,5])
+
+	theta=76.371
+	dtheta=(180/math.pi)*math.asin(1/50)
+	hohl = Hohlraum(data,
+		wall=hohl_wall,
+		angles=[theta-dtheta,theta+dtheta])
+
+	# get corrected spectrum:
+	corr_data = hohl.get_data_corr()
+
+	if verbose:
+		log_file.writerow( ['=== Hohlraum Analysis ==='] )
+		log_file.writerow( ['Raw Energy (MeV)', hohl.get_fit_raw()[1] ] )
+		log_file.writerow( ['Corr Energy (MeV)', hohl.get_fit_corr()[1] ] )
+		log_file.writerow( ['Au Thickness (um)', hohl.Au ] )
+		log_file.writerow( ['DU Thickness (um)', hohl.DU ] )
+		log_file.writerow( ['Al Thickness (um)', hohl.Al ] )
+
+	if plots:
+		# make plot of raw and corrected spectra:
+		hohl_plot1_fname = os.path.join(OutputDir,name+'_HohlCorr.eps')
+		hohl.plot_file( hohl_plot1_fname )
+		# make figure showing hohlraum profile:
+		hohl_plot2_fname = os.path.join(OutputDir,name+'_HohlProfile.eps')
+		hohl.plot_hohlraum_file( hohl_plot2_fname )
 
 	# -----------------------------
 	# 		Energy analysis
 	# -----------------------------
+	print(name + ' energy analysis...')
 	# First, we need to perform a Gaussian fit:
-	FitObj = GaussFit(data,name=name)
-
+	FitObj = GaussFit(corr_data,name=name)
 	# get the fit and uncertainty:
 	fit = FitObj.get_fit()
 
+	print(name + ' energy error analysis...')
 	fit_unc = FitObj.chi2_fit_unc()
+	print(fit_unc)
 	# average + and - error bars:
 	for i in range(len(fit_unc)):
 		fit_unc[i] = ( math.fabs(fit_unc[i][0])
 			+ math.fabs(fit_unc[i][1]) ) /2
-	print(fit_unc)
 	# make a plot of the fit:
 	if plots:
 		fit_plot_fname = os.path.join(OutputDir,name+'_GaussFit.eps')
@@ -60,11 +93,15 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True
 	# -----------------------------
 	# 		rhoR analysis
 	# -----------------------------
+	print(name + ' rhoR analysis...')
 	# set up the rhoR analysis:
 	model = rhoR_Analysis()
 	E0 = 14.7 # initial proton energy from D3He
 	temp = model.Calc_rhoR(fit[1],E0)
 	rhoR = temp[0]
+
+	# error analysis for rR:
+	print(name + ' rhoR error analysis...')
 	rhoR_model_random = 0
 	rhoR_model_systematic = (temp[1]+temp[2])/2
 	# error bars propagated from energy:
@@ -84,5 +121,5 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True
 		log_file.writerow( ['Quantity','Value','Random Unc','Sys Unc'] )
 		log_file.writerow( ['rhoR',rhoR,rhoR_random,rhoR_systematic] ) 
 
-	if plots:
-		plot_rhoR_v_Energy(model, os.path.join(OutputDir,name))
+	#if plots:
+		#plot_rhoR_v_Energy(model, os.path.join(OutputDir,name))

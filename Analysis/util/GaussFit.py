@@ -17,7 +17,7 @@ def Gaussian(x,A,mu,sigma):
 # @class GaussFit
 # @brief Wrapper for Gaussian fitting
 # @author Alex Zylstra
-# @date 203/04/10
+# @date 203/04/11
 # @copyright MIT / Alex Zylstra
 class GaussFit(object):
 	"""Wrapper class for performing Gaussian fits to data."""
@@ -47,7 +47,7 @@ class GaussFit(object):
 		super(GaussFit, self).__init__()
 
 		# copy data:
-		self.data = data
+		self.data = numpy.copy(data)
 
 		# set guess parameters:
 		self.GUESS = guess
@@ -59,15 +59,13 @@ class GaussFit(object):
 		self.OPT_RESTRICT_CHI2 = restrict_chi2
 
 		# split data into components:
-		for row in data:
-			self.data_x.append(row[0])
-			self.data_y.append(row[1])
-			self.data_err.append(row[2])
-
-		# convert to numpy arrays
-		self.data_x = numpy.array(self.data_x)
-		self.data_y = numpy.array(self.data_y)
-		self.data_err = numpy.array(self.data_err)
+		self.data_x = numpy.ndarray( len(data) )
+		self.data_y = numpy.ndarray( len(data) )
+		self.data_err = numpy.ndarray( len(data) )
+		for i in range(len(data)):
+			self.data_x[i] = data[i][0]
+			self.data_y[i] = data[i][1]
+			self.data_err[i] = data[i][2]
 
 		# perform the fit:
 		self.do_fit()
@@ -110,11 +108,6 @@ class GaussFit(object):
 	## Calculate chi2 for any fit to this data
 	# @param fit an array containing the fit parameters [A,mu,sigma]
 	# @return chi2 for class data and fit
-
-
-	## Calculate chi2 for any fit to this data
-	# @param fit an array containing the fit parameters [A,mu,sigma]
-	# @return chi2 for class data and fit
 	def chi2_other(self, fit):
 		chi2 = 0
 
@@ -140,6 +133,54 @@ class GaussFit(object):
 	def red_chi2_other(self,fit):
 		return self.chi2_other(fit) / ( len(self.data) - 3 )
 
+	## Calculate increase in chi2 due to a change in amplitude
+	# @param dA change in amplitude (A' = A + dA)
+	# @param sign (optional) whether amplitude should be increased or decreased (default=1 -> increase)
+	# @return change in chi2
+	def delta_chi2_amp(self,dA,sign=1):
+		# calculate a new best fit:
+		new_fit = scipy.optimize.fmin(
+			func=(lambda x : self.chi2_other([self.fit[0]+sign*dA,x[0],x[1]])),
+			x0=[self.fit[1],self.fit[2]],
+			disp=False)
+
+		# calculate a chi2 for the new best fit:
+		chi2 = self.chi2_other( [self.fit[0]+sign*dA,new_fit[0],new_fit[1]] )
+
+		return chi2 - self.chi2()
+
+	## Calculate increase in chi2 due to a change in mean
+	# @param dmu change in amplitude (mu' = mu + dmu)
+	# @param sign (optional) whether mean should be increased or decreased (default=1 -> increase)
+	# @return change in chi2
+	def delta_chi2_mu(self,dmu,sign=1):
+		# calculate a new best fit:
+		new_fit = scipy.optimize.fmin(
+			func=(lambda x : self.chi2_other([x[0],self.fit[1]+sign*dmu,x[1]])),
+			x0=[self.fit[0],self.fit[2]],
+			disp=False)
+
+		# calculate a chi2 for the new best fit:
+		chi2 = self.chi2_other( [new_fit[0],self.fit[1]+sign*dmu,new_fit[1]] )
+
+		return chi2 - self.chi2()
+
+	## Calculate increase in chi2 due to a change in sigma
+	# @param ds change in amplitude (sigma' = sigma + ds)
+	# @param sign (optional) whether sigma should be increased or decreased (default=1 -> increase)
+	# @return change in chi2
+	def delta_chi2_sigma(self,ds,sign=1):
+		# calculate a new best fit:
+		new_fit = scipy.optimize.fmin(
+			func=(lambda x : self.chi2_other([x[0],x[1],self.fit[2]+sign*ds])),
+			x0=[self.fit[0],self.fit[1]],
+			disp=False)
+
+		# calculate a chi2 for the new best fit:
+		chi2 = self.chi2_other( [new_fit[0],new_fit[1],self.fit[2]+sign*ds] )
+
+		return chi2 - self.chi2()
+
 	## Calculate uncertainty in the fit parameters.
 	# Routine: each fit parameter is varied to produce an increase of 1 in total chi2
 	# @return array containing uncertainties [ [-A,+A] , [-mu,+mu] , [-sigma,+sigma] ]
@@ -147,86 +188,31 @@ class GaussFit(object):
 		# return value: delta unc in each parameter
 		delta = [ [] , [] , [] ]
 
-		# minimum chi2:
-		chi2_min = self.chi2()
-
-		# Calculate uncertainty in amplitude:
+		# Calculate uncertainties
 		# need to do for both + and -
 		for sign in [-1,1]:
 			# calculate uncertainty in the amplitude:
-			d = 0
+			dA = scipy.optimize.fminbound(
+				func=(lambda x: math.fabs(self.delta_chi2_amp(x,sign)-1)), # min @ delta chi2 = 1
+				x1=0,x2=self.fit[0], # min is 0, max is 2x nominal
+				full_output=False) # suppress full output
 
-			chi2 = chi2_min
-			new_fit = 0
-
-			# increase d until the chi2 is increased by 1:
-			while (chi2 - chi2_min) < 1:
-				# update d:
-				d += sign*self.fit[0]*0.0001
-
-				# calculate a new best fit:
-				new_fit = scipy.optimize.fmin(
-					func=(lambda x : self.chi2_other([self.fit[0]+d,x[0],x[1]])),
-					x0=[self.fit[1],self.fit[2]],
-					disp=False)
-
-				# calculate a chi2 for the new best fit:
-				chi2 = self.chi2_other( [self.fit[0]+d,new_fit[0],new_fit[1]] )
-
-			# add info to delta:
-			delta[0].append( d )
-
-		# Calculate uncertainty in mu:
-		# need to do for both + and -
-		for sign in [-1,1]:
 			# calculate uncertainty in the mean:
-			d = 0
+			dmu = scipy.optimize.fminbound(
+				func=(lambda x: math.fabs(self.delta_chi2_mu(x,sign)-1)), # min @ delta chi2 = 1
+				x1=0,x2=self.fit[2], # min/max change +/- sigma
+				full_output=False) # suppress full output
 
-			chi2 = chi2_min
-			new_fit = 0
-
-			# increase d until the chi2 is increased by 1:
-			while (chi2 - chi2_min) < 1:
-				# update d:
-				d += sign*self.fit[1]*0.0001
-
-				# calculate a new best fit:
-				new_fit = scipy.optimize.fmin(
-					func=(lambda x: self.chi2_other([x[0],self.fit[1]+d,x[1]])),
-					x0=[self.fit[0],self.fit[2]],
-					disp=False)
-
-				# calcualate a chi2 for the new best fit:
-				chi2 = self.chi2_other( [new_fit[0],self.fit[1]+d,new_fit[1]] )
+			# calculate uncertainty in sigma:
+			ds = scipy.optimize.fminbound(
+				func=(lambda x: math.fabs(self.delta_chi2_sigma(x,sign)-1)), # min @ delta chi2 = 1
+				x1=0,x2=self.fit[2]*0.99, # min/max change +/- sigma
+				full_output=False) # suppress full output
 
 			# add info to delta:
-			delta[1].append( d )
-
-		# Calculate uncertainty in sigma:
-		# need to do for both + and -
-		for sign in [-1,1]:
-			# calculate uncertainty in the standard deviation:
-			d = 0
-
-			chi2 = chi2_min
-			new_fit = 0
-
-			# increase d until the chi2 is increased by 1:
-			while (chi2 - chi2_min) < 1:
-				# update d:
-				d += sign*self.fit[2]*0.01
-
-				# calculate a new best fit:
-				new_fit = scipy.optimize.fmin(
-					func=(lambda x: self.chi2_other([x[0],x[1],self.fit[2]+d])),
-					x0=[self.fit[0],self.fit[1]],
-					disp=False)
-
-				# calculate a chi2 for the new best fit:
-				chi2 = self.chi2_other( [new_fit[0],new_fit[1],self.fit[2]+d] )
-
-			# add info to delta:
-			delta[2].append( d )
+			delta[0].append( sign*dA )
+			delta[1].append( sign*dmu )
+			delta[2].append( sign*ds )
 
 		return delta
 
@@ -303,11 +289,11 @@ class GaussFit(object):
 		ax.text(x,y, # data
 			text, # text to display
 			backgroundcolor='white', # fill background
-			bbox=dict(ec='black', alpha=1.0)) # add black boundary
+			bbox=dict(fc='white',ec='black', alpha=1.0)) # add black boundary
 
 		ax.grid(True)
 		ax.set_xlabel('Energy (MeV)')
-		ax.set_ylabel('Yield/MeV')
+		ax.set_ylabel('Yield / MeV')
 		ax.set_title(self.name)
 
 		return fig

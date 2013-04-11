@@ -7,10 +7,13 @@ if cmd_subfolder not in sys.path:
 
 from CSV import *
 from Analyze_Spectrum import *
+from Hohlraum import *
 import numpy
 
+# read in the raw data:
 data = read_csv('TestData.csv',3)
 name = 'N123456'
+
 
 random = [1e7,0.1,0.05]
 systematic = [1e7,0.05,0.05]

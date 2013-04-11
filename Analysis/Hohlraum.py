@@ -46,6 +46,8 @@ def flatten(l):
 # @copyright MIT / Alex Zylstra
 class Hohlraum(object):
 	"""Wrapper class for hohlraum corrections"""
+	OutputDir = 'AnalysisOutputs'
+
 	# set up SRIM calculators:
 	Al_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Aluminum.txt") ## SRIM stopping power for Al
 	Au_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Gold.txt") ## SRIM stopping power for Au
@@ -90,7 +92,7 @@ class Hohlraum(object):
 			self.Al = 0
 
 		# copy the raw data to a class variable:
-		self.raw = numpy.array(raw)
+		self.raw = numpy.copy(raw)
 
 		# correct the spectrum:
 		self.correct_spectrum()

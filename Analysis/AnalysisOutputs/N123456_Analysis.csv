@@ -1,0 +1,14 @@
+=== Hohlraum Analysis ===
+Raw Energy (MeV),9.25508145312
+Corr Energy (MeV),11.0585961721
+Au Thickness (um),33.0192252733
+DU Thickness (um),0
+Al Thickness (um),72.659109462
+=== Spectrum Analysis ===
+Quantity,Value,Random Unc,Sys Unc
+Yield,49401851.1544,10478928.296680957,10000000.0
+Energy (MeV),11.0585961747,0.10995336091290253,0.05
+Sigma (MeV),0.619011746136,0.07076091622806688,0.05
+=== rhoR Analysis ===
+Quantity,Value,Random Unc,Sys Unc
+rhoR,0.12544937369466935,0.0038875088179257666,0.014699290434295428
