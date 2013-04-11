@@ -8,12 +8,19 @@ if cmd_subfolder not in sys.path:
 from CSV import *
 from Hohlraum import *
 import numpy
+import math
 
 data = read_csv('TestData.csv',3)
 name = 'N123456'
 
-#hohl_wall = read_csv('AAA12-119365_AA.csv')
+hohl_wall = read_csv('AAA12-119365_AA.csv',crop=0,cols=[2,4,5])
 
-h = Hohlraum(data,61,0,74)
-print(h.get_E_shift())
-h.plot_file('plot.eps')
+
+theta=76.371
+dtheta=(180/math.pi)*math.asin(1/50)
+h2 = Hohlraum(data,
+	wall=hohl_wall,
+	angles=[theta-dtheta,theta+dtheta])
+print(h2.get_E_shift())
+h2.plot_file('plot.eps')
+h2.plot_hohlraum_file('hplot.eps')

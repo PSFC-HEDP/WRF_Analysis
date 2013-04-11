@@ -1,33 +1,93 @@
-## Implement functionality for hohlraum corrections
+# Implement functionality for hohlraum corrections
 
 import numpy
+import scipy.interpolate
+import scipy.stats
 import StopPow
 from GaussFit import *
 import matplotlib
+import sys
+
+## Calculate radius along LOS given z
+# @param z the axial position in cm
+# @param theta the LOS polar angle
+# @return r the radial position in cm
+def LOS_r(z, theta):
+	theta2 = math.radians( 90 - theta )
+	return z / math.tan(theta2)
+
+## Calculate z along LOS given r
+# @param r the radial position in cm
+# @param theta the LOS polar angle
+# @return z the axial position in cm
+def LOS_z(r, theta):
+	theta2 = math.radians( 90 - theta )
+	return r * math.tan(theta2)
+
+## Sort two lists simultaneously, using first as key
+# @param list1 first list (will be sorted by this one)
+# @param list2 second list
+# @return (list1,list2) sorted
+def double_list_sort(list1,list2):
+	list1 , list2 = (list(t) for t in zip(*sorted(zip(list1, list2))))
+	return list1 , list2
+
+## Flatten a list, i.e. [[1,2],[3,4]] -> [1,2,3,4]
+# @param l the list to flatten
+# @return the flattened list
+def flatten(l):
+	return [item for sublist in l for item in sublist]
 
 ## Wrapper class for hohlraum corrections, and associated metrics
+# @class Hohlraum
+# @brief Correct proton spectra for the hohlraum wall.
+# @author Alex Zylstra
+# @date 2013/04/11
+# @copyright MIT / Alex Zylstra
 class Hohlraum(object):
 	"""Wrapper class for hohlraum corrections"""
 	# set up SRIM calculators:
-	Al_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Aluminum.txt")
-	Au_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Gold.txt")
-	DU_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Uranium.txt")
+	Al_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Aluminum.txt") ## SRIM stopping power for Al
+	Au_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Gold.txt") ## SRIM stopping power for Au
+	DU_SRIM = StopPow.StopPow_SRIM("SRIM/Hydrogen in Uranium.txt") ## SRIM stopping power for DU
 
-	raw = [] # raw spectrum
-	raw_fit = [] # Gaussian fit to the raw spectrum
-	corr = [] # corrected spectrum
-	corr_fit = [] # Gaussian fit to the corrected spectrum
+	raw = [] ## raw spectrum
+	raw_fit = [] ## Gaussian fit to the raw spectrum
+	corr = [] ## corrected spectrum
+	corr_fit = [] ## Gaussian fit to the corrected spectrum
 
 	# thickness in um of three hohlraum components:
-	Au = 0
-	DU = 0
-	Al = 0
+	Au = 0 ## Calculated or given thickness of Au
+	DU = 0 ## Calculated or given thickness of DU
+	Al = 0 ## Calculated or given thickness of Al
 
-	def __init__(self, raw, Au, DU, Al):
-		super(Hohlraum, self).__init__()
-		self.Au = Au
-		self.DU = DU
-		self.Al = Al
+	#  r and z arrays for all wall layers:
+	all_r = []
+	all_z = []
+	layer_mat = []
+	angles = []
+
+	## Constructor for the hohlraum. You must supply either the thickness array or an array containing wall data plus view angles.
+	# @param raw the raw spectrum
+	# @param wall python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
+	# @param angles python array of [theta_min, theta_max] range in polar angle
+	# @param Thickness the [Au,DU,Al] thickness in um
+	def __init__(self, raw, wall=None, angles=None, Thickness=None):
+		super(Hohlraum, self).__init__() # super constructor
+
+		# if the wall is specified:
+		if wall is not None and angles is not None:
+			self.calc_from_wall(wall, angles)
+		# thickness is specified:
+		elif Thickness is not None and len(Thickness) is 3:
+			self.Au = Thickness[0]
+			self.DU = Thickness[1]
+			self.Al = Thickness[2]
+		# if neither is supplied, default to 0 thickness to be safe:
+		else:
+			self.Au = 0
+			self.DU = 0
+			self.Al = 0
 
 		# copy the raw data to a class variable:
 		self.raw = numpy.array(raw)
@@ -38,6 +98,108 @@ class Hohlraum(object):
 		# fit ot the data:
 		self.fit_data()
 
+	## Calculate the material thicknesses from a wall definition. Sets the class variables Au, DU, and Al.
+	# @param wall python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
+	# @param angles python array of [theta_min, theta_max] range in polar angle
+	def calc_from_wall(self, wall, angles):
+		self.Au = 0
+		self.DU = 0
+		self.Al = 0
+
+		# ------------------------------------------------
+		# Split the incoming wall data into layers:
+		# ------------------------------------------------
+		# figure out how many layers there are:
+		num_layers = 0
+		for i in wall:
+			num_layers = max(num_layers,i[2])
+		num_layers += 1 # correct for zero-index data
+
+		# construct r and z arrays for all layers:
+		self.all_r = []
+		self.all_z = []
+		self.layer_mat = []
+		# create arrays of correct length for each layer:
+		for i in numpy.arange(num_layers):
+			self.all_r.append( [] )
+			self.all_z.append( [] )
+			self.layer_mat.append( [] )
+
+		# now read data into the new arrays:
+		for i in wall:
+			self.all_r[ int(i[2]) ].append(i[4])
+			self.all_z[ int(i[2]) ].append(i[5])
+			if len(self.layer_mat[ int(i[2]) ]) is 0:
+				self.layer_mat[ int(i[2]) ] = i[3]
+
+		# we need to have the wall data sorted:
+		# iterate over each layer
+		for i in range(int(num_layers)):
+			# sort r values and z values together:
+			self.all_z[i] , self.all_r[i] = double_list_sort( self.all_z[i] , self.all_r[i] )
+
+		# ------------------------------------------------
+		# Incorporate layer data into the class info:
+		# ------------------------------------------------
+		# iterate over layers
+		# each layer has two walls, thus factor of 2:
+		for i in range(int(num_layers/2)):
+			thickness = self.calc_layer_thickness( self.all_r[2*i], self.all_z[2*i], self.all_r[2*i+1], self.all_z[2*i+1], angles )
+			# check material:
+			if self.layer_mat[2*i] == 'Au':
+				self.Au += thickness[0]*1e4 # also convert -> um
+			elif self.layer_mat[2*i] == 'DU':
+				self.DU += thickness[0]*1e4 # also convert -> um
+			elif self.layer_mat[2*i] == 'Al':
+				self.Al += thickness[0]*1e4 # also convert -> um
+
+		self.angles = angles
+
+
+	## Calculate the average thickness of a wall layer
+	# @param inner_r list of r values for points defining the inner wall
+	# @param inner_z list of z values for points defining the inner wall
+	# @param outer_r list of r values for points defining the outer wall
+	# @param outer_z list of z values for points defining the outer wall
+	# @param angles [min,max] polar angles for the line of sight
+	# @param n (optional) number of angle points to sample (default = 50)
+	# @return (mean , stdev) of the thickness
+	def calc_layer_thickness(self,inner_r,inner_z,outer_r,outer_z,angles,n=50):
+		values = []
+		dtheta = (angles[1] - angles[0])/n
+		#iterate over angles:
+		for theta in numpy.arange(angles[0],angles[1],dtheta):
+			# set up interpolation:
+			inner_int = scipy.interpolate.interp1d(
+				inner_z,
+				inner_r,
+				kind='linear', bounds_error=False, fill_value=1e10 )
+			outer_int = scipy.interpolate.interp1d(
+				outer_z,
+				outer_r,
+				kind='linear', bounds_error=False, fill_value=1e10 )
+
+			# calculate the intersection points:
+			z1 = scipy.optimize.fminbound(
+				func=(lambda x: math.fabs(inner_int(x)-LOS_r(x,theta))),
+				x1=min(inner_z),
+				x2=max(inner_z), 
+				xtol=1e-7)
+			r1 = LOS_r(z1,theta)
+			z2 = scipy.optimize.fminbound(
+				func=(lambda x: math.fabs(outer_int(x)-LOS_r(x,theta))),
+				x1=min(outer_z),
+				x2=max(outer_z), 
+				xtol=1e-7)
+			r2 = LOS_r(z2,theta)
+
+			# calculate thickness:
+			values.append( math.sqrt( (z2-z1)**2 + (r2-r1)**2 ) )
+
+		return scipy.stats.tmean(values) , scipy.stats.tstd(values)
+
+
+	## Calculate the corrected spectrum
 	def correct_spectrum(self):
 		self.corr = numpy.zeros( [len(self.raw) , len(self.raw[0])] , numpy.float32 ) # array of corrected data
 
@@ -71,7 +233,9 @@ class Hohlraum(object):
 			self.corr[i][1] = new_Y
 			self.corr[i][2] = new_err
 
-
+	## Calculate the energy shift for a given incident energy
+	# @param E the incident energy for a proton in MeV
+	# @return the energy out in MeV
 	def shift_energy(self,E):
 		new_E = E
 		# correct for Al:
@@ -83,6 +247,7 @@ class Hohlraum(object):
 
 		return new_E
 
+	## Calculate fits to the raw and shifted spectra
 	def fit_data(self):
 		# fit to the raw data:
 		self.raw_fit = GaussFit(self.raw)
@@ -94,10 +259,28 @@ class Hohlraum(object):
 
 		self.corr_fit = GaussFit(self.corr,guess=g)
 
+	## Get the fit to the raw data
+	# @return an array containing [Yp,Ep,sigma]
 	def get_fit_raw(self):
 		return self.raw_fit.get_fit()
+
+	## Get the fit to the corrected data
+	# @return an array containing [Yp,Ep,sigma]
 	def get_fit_corr(self):
 		return self.corr_fit.get_fit()
+
+	## Get the raw data
+	# @return array containing raw data
+	def get_data_raw(self):
+		return self.raw
+
+	## Get the hohlraum-corrected data
+	# @return array containing corrected data
+	def get_data_corr(self):
+		return self.corr
+
+	## Get the peak's energy shift due to the hohlraum
+	# @return peak shift in MeV
 	def get_E_shift(self):
 		raw = self.raw_fit.get_fit()[1]
 		corr = self.corr_fit.get_fit()[1]
@@ -126,7 +309,7 @@ class Hohlraum(object):
 
 		plt.show()
 
-	## Make a plot of the data and fit
+	## Make a plot of the spectrum data (raw & corrected) and fit
 	# @return matplotlib figure
 	def plot(self):
 		import matplotlib.pyplot as plt
@@ -224,4 +407,91 @@ class Hohlraum(object):
 
 		return fig
 
+	## Save a hohlraum plot to file
+	# @param fname the file to save
+	def plot_hohlraum_file(self,fname):
+		matplotlib.use('Agg')
+		import matplotlib.pyplot as plt
 
+		# get the figure:
+		fig = self.plot_hohlraum()
+
+		# save to file:
+		fig.savefig(fname)
+
+	## Make a hohlraum plot in new UI window
+	def plot_hohlraum_window(self):
+		if matplotlib.get_backend() != 'MacOSX':
+			matplotlib.pyplot.switch_backend('MacOSX')
+		import matplotlib.pyplot as plt
+
+		# get the figure:
+		fig = self.plot_hohlraum()
+
+		plt.show()
+
+	## Make a plot of the hohlraum wall and LOS
+	# @return matplotlib figure
+	def plot_hohlraum(self):
+		import matplotlib.pyplot as plt
+
+		# make figure and subplot:
+		fig = plt.figure()
+		ax = fig.add_subplot(111)
+
+		# iterate over all layers:
+		for i in numpy.arange( len(self.all_z)/2-1 , -1, -1 , int ):
+			# choose a color based on material type:
+			c='black'
+			if self.layer_mat[2*i] == 'Au':
+				c = 'orange'
+			if self.layer_mat[2*i] == 'DU':
+				c = '#555555'
+			if self.layer_mat[2*i] == 'Al':
+				c = '#aaaaaa'
+
+			# plot this layer:
+			ax.fill_between( # use fill_between type plot
+				self.all_z[2*i] , # z points
+				self.all_r[2*i] , # inner wall
+				self.all_r[2*i+1] , # outer wall
+				color=c ) # options
+
+		# now plot the LOS:
+		# find the max/min r we should plot:
+		r_max = max(flatten(self.all_r))*1.1
+		r_min = min(flatten(self.all_r))*0.9
+		for theta in self.angles:
+			r = numpy.linspace(r_min,r_max,100)
+			z = LOS_z(r,theta)
+
+			ax.plot( z , r , 'b--' )
+
+		# add a WRF text annotation for blue lines:
+		text = 'WRF LOS'
+		theta = scipy.stats.tmean(self.angles)
+		ax.text(LOS_z(r_max,theta),r_max, # where to put it
+			text, # text to display
+			color='blue', horizontalalignment='center')
+			#backgroundcolor='blue') # fill background
+			#bbox=dict(ec='black', fc='blue', alpha=1.0)) # add black boundary
+
+		# add some text annotation with thicknesses:
+		text = '\n'
+		text += '{:.1f}'.format(self.Au) + r' $\mu$m Au'
+		text += '\n'
+		text += '{:.1f}'.format(self.DU) + r' $\mu$m DU'
+		text += '\n'
+		text += '{:.1f}'.format(self.Al) + r' $\mu$m Al'
+		text += '\n'
+		ax.text( 0 , r_min , text , horizontalalignment='center')
+
+		# add an indicator showing where N pole is in this plot
+		z_max = max(flatten(self.all_z))
+		ax.arrow( z_max , r_min, z_max/8, 0 , fc='k', ec='k', head_width=z_max/30, head_length=z_max/30 )
+		ax.text( z_max , r_min*1.02 , 'N pole' , ha='left', va='bottom')
+
+		ax.set_xlabel('z (cm)')
+		ax.set_ylabel('r (cm)')
+
+		return fig

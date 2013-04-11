@@ -17,7 +17,7 @@ def Gaussian(x,A,mu,sigma):
 # @class GaussFit
 # @brief Wrapper for Gaussian fitting
 # @author Alex Zylstra
-# @date 203/04/08
+# @date 203/04/10
 # @copyright MIT / Alex Zylstra
 class GaussFit(object):
 	"""Wrapper class for performing Gaussian fits to data."""
