@@ -1,19 +1,23 @@
 ## Implement a function which performs analysis of a NIF WRF spectrum
 # to get rhoR, yield, and so on with error bars.
 
+import os
+import csv
+import math
+import matplotlib
+matplotlib.use('Agg')
+
 from rhoR_Analysis import *
 from rhoR_Model_plots import *
 from GaussFit import *
 from CSV import *
 from Hohlraum import *
-import os
-import csv
-import math
+from SlideGenerator import *
 
 def diff(a,b):
 	return max(a,b) - min(a,b)
 
-def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True,verbose=True):
+def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name="",summary=True,plots=True,verbose=True):
 	OutputDir = 'AnalysisOutputs'
 	# check to see if OutputDir exists:
 	if not os.path.isdir(OutputDir):
@@ -27,13 +31,10 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True
 	# 		Hohlraum Correction
 	# ----------------------------
 	print(name + ' hohlraum correction...')
-	hohl_wall = read_csv('AAA12-119365_AA.csv',crop=0,cols=[2,4,5])
-
-	theta=76.371
-	dtheta=(180/math.pi)*math.asin(1/50)
+	
 	hohl = Hohlraum(data,
 		wall=hohl_wall,
-		angles=[theta-dtheta,theta+dtheta])
+		angles=LOS)
 
 	# get corrected spectrum:
 	corr_data = hohl.get_data_corr()
@@ -64,7 +65,7 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True
 	fit = FitObj.get_fit()
 
 	print(name + ' energy error analysis...')
-	fit_unc = FitObj.chi2_fit_unc()
+	fit_unc = [[0,0],[0,0],[0,0]] #FitObj.chi2_fit_unc()
 	print(fit_unc)
 	# average + and - error bars:
 	for i in range(len(fit_unc)):
@@ -116,10 +117,29 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,name="",plots=True
 	rhoR_random = math.sqrt( rhoR_model_random**2 + rhoR_energy_random**2 )
 	rhoR_systematic = math.sqrt( rhoR_model_systematic**2 + rhoR_energy_systematic**2 )
 
+	# convert all rR to mg/cm2:
+	rhoR = rhoR * 1e3
+	rhoR_random = rhoR_random * 1e3
+	rhoR_systematic = rhoR_systematic * 1e3
+
 	if verbose:
 		log_file.writerow( ['=== rhoR Analysis ==='] )
 		log_file.writerow( ['Quantity','Value','Random Unc','Sys Unc'] )
-		log_file.writerow( ['rhoR',rhoR,rhoR_random,rhoR_systematic] ) 
+		log_file.writerow( ['rhoR (mg/cm2)',rhoR,rhoR_random,rhoR_systematic] ) 
 
 	#if plots:
 		#plot_rhoR_v_Energy(model, os.path.join(OutputDir,name))
+
+
+
+	# -----------------------------
+	# 		Make summary Figs
+	# -----------------------------
+	summary = r'foo'
+	results = []
+	results.append(r'$Y_p$ = ' + r'{:.2e}'.format(fit[0]) + r' $\pm$ ' + r'{:.1e}'.format(yield_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.1e}'.format(yield_systematic) + r'$_{(sys)}$')
+	results.append(r'$E_p$ (MeV) = ' + r'{:.2f}'.format(fit[1]) + r' $\pm$ ' + r'{:.2f}'.format(energy_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.2f}'.format(energy_systematic) + r'$_{(sys)}$')
+	results.append(r'$\sigma_p$ (MeV) = ' + r'{:.2f}'.format(fit[2]) + r' $\pm$ ' + r'{:.2f}'.format(sigma_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.2f}'.format(sigma_systematic) + r'$_{(sys)}$')
+	results.append(r'$\rho R$ (mg/cm$^2$) = ' + r'{:.0f}'.format(rhoR) + r' $\pm$ ' + r'{:.0f}'.format(rhoR_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.0f}'.format(rhoR_systematic) + r'$_{(sys)}$')
+	fname = os.path.join(OutputDir,name+'_Summary.eps')
+	save_slide(fname,Fit=FitObj,Hohl=hohl,name=name,summary=summary,results=results)

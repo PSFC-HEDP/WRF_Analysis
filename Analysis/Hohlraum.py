@@ -6,6 +6,7 @@ import scipy.stats
 import StopPow
 from GaussFit import *
 import matplotlib
+import matplotlib.pyplot as plt
 import sys
 
 ## Calculate radius along LOS given z
@@ -291,34 +292,32 @@ class Hohlraum(object):
 	## Save a plot to file
 	# @param fname the file to save
 	def plot_file(self,fname):
-		matplotlib.use('Agg')
-		import matplotlib.pyplot as plt
+		if matplotlib.get_backend() is 'agg':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot(ax)
 
-		# get the figure:
-		fig = self.plot()
-
-		# save to file:
-		fig.savefig(fname)
+			# save to file:
+			fig.savefig(fname)
 
 	## Make a plot in new UI window
 	def plot_window(self):
-		if matplotlib.get_backend() != 'MacOSX':
-			matplotlib.pyplot.switch_backend('MacOSX')
-		import matplotlib.pyplot as plt
+		if matplotlib.get_backend() is 'MacOSX':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot(ax)
 
-		# get the figure:
-		fig = self.plot()
-
-		plt.show()
+			plt.show()
 
 	## Make a plot of the spectrum data (raw & corrected) and fit
-	# @return matplotlib figure
-	def plot(self):
+	# @param ax Axes instance to plot into
+	def plot(self, ax=None):
 		import matplotlib.pyplot as plt
-
-		# make figure and subplot:
-		fig = plt.figure()
-		ax = fig.add_subplot(111)
+		# sanity check:
+		if ax is None:
+			ax = plt.gca()
 
 		# split up raw data into columns:
 		raw_x = numpy.zeros( len(self.raw) )
@@ -405,41 +404,37 @@ class Hohlraum(object):
 		ax.grid(True)
 		ax.set_xlabel('Energy (MeV)')
 		ax.set_ylabel('Yield/MeV')
-		#ax.set_title(self.name)
-
-		return fig
+		ax.set_title('Hohlraum Correction')
 
 	## Save a hohlraum plot to file
 	# @param fname the file to save
 	def plot_hohlraum_file(self,fname):
-		matplotlib.use('Agg')
-		import matplotlib.pyplot as plt
+		if matplotlib.get_backend() is 'agg':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot_hohlraum(ax)
 
-		# get the figure:
-		fig = self.plot_hohlraum()
-
-		# save to file:
-		fig.savefig(fname)
+			# save to file:
+			fig.savefig(fname)
 
 	## Make a hohlraum plot in new UI window
 	def plot_hohlraum_window(self):
-		if matplotlib.get_backend() != 'MacOSX':
-			matplotlib.pyplot.switch_backend('MacOSX')
+		if matplotlib.get_backend() is 'MacOSX':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot_hohlraum(ax)
+
+			plt.show()
+
+	## Make a plot of the hohlraum wall and LOS into given Axes
+	# @param ax Axes instance to plot into
+	def plot_hohlraum(self, ax=None):
 		import matplotlib.pyplot as plt
-
-		# get the figure:
-		fig = self.plot_hohlraum()
-
-		plt.show()
-
-	## Make a plot of the hohlraum wall and LOS
-	# @return matplotlib figure
-	def plot_hohlraum(self):
-		import matplotlib.pyplot as plt
-
-		# make figure and subplot:
-		fig = plt.figure()
-		ax = fig.add_subplot(111)
+		# sanity check:
+		if ax is None:
+			ax = plt.gca()
 
 		# iterate over all layers:
 		for i in numpy.arange( len(self.all_z)/2-1 , -1, -1 , int ):
@@ -496,4 +491,4 @@ class Hohlraum(object):
 		ax.set_xlabel('z (cm)')
 		ax.set_ylabel('r (cm)')
 
-		return fig
+		ax.set_title('Hohlraum Profile')

@@ -14,7 +14,12 @@ import numpy
 data = read_csv('TestData.csv',3)
 name = 'N123456'
 
+hohl_wall = read_csv('AAA12-119365_AA.csv',crop=0,cols=[2,4,5])
+theta=76.371
+dtheta=(180/math.pi)*math.asin(1/50)
+angles = [theta-dtheta,theta+dtheta]
 
 random = [1e7,0.1,0.05]
 systematic = [1e7,0.05,0.05]
-Analyze_Spectrum(data,random,systematic,name)
+
+Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles)

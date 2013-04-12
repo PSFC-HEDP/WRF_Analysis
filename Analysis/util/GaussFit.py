@@ -2,7 +2,7 @@ import math
 import numpy
 import scipy.optimize
 import matplotlib
-
+import matplotlib.pyplot as plt
 
 ## Evaluate a Gaussian distribution
 # @param x the independent variable
@@ -219,34 +219,31 @@ class GaussFit(object):
 	## Save a plot to file
 	# @param fname the file to save
 	def plot_file(self,fname):
-		matplotlib.use('Agg')
-		import matplotlib.pyplot as plt
+		if matplotlib.get_backend() is 'agg':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot(ax)
 
-		# get the figure:
-		fig = self.plot()
-
-		# save to file:
-		fig.savefig(fname)
+			# save to file:
+			fig.savefig(fname)
 
 	## Make a plot in new UI window
 	def plot_window(self):
-		if matplotlib.get_backend() != 'MacOSX':
-			matplotlib.pyplot.switch_backend('MacOSX')
-		import matplotlib.pyplot as plt
+		if matplotlib.get_backend() is 'MacOSX':
+			# get the figure:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			self.plot(ax)
 
-		# get the figure:
-		fig = self.plot()
+			plt.show()
 
-		plt.show()
-
-	## Make a plot of the data and fit
-	# @return matplotlib figure
-	def plot(self):
-		import matplotlib.pyplot as plt
-
-		# make figure and subplot:
-		fig = plt.figure()
-		ax = fig.add_subplot(111)
+	## Make a plot of the data and fit, drawn into given Axes
+	# @param ax Axes instance to plot into
+	def plot(self,ax=None):
+		# sanity check:
+		if ax is None:
+			ax = plt.gca()
 
 		# plot the data with error bars
 		ax.errorbar(
@@ -296,4 +293,4 @@ class GaussFit(object):
 		ax.set_ylabel('Yield / MeV')
 		ax.set_title(self.name)
 
-		return fig
+		#return fig
