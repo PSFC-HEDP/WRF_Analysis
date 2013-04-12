@@ -2,6 +2,7 @@
 # to get rhoR, yield, and so on with error bars.
 
 import os
+from datetime import *
 import csv
 import math
 import matplotlib
@@ -17,7 +18,7 @@ from SlideGenerator import *
 def diff(a,b):
 	return max(a,b) - min(a,b)
 
-def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name="",summary=True,plots=True,verbose=True):
+def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name="",summary=True,plots=True,verbose=True,rhoR_plots=False):
 	OutputDir = 'AnalysisOutputs'
 	# check to see if OutputDir exists:
 	if not os.path.isdir(OutputDir):
@@ -30,8 +31,9 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name
 	# ----------------------------
 	# 		Hohlraum Correction
 	# ----------------------------
+	t1 = datetime.now()
 	print(name + ' hohlraum correction...')
-	
+
 	hohl = Hohlraum(data,
 		wall=hohl_wall,
 		angles=LOS)
@@ -55,17 +57,24 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name
 		hohl_plot2_fname = os.path.join(OutputDir,name+'_HohlProfile.eps')
 		hohl.plot_hohlraum_file( hohl_plot2_fname )
 
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
+
 	# -----------------------------
 	# 		Energy analysis
 	# -----------------------------
+	t1 = datetime.now()
 	print(name + ' energy analysis...')
 	# First, we need to perform a Gaussian fit:
 	FitObj = GaussFit(corr_data,name=name)
 	# get the fit and uncertainty:
 	fit = FitObj.get_fit()
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
 
+	t1 = datetime.now()
 	print(name + ' energy error analysis...')
-	fit_unc = [[0,0],[0,0],[0,0]] #FitObj.chi2_fit_unc()
+	fit_unc = FitObj.chi2_fit_unc()
 	print(fit_unc)
 	# average + and - error bars:
 	for i in range(len(fit_unc)):
@@ -91,17 +100,24 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name
 		log_file.writerow( ['Energy (MeV)',fit[1],energy_random,energy_systematic] )
 		log_file.writerow( ['Sigma (MeV)',fit[2],sigma_random,sigma_systematic] )
 
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
+
 	# -----------------------------
 	# 		rhoR analysis
 	# -----------------------------
+	t1 = datetime.now()
 	print(name + ' rhoR analysis...')
 	# set up the rhoR analysis:
 	model = rhoR_Analysis()
 	E0 = 14.7 # initial proton energy from D3He
 	temp = model.Calc_rhoR(fit[1],E0)
 	rhoR = temp[0]
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
 
 	# error analysis for rR:
+	t1 = datetime.now()
 	print(name + ' rhoR error analysis...')
 	rhoR_model_random = 0
 	rhoR_model_systematic = (temp[1]+temp[2])/2
@@ -127,14 +143,32 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name
 		log_file.writerow( ['Quantity','Value','Random Unc','Sys Unc'] )
 		log_file.writerow( ['rhoR (mg/cm2)',rhoR,rhoR_random,rhoR_systematic] ) 
 
-	#if plots:
-		#plot_rhoR_v_Energy(model, os.path.join(OutputDir,name))
+	if rhoR_plots:
+		plot_rhoR_v_Energy(model, os.path.join(OutputDir,name + '_rR_v_E.eps'))
+		plot_Rcm_v_Energy(model, os.path.join(OutputDir,name + '_Rcm_v_E.eps'))
+		plot_rhoR_v_Rcm(model, os.path.join(OutputDir,name + '_rR_v_Rcm.eps'))
+
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
 
 
+	# -----------------------------
+	# 		Rcm analysis
+	# -----------------------------
+	t1 = datetime.now()
+	print(name + ' Rcm analysis...')
+	E0 = 14.7 # initial proton energy from D3He
+	temp = model.Calc_Rcm(fit[1],0,E0=E0)
+	Rcm = temp[0]
+	print(temp)
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")
 
 	# -----------------------------
 	# 		Make summary Figs
 	# -----------------------------
+	t1 = datetime.now()
+	print(name + ' generate summary...')
 	summary = r'foo'
 	results = []
 	results.append(r'$Y_p$ = ' + r'{:.2e}'.format(fit[0]) + r' $\pm$ ' + r'{:.1e}'.format(yield_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.1e}'.format(yield_systematic) + r'$_{(sys)}$')
@@ -143,3 +177,6 @@ def Analyze_Spectrum(data,spectrum_random,spectrum_systematic,hohl_wall,LOS,name
 	results.append(r'$\rho R$ (mg/cm$^2$) = ' + r'{:.0f}'.format(rhoR) + r' $\pm$ ' + r'{:.0f}'.format(rhoR_random) + r'$_{(ran)}$ $\pm$ ' + r'{:.0f}'.format(rhoR_systematic) + r'$_{(sys)}$')
 	fname = os.path.join(OutputDir,name+'_Summary.eps')
 	save_slide(fname,Fit=FitObj,Hohl=hohl,name=name,summary=summary,results=results)
+
+	t2 = datetime.now()
+	print( '{:.1f}'.format((t2-t1).total_seconds()) + "s elapsed")

@@ -3,7 +3,7 @@
 # including fuel, shell, and ablated mass
 #
 # Author: Alex Zylstra
-# Date: 2013/04/02
+# Date: 2013/04/12
 
 import math
 import numpy
@@ -48,7 +48,7 @@ class rhoR_Model(object):
 	MixF = 0.025
 
 	# options for stop pow calculations:
-	steps = 50 # steps in radius per region
+	steps = 25 # steps in radius per region
 
 	## initialize the rhoR model. Arguments taken here are primarily
 	## shot-dependent initial conditions
@@ -89,20 +89,23 @@ class rhoR_Model(object):
 	# @return Eout = final proton energy [MeV]
 	def Eout(self, Rcm, Tshell, Mrem, E0=14.7):
 		E = E0
-		# range through gas:
-		dr = (Rcm-Tshell/2) / self.steps # radial step
-		for i in range(self.steps):
-			E = E + dr*(self.dEdr_Gas(E,Rcm,Tshell,Mrem)
-				        +self.dEdr_Mix(E,Rcm,Tshell,Mrem))
+		# range through gas+mix:
+		dr = 1e4*(Rcm-Tshell/2) # length in um
+		E = self.Eout_GasMix(E,dr,Rcm,Tshell,Mrem)
 		
 		#range through shell:
-		dr = Tshell / self.steps # radial step
-		for i in range(self.steps):
-			E = E + dr*self.dEdr_Shell(E,Rcm,Tshell,Mrem)
+		dr = 1e4*Tshell
+		E = self.Eout_Shell(E,dr,Rcm,Tshell,Mrem)
 
-		#range through ablated mass:
+		#range through ablated mass gradient:
 		r1,r2,r3 = self.get_Abl_radii(Rcm,Tshell,Mrem)
-		dr = (r3-r1) / self.steps
+		dr = (r2-r1) / self.steps
+		# have to do manually b/c of density gradient:
+		for i in range(self.steps):
+			E = E + dr*self.dEdr_Abl(E,r1+dr*i,Rcm,Tshell,Mrem)
+		# rest of the ablated mass can be done with native library:
+		dr = (r3-r2) / self.steps
+		# have to do manually b/c of density gradient:
 		for i in range(self.steps):
 			E = E + dr*self.dEdr_Abl(E,r1+dr*i,Rcm,Tshell,Mrem)
 
@@ -115,37 +118,6 @@ class rhoR_Model(object):
 	# @param E0 = initial proton energy [MeV]
 	# @return rhoR = modeled areal density to produce modeled E
 	def Calc_rhoR(self, E1, Tshell, Mrem, E0=14.7):
-		# this function sets up an interpolating function to solve
-		# for an exact answer
-		#E = []
-		#rR = []
-		#for i in numpy.arange(150e-4,400e-4,5e-4): # model from 150 to 400 um Rcm
-		#	E.append( self.Eout( i, Tshell, Mrem, E0) )
-		#	rR.append( self.rhoR_Total( i, Tshell, Mrem) )
-
-		# set up interpolation:
-		#interp = scipy.interpolate.interp1d( E , rR )
-		#return interp(E1)
-
-		# possibly faster:
-		#E = E0
-		#r = self.Ri
-		#rhoR = self.rhoR_Total(r,Tshell,Mrem)
-
-		#E_last = E
-		#rhoR_last = rhoR
-
-		#dr = 5e-4
-		#while E > E1:
-		#	r -= dr
-		#	E_last = E
-		#	rhoR_last = rhoR
-#
-#			E = self.Eout(r,Tshell,Mrem,E0)
-#			rhoR = self.rhoR_Total(r,Tshell,Mrem)
-#
-#		return rhoR - (E1 - E) * (rhoR-rhoR_last)/(E_last-E)
-
 		# fastest implementation: binary search
 		min_r = self.Ri/20
 		max_r = self.Ri
@@ -336,77 +308,67 @@ class rhoR_Model(object):
 	# ----------------------------------------------------------------
 	#         Calculators for stopping power
 	# ----------------------------------------------------------------
-	## Calculate gas stopping power for protons
+	## Calculate gas+mix downshift for protons
 	# @param Ep = proton energy [MeV]
+	# @param x = path length [um]
 	# @param Rcm = shell radius at shock BT [cm]
 	# @param Tshell = shell thickness at shock BT [cm]
 	# @param Mrem = fraction of shell mass remaining
-	def dEdr_Gas(self, Ep, Rcm, Tshell, Mrem):
+	# @return downshifted energy [MeV]
+	def Eout_GasMix(self, Ep, x, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
 
-	    # Set up FloatVectors for stopping power
-	    mf = FloatVector(3)
+	    # Set up FloatVectors for gas plus mix stopping power
+	    mf = FloatVector(5) # D , 3He , H , C , e-
 	    mf[0] = 2
 	    mf[1] = 3
-	    mf[2] = me/mp
-	    Zf = FloatVector(3)
+	    mf[2] = 1
+	    mf[3] = 12
+	    mf[4] = me/mp
+	    Zf = FloatVector(5) # D , 3He , H , C , e-
 	    Zf[0] = 1
 	    Zf[1] = 2
-	    Zf[2] = -1
-	    Tf = FloatVector(3)
+	    Zf[2] = 1
+	    Zf[3] = 6
+	    Zf[4] = -1
+	    Tf = FloatVector(5) # D , 3He , H , C , e-
 	    Tf[0] = self.Te_Gas
 	    Tf[1] = self.Te_Gas
-	    Tf[2] = self.Te_Gas
-	    nf = FloatVector(3)
-	    ni , ne = self.n_Gas(Rcm,Tshell)
-	    nf[0] = ni*self.fD
-	    nf[1] = ni*self.f3He
-	    nf[2] = ne
-	    # Use Li-Petrasso:
-	    if ne>0:
-	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
-	    	return 1e4*model.dEdx(Ep)
-	    return 0
-
-	## Calculate mix stopping power for protons
-	# @param Ep = proton energy [MeV]
-	# @param Rcm = shell radius at shock BT [cm]
-	# @param Tshell = shell thickness at shock BT [cm]
-	# @param Mrem = fraction of shell mass remaining
-	def dEdr_Mix(self, Ep, Rcm, Tshell, Mrem):
-	    mt = 1
-	    Zt = 1
-	    # Set up FloatVectors for stopping power
-	    mf = FloatVector(3)
-	    mf[0] = 1
-	    mf[1] = 12
-	    mf[2] = me/mp
-	    Zf = FloatVector(3)
-	    Zf[0] = 1
-	    Zf[1] = 6
-	    Zf[2] = -1
-	    Tf = FloatVector(3)
-	    Tf[0] = self.Te_Mix
-	    Tf[1] = self.Te_Mix
 	    Tf[2] = self.Te_Mix
-	    nf = FloatVector(3)
-	    ni , ne = self.n_Mix(Rcm,Tshell,Mrem)
-	    nf[0] = ni/2
-	    nf[1] = ni/2
-	    nf[2] = ne
+	    Tf[3] = self.Te_Mix
+	    Tf[4] = self.Te_Gas
+	    nf = FloatVector(5) # D , 3He , H , C , e-
+	    ni_gas , ne_gas = self.n_Gas(Rcm,Tshell)
+	    ni_mix , ne_mix = self.n_Mix(Rcm,Tshell,Mrem)
+	    nf[0] = ni_gas*self.fD
+	    nf[1] = ni_gas*self.f3He
+	    nf[2] = ni_mix/2
+	    nf[3] = ni_mix/2
+	    nf[4] = ne_gas + ne_mix
+
+	    # if any densities are zero, it is problematic (no mix does this)
+	    # add 1 particle per cc minimum:
+	    for i in range(len(nf)):
+	    	if nf[i] <= 0:
+	    		nf[i] = 1
+
 	    # Use Li-Petrasso:
-	    if ne>0:
+	    if nf[4]>0: # with sanity fheck
 	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
-	    	return 1e4*model.dEdx(Ep)
+	    	# check limits:
+	    	if Ep > model.get_Emin() and Ep < model.get_Emax():
+	    		return model.Eout(Ep,x)
 	    return 0
 
-	## Calculate shell stopping power for protons
+	## Calculate shell downshift for protons
 	# @param Ep = proton energy [MeV]
+	# @param x = path length [um]
 	# @param Rcm = shell radius at shock BT [cm]
 	# @param Tshell = shell thickness at shock BT [cm]
 	# @param Mrem = fraction of shell mass remaining
-	def dEdr_Shell(self, Ep, Rcm, Tshell, Mrem):
+	# @return downshifted energy [MeV]
+	def Eout_Shell(self, Ep, x, Rcm, Tshell, Mrem):
 	    mt = 1
 	    Zt = 1
 	    mf = FloatVector(3)
@@ -429,7 +391,9 @@ class rhoR_Model(object):
 	    # Use Li-Petrasso:
 	    if ne>0:
 	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
-	    	return 1e4*model.dEdx(Ep)
+	    	# check limits:
+	    	if Ep > model.get_Emin() and Ep < model.get_Emax():
+	    		return model.Eout(Ep,x)
 	    return 0
 
 
@@ -463,5 +427,7 @@ class rhoR_Model(object):
 	    # Use Li-Petrasso:
 	    if ne>0:
 	    	model = StopPow_LP(mt,Zt,mf,Zf,Tf,nf)
-	    	return 1e4*model.dEdx(Ep)
+	    	# check limits:
+	    	if Ep > model.get_Emin() and Ep < model.get_Emax():
+	    		return 1e4*model.dEdx(Ep)
 	    return 0

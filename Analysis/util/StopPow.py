@@ -107,30 +107,6 @@ floatp_assign = _StopPow.floatp_assign
 def floatp_value(*args):
   return _StopPow.floatp_value(*args)
 floatp_value = _StopPow.floatp_value
-class buffer(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, buffer, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, buffer, name)
-    __repr__ = _swig_repr
-    def __init__(self, *args): 
-        this = _StopPow.new_buffer(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _StopPow.delete_buffer
-    __del__ = lambda self : None;
-    def __getitem__(self, *args): return _StopPow.buffer___getitem__(self, *args)
-    def __setitem__(self, *args): return _StopPow.buffer___setitem__(self, *args)
-    def cast(self): return _StopPow.buffer_cast(self)
-    __swig_getmethods__["frompointer"] = lambda x: _StopPow.buffer_frompointer
-    if _newclass:frompointer = staticmethod(_StopPow.buffer_frompointer)
-buffer_swigregister = _StopPow.buffer_swigregister
-buffer_swigregister(buffer)
-
-def buffer_frompointer(*args):
-  return _StopPow.buffer_frompointer(*args)
-buffer_frompointer = _StopPow.buffer_frompointer
-
 class SwigPyIterator(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, SwigPyIterator, name, value)
@@ -254,53 +230,6 @@ class FloatVector(_object):
 FloatVector_swigregister = _StopPow.FloatVector_swigregister
 FloatVector_swigregister(FloatVector)
 
-class DoubleVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, DoubleVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, DoubleVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _StopPow.DoubleVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _StopPow.DoubleVector___nonzero__(self)
-    def __bool__(self): return _StopPow.DoubleVector___bool__(self)
-    def __len__(self): return _StopPow.DoubleVector___len__(self)
-    def pop(self): return _StopPow.DoubleVector_pop(self)
-    def __getslice__(self, *args): return _StopPow.DoubleVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _StopPow.DoubleVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _StopPow.DoubleVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _StopPow.DoubleVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _StopPow.DoubleVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _StopPow.DoubleVector___setitem__(self, *args)
-    def append(self, *args): return _StopPow.DoubleVector_append(self, *args)
-    def empty(self): return _StopPow.DoubleVector_empty(self)
-    def size(self): return _StopPow.DoubleVector_size(self)
-    def clear(self): return _StopPow.DoubleVector_clear(self)
-    def swap(self, *args): return _StopPow.DoubleVector_swap(self, *args)
-    def get_allocator(self): return _StopPow.DoubleVector_get_allocator(self)
-    def begin(self): return _StopPow.DoubleVector_begin(self)
-    def end(self): return _StopPow.DoubleVector_end(self)
-    def rbegin(self): return _StopPow.DoubleVector_rbegin(self)
-    def rend(self): return _StopPow.DoubleVector_rend(self)
-    def pop_back(self): return _StopPow.DoubleVector_pop_back(self)
-    def erase(self, *args): return _StopPow.DoubleVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _StopPow.new_DoubleVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _StopPow.DoubleVector_push_back(self, *args)
-    def front(self): return _StopPow.DoubleVector_front(self)
-    def back(self): return _StopPow.DoubleVector_back(self)
-    def assign(self, *args): return _StopPow.DoubleVector_assign(self, *args)
-    def resize(self, *args): return _StopPow.DoubleVector_resize(self, *args)
-    def insert(self, *args): return _StopPow.DoubleVector_insert(self, *args)
-    def reserve(self, *args): return _StopPow.DoubleVector_reserve(self, *args)
-    def capacity(self): return _StopPow.DoubleVector_capacity(self)
-    __swig_destroy__ = _StopPow.delete_DoubleVector
-    __del__ = lambda self : None;
-DoubleVector_swigregister = _StopPow.DoubleVector_swigregister
-DoubleVector_swigregister(DoubleVector)
-
 class StopPow(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, StopPow, name, value)
@@ -308,9 +237,11 @@ class StopPow(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, StopPow, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
     __repr__ = _swig_repr
-    def dEdx(self, *args): return _StopPow.StopPow_dEdx(self, *args)
     def dEdx_MeV_um(self, *args): return _StopPow.StopPow_dEdx_MeV_um(self, *args)
     def dEdx_MeV_mgcm2(self, *args): return _StopPow.StopPow_dEdx_MeV_mgcm2(self, *args)
+    def get_Emin(self): return _StopPow.StopPow_get_Emin(self)
+    def get_Emax(self): return _StopPow.StopPow_get_Emax(self)
+    def dEdx(self, *args): return _StopPow.StopPow_dEdx(self, *args)
     def Eout(self, *args): return _StopPow.StopPow_Eout(self, *args)
     def Ein(self, *args): return _StopPow.StopPow_Ein(self, *args)
     def Thickness(self, *args): return _StopPow.StopPow_Thickness(self, *args)
@@ -344,6 +275,8 @@ class StopPow_SRIM(StopPow):
     __del__ = lambda self : None;
     def dEdx_MeV_um(self, *args): return _StopPow.StopPow_SRIM_dEdx_MeV_um(self, *args)
     def dEdx_MeV_mgcm2(self, *args): return _StopPow.StopPow_SRIM_dEdx_MeV_mgcm2(self, *args)
+    def get_Emin(self): return _StopPow.StopPow_SRIM_get_Emin(self)
+    def get_Emax(self): return _StopPow.StopPow_SRIM_get_Emax(self)
 StopPow_SRIM_swigregister = _StopPow.StopPow_SRIM_swigregister
 StopPow_SRIM_swigregister(StopPow_SRIM)
 
@@ -362,6 +295,8 @@ class StopPow_LP(StopPow):
     def dEdx_MeV_um(self, *args): return _StopPow.StopPow_LP_dEdx_MeV_um(self, *args)
     def dEdx_MeV_mgcm2(self, *args): return _StopPow.StopPow_LP_dEdx_MeV_mgcm2(self, *args)
     def set_collective(self, *args): return _StopPow.StopPow_LP_set_collective(self, *args)
+    def get_Emin(self): return _StopPow.StopPow_LP_get_Emin(self)
+    def get_Emax(self): return _StopPow.StopPow_LP_get_Emax(self)
     __swig_destroy__ = _StopPow.delete_StopPow_LP
     __del__ = lambda self : None;
 StopPow_LP_swigregister = _StopPow.StopPow_LP_swigregister
@@ -381,6 +316,8 @@ class StopPow_BetheBloch(StopPow):
         except: self.this = this
     def dEdx_MeV_um(self, *args): return _StopPow.StopPow_BetheBloch_dEdx_MeV_um(self, *args)
     def dEdx_MeV_mgcm2(self, *args): return _StopPow.StopPow_BetheBloch_dEdx_MeV_mgcm2(self, *args)
+    def get_Emin(self): return _StopPow.StopPow_BetheBloch_get_Emin(self)
+    def get_Emax(self): return _StopPow.StopPow_BetheBloch_get_Emax(self)
     __swig_destroy__ = _StopPow.delete_StopPow_BetheBloch
     __del__ = lambda self : None;
 StopPow_BetheBloch_swigregister = _StopPow.StopPow_BetheBloch_swigregister

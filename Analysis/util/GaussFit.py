@@ -17,7 +17,7 @@ def Gaussian(x,A,mu,sigma):
 # @class GaussFit
 # @brief Wrapper for Gaussian fitting
 # @author Alex Zylstra
-# @date 203/04/11
+# @date 203/04/12
 # @copyright MIT / Alex Zylstra
 class GaussFit(object):
 	"""Wrapper class for performing Gaussian fits to data."""
@@ -291,6 +291,6 @@ class GaussFit(object):
 		ax.grid(True)
 		ax.set_xlabel('Energy (MeV)')
 		ax.set_ylabel('Yield / MeV')
-		ax.set_title(self.name)
+		ax.set_title(self.name + ' Fit')
 
 		#return fig
