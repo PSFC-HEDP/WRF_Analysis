@@ -19,7 +19,7 @@ theta=76.371
 dtheta=(180/math.pi)*math.asin(1/50)
 angles = [theta-dtheta,theta+dtheta]
 
-random = [1e7,0.1,0.05]
-systematic = [1e7,0.05,0.05]
+random = [1e7,0.085,0.05]
+systematic = [1e7,0.075,0.05]
 
 Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles)

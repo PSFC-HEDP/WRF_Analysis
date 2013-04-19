@@ -1,1 +1,6 @@
 *.pyc
+Analysis/AnalysisOutputs/N123456_Analysis.csv
+Analysis/AnalysisOutputs/N123456_GaussFit.eps
+Analysis/AnalysisOutputs/N123456_HohlCorr.eps
+Analysis/AnalysisOutputs/N123456_HohlProfile.eps
+Analysis/AnalysisOutputs/N123456_Summary.eps

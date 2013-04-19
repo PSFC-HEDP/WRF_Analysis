@@ -1,4 +1,8 @@
-# Implement functionality for hohlraum corrections
+## Implement functionality for hohlraum corrections.
+#
+# @author Alex Zylstra
+# @date 2013/04/19
+# @copyright MIT / Alex Zylstra
 
 import numpy
 import scipy.interpolate
@@ -63,6 +67,10 @@ class Hohlraum(object):
 	Au = 0 ## Calculated or given thickness of Au
 	DU = 0 ## Calculated or given thickness of DU
 	Al = 0 ## Calculated or given thickness of Al
+	# uncertainties in thickness:
+	d_Au = 0 ## Calculated or given uncertainty in thickness of Au
+	d_DU = 0 ## Calculated or given uncertainty in thickness of DU
+	d_Al = 0 ## Calculated or given uncertainty in thickness of Al
 
 	#  r and z arrays for all wall layers:
 	all_r = []
@@ -75,7 +83,8 @@ class Hohlraum(object):
 	# @param wall python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
 	# @param angles python array of [theta_min, theta_max] range in polar angle
 	# @param Thickness the [Au,DU,Al] thickness in um
-	def __init__(self, raw, wall=None, angles=None, Thickness=None):
+	# @param d_Thickness the uncertainty in wall thickness for [Au,DU,Al] in um
+	def __init__(self, raw, wall=None, angles=None, Thickness=None, d_Thickness=[1,1,3]):
 		super(Hohlraum, self).__init__() # super constructor
 
 		# if the wall is specified:
@@ -95,10 +104,15 @@ class Hohlraum(object):
 		# copy the raw data to a class variable:
 		self.raw = numpy.copy(raw)
 
+		# set the uncertainties:
+		self.d_Au = d_Thickness[0]
+		self.d_DU = d_Thickness[1]
+		self.d_Al = d_Thickness[2]
+
 		# correct the spectrum:
 		self.correct_spectrum()
 
-		# fit ot the data:
+		# fit to the data:
 		self.fit_data()
 
 	## Calculate the material thicknesses from a wall definition. Sets the class variables Au, DU, and Al.
@@ -203,13 +217,24 @@ class Hohlraum(object):
 
 
 	## Calculate the corrected spectrum
-	def correct_spectrum(self):
+	# @param Al (optional) the aluminum thickness in um
+	# @param DU (optional) the uranium thickness in um
+	# @param Au (optional) the gold thickness in um
+	def correct_spectrum(self, Al=None, DU=None, Au=None):
 		self.corr = numpy.zeros( [len(self.raw) , len(self.raw[0])] , numpy.float32 ) # array of corrected data
+
+		# if no thicknesses are input, use default class variables:
+		if Al is None:
+			Al = self.Al
+		if DU is None:
+			DU = self.DU
+		if Au is None:
+			Au = self.Au
 
 		# loop over all data:
 		for i in range(len(self.raw)):
 			# calculate new energy:
-			new_E = self.shift_energy(self.raw[i][0])
+			new_E = self.shift_energy(self.raw[i][0],Al=Al,DU=DU,Au=Au)
 			
 			# infer the bin size:
 			bin = 0
@@ -220,8 +245,8 @@ class Hohlraum(object):
 				bin = self.raw[i+1][0] - self.raw[i][0]
 
 			# calculate a corrected bin size:
-			new_bin = ( self.shift_energy(self.raw[i][0]+bin/2)
-				- self.shift_energy(self.raw[i][0]-bin/2) )
+			new_bin = ( self.shift_energy(self.raw[i][0]+bin/2,Al=Al,DU=DU,Au=Au)
+				- self.shift_energy(self.raw[i][0]-bin/2,Al=Al,DU=DU,Au=Au) )
 			
 			# correct for accordian effect due to bin width:
 			new_Y = self.raw[i][1] * bin/new_bin
@@ -238,15 +263,26 @@ class Hohlraum(object):
 
 	## Calculate the energy shift for a given incident energy
 	# @param E the incident energy for a proton in MeV
+	# @param Al (optional) the aluminum thickness in um
+	# @param DU (optional) the uranium thickness in um
+	# @param Au (optional) the gold thickness in um
 	# @return the energy out in MeV
-	def shift_energy(self,E):
+	def shift_energy(self,E, Al=None, DU=None, Au=None):
+		# if no thicknesses are input, use default class variables:
+		if Al is None:
+			Al = self.Al
+		if DU is None:
+			DU = self.DU
+		if Au is None:
+			Au = self.Au
+		
 		new_E = E
 		# correct for Al:
-		new_E = self.Al_SRIM.Ein(new_E,self.Al)
+		new_E = self.Al_SRIM.Ein(new_E,Al)
 		# correct for DU:
-		new_E = self.DU_SRIM.Ein(new_E,self.DU)
+		new_E = self.DU_SRIM.Ein(new_E,DU)
 		# correct for Au:
-		new_E = self.Au_SRIM.Ein(new_E,self.Au)
+		new_E = self.Au_SRIM.Ein(new_E,Au)
 
 		return new_E
 
@@ -288,6 +324,66 @@ class Hohlraum(object):
 		raw = self.raw_fit.get_fit()[1]
 		corr = self.corr_fit.get_fit()[1]
 		return corr-raw
+
+	## Get the uncertainty in proton mean energy due to
+	# the hohlraum correction w/ given uncertainties
+	# @return the uncertainties as [ [-dY,+dy] , [-dE,+dE] , [-ds,+ds] ]
+	def get_unc(self):
+		# nominal raw and corrected energies:
+		fit_nominal = self.corr_fit.get_fit()
+
+		# minimum thicknesses:
+		Au = self.Au
+		if Au > 0:
+			Au -= self.d_Au
+		DU = self.DU
+		if DU > 0:
+			DU -= self.d_DU
+		Al = self.Al
+		if Al > 0:
+			Al -= self.d_Al
+
+		# calculate new spectrum and fits with these thicknesses:
+		self.correct_spectrum(Al=Al,DU=DU,Au=Au)
+		self.fit_data()
+
+		# fit to corrected spectrum with minimum thickness:
+		fit_min = self.get_fit_corr()
+
+		# minimum thicknesses:
+		Au = self.Au
+		if Au > 0:
+			Au += self.d_Au
+		DU = self.DU
+		if DU > 0:
+			DU += self.d_DU
+		Al = self.Al
+		if Al > 0:
+			Al += self.d_Al
+
+		# calculate new spectrum and fits with these thicknesses:
+		self.correct_spectrum(Al=Al,DU=DU,Au=Au)
+		self.fit_data()
+
+		# fit to corrected spectrum with minimum thickness:
+		fit_max = self.get_fit_corr()
+
+		# put things back to nominal:
+		self.correct_spectrum()
+		self.fit_data()
+
+		# we want to return uncertainties and not absolute values,
+		# so reference to nominal fit:
+		fit_min = numpy.absolute(fit_min - fit_nominal)
+		fit_max = numpy.absolute(fit_max - fit_nominal)
+
+		# return:
+		dY = [ fit_min[0] , fit_max[0] ]
+		dE = [ fit_min[1] , fit_max[1] ]
+		ds = [ fit_min[2] , fit_max[2] ]
+		return [ dY , dE , ds ]
+
+
 
 	## Save a plot to file
 	# @param fname the file to save
