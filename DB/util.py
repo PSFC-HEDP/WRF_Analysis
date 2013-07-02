@@ -1,13 +1,10 @@
-## Various utilities
-# @author Alex Zylstra
-# @date 2013/02/19
-
 import collections
 
-## Convert a database query to python array
-# @param query The result of a database query
-def array_convert(query):
-	"""Convert a database query to python array"""
+def array_convert(query) -> list:
+	"""Convert a database query to python array
+	:param query: The result of a database query
+	:returns: a list of converted values
+	"""
 	# build a nice return array
 	ret = []
 	for row in query:
@@ -18,10 +15,11 @@ def array_convert(query):
 
 	return ret
 
-## Flatten a list once (useful for processing results)
-# @param x the list to flatten
-def flatten(x):
-	"""Flatten a list (useful for processing results)"""
+def flatten(x) -> list:
+	"""Flatten a list (useful for processing results)
+	:param x: the list to flatten
+	:returns: The flattened list
+	"""
 	if isinstance(x, collections.Iterable):
 		ret = []
 		for i in x:

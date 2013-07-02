@@ -1,0 +1,4 @@
+from Import_WRF_CSV import *
+
+w = WRF_CSV("N130520-002-999_WRF_Pos1_3_13425888_AL_13511794_S1_40x_5hr_ANALYSIS.CSV")
+w.Print()

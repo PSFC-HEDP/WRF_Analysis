@@ -1,4 +1,0 @@
-"(0, 'id', 'text', 0, None, 0)","(1, 'shots', 'int', 0, None, 0)","(2, 'status', 'text', 0, None, 0)"
-1,3,active
-2,0,active
-3,5,retired

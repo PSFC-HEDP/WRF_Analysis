@@ -1,4 +1,0 @@
-"(0, 'shot', 'text', 0, None, 0)","(1, 'wrf_type', 'text', 0, None, 0)","(2, 'shot_name', 'text', 0, None, 0)","(3, 'dim', 'text', 0, None, 0)","(4, 'r', 'real', 0, None, 0)","(5, 'snout', 'text', 0, None, 0)","(6, 'position', 'int', 0, None, 0)","(7, 'wrf_id', 'text', 0, None, 0)","(8, 'cr39_1_id', 'text', 0, None, 0)","(9, 'cr39_2_id', 'text', 0, None, 0)","(10, 'cr39_3_id', 'text', 0, None, 0)","(11, 'poly_1', 'real', 0, None, 0)","(12, 'poly_2', 'real', 0, None, 0)","(13, 'vacuum_pre', 'time', 0, None, 0)","(14, 'vacuum_post', 'time', 0, None, 0)"
-N130227-001-999,AAA10-108020-10,I_Shap_2DConA_Lgth_S05,90-78,50.0,Generic,1,13425857,13511730,13511716,,100.0,,32:40:00,0:34:00
-N130228-001-999,AAA10-108020-10,I_Shap_2DConA_Lgth_S05,90-78,50.0,Generic,2,13425857,13511730,13511716,,100.0,,32:40:00,0:34:00
-N130229-001-999,AAA10-108020-10,I_Shap_2DConA_Lgth_S05,90-78,50.0,Generic,3,12345,12345,13511716,,100.0,,32:40:00,0:34:00

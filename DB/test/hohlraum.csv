@@ -1,4 +1,0 @@
-"(0, 'drawing', 'text', 0, None, 0)","(1, 'name', 'text', 0, None, 0)","(2, 'layer', 'int', 0, None, 0)","(3, 'material', 'text', 0, None, 0)","(4, 'r', 'real', 0, None, 0)","(5, 'z', 'real', 0, None, 0)"
-AAA123,Generic_Au_575,0,Au,5.0,10.0
-AAA123,Generic_Au_575,0,Au,5.0,11.0
-AAA456,Generic_U_575,0,U,1.0,2.0

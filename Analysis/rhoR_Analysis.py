@@ -1,404 +1,381 @@
-## @package wrf_analysis
-# A three-part rhoR model for NIF WRF analysis
-# including fuel, shell, and ablated mass.
-# This class encapsulates the model itself, adding in
-# error bars and sensitivity analysis.
-#
-# Author: Alex Zylstra
-# Date: 2013/03/20
+from Analysis.rhoR_Model import *
 
-from rhoR_Model import *
-from Constants import *
+__author__ = 'Alex Zylstra'
 
-## Encapsulate analysis of energy -> rhoR using various error bars for assumed parameters.
-#
+
+# Encapsulate analysis of energy -> rhoR using various error bars for assumed parameters.
 class rhoR_Analysis(object):
-	"""Encapsulate analysis of energy -> rhoR using various error bars for assumed parameters."""
+    """A three-part rhoR model for NIF WRF analysis
+    including fuel, shell, and ablated mass.
+    This class encapsulates the model itself, adding in
+    error bars and sensitivity analysis.
+    :author: Alex Zylstra
+    :date: 2013/06/29
+    """
 
-	# set verbosity for console output:
-	verbose = False
+    # set verbosity for console output:
+    verbose = False
 
-	# Error bars for various things:
-	Ri_Err = 5e-4
-	Ro_Err = 5e-4 # initial outer radius [cm]
-	P0_Err = 5 # initial pressure [atm]
-	fD_Err = 0. # deuterium fraction in fuel
-	f3He_Err = 0. # 3He fraction in fuel
-	Te_Gas_Err = 2 # keV
-	Te_Shell_Err = 0.1 # keV
-	Te_Abl_Err = 0.1 # keV
-	Te_Mix_Err = 0.2 # keV
-	# ablated mass is modeled as an exponential profile
-	# specified by max, min, and length scale:
-	rho_Abl_Max_Err = 0.5 # g/cc
-	rho_Abl_Min_Err = 0.05 # g/cc
-	rho_Abl_Scale_Err = 30e-4 # [cm]
-	# Fraction of CH mixed into the hot spot
-	MixF_Err = 0.05
-	# thickness and mass remaining:
-	Tshell_Err = 20e-4
-	Mrem_Err = 0.05
+    # Error bars for various things:
+    Ri_Err = 5e-4
+    Ro_Err = 5e-4  # initial outer radius [cm]
+    P0_Err = 1  # initial pressure [atm]
+    fD_Err = 0.  # deuterium fraction in fuel
+    f3He_Err = 0.  # 3He fraction in fuel
+    Te_Gas_Err = 2  # keV
+    Te_Shell_Err = 0.1  # keV
+    Te_Abl_Err = 0.1  # keV
+    Te_Mix_Err = 0.2  # keV
+    # ablated mass is modeled as an exponential profile
+    # specified by max, min, and length scale:
+    rho_Abl_Max_Err = 0.5  # g/cc
+    rho_Abl_Min_Err = 0.05  # g/cc
+    rho_Abl_Scale_Err = 30e-4  # [cm]
+    # Fraction of CH mixed into the hot spot
+    MixF_Err = 0.05
+    # thickness and mass remaining:
+    Tshell_Err = 10e-4
+    Mrem_Err = 0.025
 
-	# the rhoR model itself:
-	model = 0
+    # the rhoR model itself:
+    model = 0
 
-	# a list of all parameters
-	AllParam = []
+    # a list of all parameters
+    AllParam = []
 
-	## initialize the rhoR model. Arguments taken here are primarily
-	## shot-dependent initial conditions
-	# @param Ri = inner radius [cm]
-	# @param Ro = outer radius [cm]
-	# @param fD = deuterium fraction
-	# @param f3He = 3He fraction
-	# @param P0 = initial fuel pressure [atm]
-	def __init__(self, Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50, 
-		Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
-		rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF = 0.05,
-		Tshell = 40e-4 , Mrem = 0.175):
-		self.Ri = [ Ri-self.Ri_Err , Ri , Ri + self.Ri_Err ]
-		self.Ro = [ Ro-self.Ro_Err , Ro , Ro + self.Ro_Err ]
-		self.fD = [ fD-self.fD_Err, fD , fD+self.fD_Err]
-		self.f3He = [ f3He-self.f3He_Err , f3He , f3He+self.f3He_Err ]
-		self.P0 = [ P0-self.P0_Err , P0 , P0+self.P0_Err ]
-		self.Te_Gas = [ Te_Gas-self.Te_Gas_Err , Te_Gas , Te_Gas+self.Te_Gas_Err ]
-		self.Te_Shell = [ Te_Shell-self.Te_Shell_Err , Te_Shell , Te_Shell+self.Te_Shell_Err ]
-		self.Te_Abl = [ Te_Abl-self.Te_Abl_Err , Te_Abl , Te_Abl+self.Te_Abl_Err ]
-		self.Te_Mix = [ Te_Mix-self.Te_Mix_Err , Te_Mix , Te_Mix+self.Te_Mix_Err ]
-		self.rho_Abl_Max = [ rho_Abl_Max-self.rho_Abl_Max_Err, rho_Abl_Max, rho_Abl_Max+self.rho_Abl_Max_Err]
-		self.rho_Abl_Min = [ rho_Abl_Min-self.rho_Abl_Min_Err , rho_Abl_Min , rho_Abl_Min+self.rho_Abl_Min_Err ]
-		self.rho_Abl_Scale = [ rho_Abl_Scale-self.rho_Abl_Scale_Err , rho_Abl_Scale , rho_Abl_Scale+self.rho_Abl_Scale_Err]
-		self.MixF = [ MixF-self.MixF_Err , MixF , MixF+self.MixF_Err ]
-		self.Tshell = [ Tshell-self.Tshell_Err , Tshell , Tshell+self.Tshell_Err ]
-		self.Mrem = [ Mrem-self.Mrem_Err , Mrem , Mrem+self.Mrem_Err ]
+    # a big python list of models where parameters are varied systematically
+    __varied_models__ = []  # a 2-D array containing models with varied parameters
+    __varied_model_names__ = []  # strings containing descriptions of which param was varied for the above
 
-		# start the rhoR model itself:
-		self.model = rhoR_Model(Ri,Ro,fD,f3He,P0,Te_Gas,Te_Shell,Te_Abl,Te_Mix,rho_Abl_Max,rho_Abl_Min,rho_Abl_Scale,MixF)
+    def __init__(self, Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
+                 Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
+                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.05,
+                 Tshell=40e-4, Mrem=0.175, E0=14.7):
+        """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
+        :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
+        :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
+        :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
+        :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
+        :param P0: (optional) initial gas fill pressure [atm] {default=50}
+        :param Te_Gas: (optional) gas electron temperature [keV] {default=3}
+        :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
+        :param Te_Abl: (optional) ablated mass electron temperature [keV] {default=0.3}
+        :param Te_Mix: (optional) mix mass electron temperature [keV] {default=0.5}
+        :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
+        :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
+        :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
+        :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.05}
+        :param Tshell: (optional) shell thickness during the implosion [cm] {default=40e-4}
+        :param Mrem: (optional) shell mass remaining during the implosion [fractional] {default=0.175}
+        :param E0: (optional) initial proton energy [MeV] {default=14.7}
+        """
+        self.Ri = [Ri - self.Ri_Err, Ri, Ri + self.Ri_Err]
+        self.Ro = [Ro - self.Ro_Err, Ro, Ro + self.Ro_Err]
+        self.fD = [fD - self.fD_Err, fD, fD + self.fD_Err]
+        self.f3He = [f3He - self.f3He_Err, f3He, f3He + self.f3He_Err]
+        self.P0 = [P0 - self.P0_Err, P0, P0 + self.P0_Err]
+        self.Te_Gas = [Te_Gas - self.Te_Gas_Err, Te_Gas, Te_Gas + self.Te_Gas_Err]
+        self.Te_Shell = [Te_Shell - self.Te_Shell_Err, Te_Shell, Te_Shell + self.Te_Shell_Err]
+        self.Te_Abl = [Te_Abl - self.Te_Abl_Err, Te_Abl, Te_Abl + self.Te_Abl_Err]
+        self.Te_Mix = [Te_Mix - self.Te_Mix_Err, Te_Mix, Te_Mix + self.Te_Mix_Err]
+        self.rho_Abl_Max = [rho_Abl_Max - self.rho_Abl_Max_Err, rho_Abl_Max, rho_Abl_Max + self.rho_Abl_Max_Err]
+        self.rho_Abl_Min = [rho_Abl_Min - self.rho_Abl_Min_Err, rho_Abl_Min, rho_Abl_Min + self.rho_Abl_Min_Err]
+        self.rho_Abl_Scale = [rho_Abl_Scale - self.rho_Abl_Scale_Err, rho_Abl_Scale,
+                              rho_Abl_Scale + self.rho_Abl_Scale_Err]
+        self.MixF = [MixF - self.MixF_Err, MixF, MixF + self.MixF_Err]
+        self.Tshell = [Tshell - self.Tshell_Err, Tshell, Tshell + self.Tshell_Err]
+        self.Mrem = [Mrem - self.Mrem_Err, Mrem, Mrem + self.Mrem_Err]
+        self.E0 = E0
 
-	## Main function
-	# Calculate the proton energy downshift
-	# @param Rcm = shell radius at shock BT [cm]
-	# @param E0 = initial proton energy [MeV]
-	# @return Eout = final proton energy [MeV]
-	def Eout(self, Rcm, E0=14.7):
-		TotalError = self.__calc_error__("Eout",Rcm,E0)
-		return self.model.Eout(Rcm, self.Tshell[1], self.Mrem[1], E0) , TotalError
+        # start the rhoR model itself:
+        self.model = rhoR_Model(Ri, Ro, fD, f3He, P0, Te_Gas, Te_Shell, Te_Abl, Te_Mix, rho_Abl_Max, rho_Abl_Min,
+                                rho_Abl_Scale, MixF, Tshell, Mrem, E0)
 
-	## Alternative analysis method: specify measured E and calc rhoR
-	# @param E1 = Measured proton energy [MeV]
-	# @param E0 = initial proton energy [MeV]
-	# @return rhoR , Rcm , rhoR error = modeled areal density to produce modeled E
-	def Calc_rhoR(self, E1, E0=14.7):
-		TotalError = self.__calc_error__("Calc_rhoR",0,E0,E1)
-		rhoR , Rcm = self.model.Calc_rhoR(E1, self.Tshell[1], self.Mrem[1], E0)
-		return rhoR , Rcm , TotalError
+        # set up the models for error bar calculations:
+        self.__setup_error_models__()
 
-	## Calculate total rhoR
-	# @param Rcm = shell radius at shock BT [cm]
-	def rhoR_Total(self, Rcm):
-		TotalError = self.__calc_error__("rhoR_Total",Rcm)
-		return self.model.rhoR_Total(Rcm, self.Tshell[1], self.Mrem[1]) , TotalError
+    def Eout(self, Rcm) -> tuple:
+        """Main function, which calculates the proton energy downshift.
+        :param Rcm: shell radius at shock BT [cm]
+        :returns: Eout, error = final proton energy and its error bar [MeV]
+        """
+        TotalError = self.__calc_error__("Eout", Rcm, breakout=True)
+        return self.model.Eout(Rcm), TotalError
 
-	## Calculate the three components of rhoR
-	# @param Rcm shell radius at shock BT [cm]
-	def rhoR_Parts(self,Rcm):
-		#TotalError = self.__calc_error__("rhoR_Parts",Rcm)
-		return self.model.rhoR_Parts(Rcm, self.Tshell[1], self.Mrem[1]) #, TotalError
+    def Calc_rhoR(self, E1, breakout=False) -> tuple:
+        """Alternative analysis method: specify measured E and calc rhoR.
+        :param E1: Measured proton energy [MeV]
+        :returns: tuple containing (rhoR , Rcm , rhoR error) = modeled areal density to produce modeled E
+        """
+        rhoR, Rcm = self.model.Calc_rhoR(E1)
+        TotalError = self.__calc_error__("Calc_rhoR", Rcm, E1, breakout=breakout)
+        return rhoR, Rcm, TotalError
 
+    def rhoR_Total(self, Rcm) -> tuple:
+        """Calculate the total rhoR when the shell is at a given position.
+        :param Rcm: shell radius [cm]
+        :returns: tuple containing (rhoR,error) with error due to the model
+        """
+        TotalError = self.__calc_error__("rhoR_Total", Rcm)
+        return self.model.rhoR_Total(Rcm), TotalError
 
-	## Calculate the shell Rcm
-	# @param E1 the measured energy (MeV)
-	# @param dE the energy uncertainty (MeV)
-	# @param E0 initial proton energy
-	# @return Rcm , Rcm unc
-	def Calc_Rcm(self, E1, dE, E0=14.7, ModelErr=True):
-		"""Calculate the shell Rcm"""
-		rhoR , Rcm = self.model.Calc_rhoR(E1, self.Tshell[1], self.Mrem[1], E0)
+    def rhoR_Parts(self, Rcm) -> tuple:
+        """Calculate the three components of rhoR.
+        :param Rcm: shell radius at shock BT [cm]
+        :returns: the three components of rhoR
+        """
+        #TotalError = self.__calc_error__("rhoR_Parts",Rcm)
+        return self.model.rhoR_Parts(Rcm)  # TotalError
 
-		# error due to the rhoR model:
-		if ModelErr:
-			RcmModelErr = self.__calc_error__("Calc_rhoR_Rcm",0,E0,E1)
-		else:
-			RcmModelErr = 0
+    def Calc_Rcm(self, E1, dE, ModelErr=True) -> tuple:
+        """Calculate the shell Rcm.
+        :param E1: the measured energy [MeV]
+        :param dE: the energy uncertainty [MeV]
+        :param ModelErr: (optional) whether to include model errors {default=True}
+        :returns: a tuple containing (Rcm,Uncertainty)
+        """
+        rhoR, Rcm = self.model.Calc_rhoR(E1)
 
-		# error due to dE, on low energy side:
-		Rcm_Emin = Rcm
-		Emin = E1
-		while Emin > (E1-dE):
-			Rcm_Emin -= 1e-4
-			Emin = self.Eout(Rcm_Emin,E0)[0]
+        # error due to the rhoR model:
+        if ModelErr:
+            RcmModelErr = self.__calc_error__("Calc_rhoR_Rcm", 0, E1)
+        else:
+            RcmModelErr = 0
 
-		# error due to dE, on high energy side:
-		Rcm_Emax = Rcm
-		Emax = E1
-		while Emax < (E1+dE):
-			Rcm_Emax += 1e-4
-			Emax = self.Eout(Rcm_Emax,E0)[0]
+        # error due to dE, on low energy side:
+        Rcm_Emin = Rcm
+        Emin = E1
+        while Emin > (E1 - dE):
+            Rcm_Emin -= 1e-4
+            Emin = self.Eout(Rcm_Emin)[0]
 
-		# Calculate a quadrature sum total error:
-		TotalError = math.sqrt( RcmModelErr**2 + ((Rcm_Emax-Rcm_Emin)/2)**2 )
+        # error due to dE, on high energy side:
+        Rcm_Emax = Rcm
+        Emax = E1
+        while Emax < (E1 + dE):
+            Rcm_Emax += 1e-4
+            Emax = self.Eout(Rcm_Emax)[0]
 
-		return Rcm , TotalError
+        # Calculate a quadrature sum total error:
+        TotalError = math.sqrt(RcmModelErr ** 2 + ((Rcm_Emax - Rcm_Emin) / 2) ** 2)
 
+        return Rcm, TotalError
 
-	## Helper function for calculating errors. Calls an appropriate function
-	# of model.
-	def __call_func__(self, model, func, Rcm, Tshell, Mrem, E0=0, E1=0):
-		if func == "Eout":
-			return model.Eout(Rcm,Tshell,Mrem,E0)
-		if func == "Calc_rhoR":
-			return model.Calc_rhoR(E1, Tshell, Mrem, E0)[0]
-		if func == "Calc_rhoR_Rcm":
-			return model.Calc_rhoR(E1, Tshell, Mrem, E0)[1]
-		if func == "rhoR_Total":
-			return model.rhoR_Total(Rcm, Tshell, Mrem)
-		if func == "rhoR_Parts":
-			return model.rhoR_Parts(Rcm, Tshell, Mrem)
+    def __setup_error_models__(self):
+        """Set up extra models corresponding to varying each parameter."""
+        # clear, just in case:
+        self.__varied_models__ = []
+        self.__varied_model_names__ = []
 
-	def __calc_error__(self, func, Rcm=0, E0=0, E1=0):
+        # Vary the inner radius:
+        new_set = []
+        for Ri in [self.Ri[0], self.Ri[2]]:  # vary inner radius:
+            new_set.append(rhoR_Model(Ri, self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Ri')
 
-		# list of error bars for various parameters:
-		Errors = []
-		new_model = 0
+        # Vary the outer radius:
+        new_set = []
+        for Ro in [self.Ro[0], self.Ro[2]]:  # vary Ro:
+            new_set.append(rhoR_Model(self.Ri[1], Ro, self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Ro')
 
-		# Vary the inner radius:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max
-		for Ri in self.Ri: # vary inner radius:
-			new_model = rhoR_Model(Ri,self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the deuterium fraction:
+        new_set = []
+        for fD in [self.fD[0], self.fD[2]]:  # vary fD:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], fD, self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('fD')
 
-		# Vary the outer radius:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Ro in self.Ro: # vary Ro:
-			new_model = rhoR_Model(self.Ri[1],Ro,self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the 3He fraction::
+        new_set = []
+        for f3He in [self.f3He[0], self.f3He[2]]:  # vary f3He:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], f3He, self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('f3He')
 
-		# Vary the deuterium fraction:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for fD in self.fD: # vary fD:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],fD,self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the initial pressure:
+        new_set = []
+        for P0 in [self.P0[0], self.P0[2]]:  # vary P0:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], P0,
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('P0')
 
-		# Vary the 3He fraction::
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for f3He in self.f3He: # vary f3He:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],f3He,self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the gas electron temperature:
+        new_set = []
+        for Te_Gas in [self.Te_Gas[0], self.Te_Gas[2]]:  # vary Te_Gas:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      Te_Gas, self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Gas Te')
 
-		# Vary the initial pressure:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for P0 in self.P0: # vary P0:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],P0,
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the shell electron temperature:
+        new_set = []
+        for Te_Shell in [self.Te_Shell[0], self.Te_Shell[2]]:  # vary Te_Shell:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], Te_Shell, self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Shell Te')
 
-		# Vary the gas electron temperature:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Te_Gas in self.Te_Gas: # vary Te_Gas:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				Te_Gas,self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the ablated material electron temp:
+        new_set = []
+        for Te_Abl in [self.Te_Abl[0], self.Te_Abl[2]]:  # vary Te_Abl:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], Te_Abl, self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Ablated Te')
 
-		# Vary the shell electron temperature:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Te_Shell in self.Te_Shell: # vary Te_Shell:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],Te_Shell,self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the Te_Mix:
+        new_set = []
+        for Te_Mix in [self.Te_Mix[0], self.Te_Mix[2]]:  # vary Te_Mix:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], Te_Mix,
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Mix Te')
 
-		# Vary the ablated material electron temp:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Te_Abl in self.Te_Abl: # vary Te_Abl:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],Te_Abl,self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the maximum ablated material density:
+        new_set = []
+        for rho_Abl_Max in [self.rho_Abl_Max[0], self.rho_Abl_Max[2]]:  # vary rho_Abl_Max:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      rho_Abl_Max, self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Abl mass max rho')
 
-		# Vary the Te_Mix:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Te_Mix in self.Te_Mix: # vary Te_Mix:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],Te_Mix,
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the minimum ablated mass density:
+        new_set = []
+        for rho_Abl_Min in [self.rho_Abl_Min[0], self.rho_Abl_Min[2]]:  # vary rho_Abl_Min:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], rho_Abl_Min, self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Abl mass min rho')
 
-		# Vary the maximum ablated material density:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for rho_Abl_Max in self.rho_Abl_Max: # vary rho_Abl_Max:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				rho_Abl_Max,self.rho_Abl_Min[1],self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the ablated mass scale length:
+        new_set = []
+        for rho_Abl_Scale in [self.rho_Abl_Scale[0], self.rho_Abl_Scale[2]]:  # vary rho_Abl_Scale:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], rho_Abl_Scale, self.MixF[1],
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Abl mass exp scale')
 
-		# Vary the minimum ablated mass density:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for rho_Abl_Min in self.rho_Abl_Min: # vary rho_Abl_Min:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],rho_Abl_Min,self.rho_Abl_Scale[1],self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the mix fraction:
+        new_set = []
+        for MixF in [self.MixF[0], self.MixF[2]]:  # vary MixF:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], MixF,
+                                      self.Tshell[1], self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Mix fraction')
 
-		# Vary the ablated mass scale length:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for rho_Abl_Scale in self.rho_Abl_Scale: # vary rho_Abl_Scale:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],rho_Abl_Scale,self.MixF[1])
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the shell thickness:
+        new_set = []
+        for Tshell in [self.Tshell[0], self.Tshell[2]]:  # vary Tshell:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      Tshell, self.Mrem[1], self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Shell Thickness')
 
-		# Vary the mix fraction:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for MixF in self.MixF: # vary MixF:
-			new_model = rhoR_Model(self.Ri[1],self.Ro[1],self.fD[1],self.f3He[1],self.P0[1],
-				self.Te_Gas[1],self.Te_Shell[1],self.Te_Abl[1],self.Te_Mix[1],
-				self.rho_Abl_Max[1],self.rho_Abl_Min[1],self.rho_Abl_Scale[1],MixF)
-			new_val = self.__call_func__( new_model , func, Rcm, self.Tshell[1], self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+        # Vary the mass remaining::
+        new_set = []
+        for Mrem in [self.Mrem[0], self.Mrem[2]]:  # vary Mrem:
+            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+                                      self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
+                                      self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
+                                      self.Tshell[1], Mrem, self.E0))
+        self.__varied_models__.append(new_set)
+        self.__varied_model_names__.append('Mass Remaining')
 
-		# Vary the shell thickness:
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Tshell in self.Tshell: # vary Tshell:
-			new_val = self.__call_func__( self.model , func, Rcm, Tshell, self.Mrem[1], E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+    def __call_func__(self, model, func, Rcm, E1=0):
+        """Helper function for calculating errors. Calls an appropriate function of the model.
+        :param model: The model object to call
+        :param func: A string containing the function to call
+        :param Rcm: The center of mass radius of the shell [cm]
+        :param E1: (optional) second energy value to be passed to the function [MeV]
+        """
+        if func == "Eout":
+            return model.Eout(Rcm)
+        if func == "Calc_rhoR":
+            return model.Calc_rhoR(E1)[0]
+        if func == "Calc_rhoR_Rcm":
+            return model.Calc_rhoR(E1)[1]
+        if func == "rhoR_Total":
+            return model.rhoR_Total(Rcm)
+        if func == "rhoR_Parts":
+            return model.rhoR_Parts(Rcm)
 
-		# Vary the mass remaining::
-		Max = self.__call_func__( self.model , func , Rcm, self.Tshell[1], self.Mrem[1], E0, E1) # nominal value
-		Min = Max # nominal value
-		for Mrem in self.Mrem: # vary Mrem:
-			new_val = self.__call_func__( self.model , func, Rcm, self.Tshell[1], Mrem, E0, E1)
-			if new_val > Max:
-				Max = new_val
-			elif new_val < Min:
-				Min = new_val
-		Errors.append( (Max-Min)/2.0 )
-		if self.verbose:
-			print( (Max-Min)/2.0 )
+    def __calc_error__(self, func, Rcm, E1=0, breakout=False):
+        """Helper function for calculating error bars due to uncertainties in model assumptions.
+        :param func: The functional to call (i.e. Eout)
+        :param Rcm: The center of mass radius [cm]
+        :param E1: (optional) The energy to pass to func [MeV]
+        :param breakout: (optional) Whether to provide a summary of the sources of error [default = false]
+        """
+        if self.verbose:
+            print("--------------")
+        # list of error bars for various parameters:
+        TotalError = 0
+        sources = []
 
-		#Calculate quadrature sum of Errors, i.e. total error bar:
-		TotalError = 0
-		for i in Errors:
-			TotalError += i**2.0
-		TotalError = math.sqrt(TotalError)
+        # calculate nominal value:
+        nominal = self.__call_func__(self.model, func, Rcm, E1)
 
-		return TotalError
+        # iterate through all models
+        for row in range(len(self.__varied_models__)):
+            values = []
+            for model in self.__varied_models__[row]:
+                values.append(self.__call_func__(model, func, Rcm, E1))
+
+            # calculate the error bar, if valid:
+            if numpy.nan not in values:
+                val_max = math.fabs(max(values))
+                val_min = math.fabs(min(values))
+                err = (val_max - val_min) / 2.0
+                if self.verbose:
+                    print(values, err)
+                TotalError += numpy.abs(err**2.0)
+
+                # if requested, keep track of error sources:
+                if breakout:
+                    sources.append([self.__varied_model_names__[row], err])
+
+        # Calculate quadrature sum of Errors, i.e. total error bar:
+        TotalError = numpy.sqrt(TotalError)
+
+        # return sources of error if requested:
+        if breakout:
+            return TotalError, sources
+
+        # default, just return total error:
+        return TotalError

@@ -1,9 +1,14 @@
-## Define parameters for the sqlite3 database
+# Define parameters for the sqlite3 database
 
-DIR = './'
+# Directory where the main database is stored
+DIR = '/Uesrs/alex/'
+# Directory where the tests are stored
+TEST_DIR = '/Users/alex/test/'
 
+# Database file
 FILE = DIR + 'NIF.db'
-FILE_TEST = DIR + 'test/test.db'
+# Test database file
+FILE_TEST = TEST_DIR + 'test.db'
 
 # Define table names:
 SNOUT_TABLE = 'snout'
