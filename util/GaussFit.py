@@ -4,6 +4,7 @@ import scipy.optimize
 import scipy.stats
 import matplotlib
 import matplotlib.pyplot as plt
+import sys
 
 
 def Gaussian(x, A, mu, sigma):
@@ -22,7 +23,7 @@ def Gaussian(x, A, mu, sigma):
 class GaussFit(object):
     """Wrapper class for performing Gaussian fits to data.
     :author: Alex Zylstra
-    :date: 2013/06/14"""
+    :date: 2013/07/05"""
     data = []  # multi-dimensional array containing data
     data_x = []  # x values of the data
     data_y = []  # y values of the data
@@ -290,8 +291,14 @@ class GaussFit(object):
         # import matplotlib
         import matplotlib
         import matplotlib.pyplot as plt
-        if matplotlib.get_backend() != 'MacOSX':
-            plt.switch_backend('MacOSX')
+
+        # os detection
+        if sys.platform.startswith('linux'):  # generic *nix
+            plt.switch_backend('TkAgg')
+        elif sys.platform.startswith('darwin'):  # Mac OS X
+            if matplotlib.get_backend() != 'MacOSX':
+                plt.switch_backend('MacOSX')
+        # use interactive mode if requested:
         plt.interactive(interactive)
 
         # get the figure:

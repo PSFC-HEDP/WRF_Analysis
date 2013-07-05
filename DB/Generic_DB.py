@@ -1,3 +1,5 @@
+__author__ = 'Alex Zylstra'
+
 import sqlite3
 import csv
 import shlex

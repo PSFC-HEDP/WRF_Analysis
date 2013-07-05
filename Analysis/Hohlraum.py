@@ -413,9 +413,16 @@ class Hohlraum(object):
         :param interactive: (optional) whether to use the interactive mode {default=False}"""
         import matplotlib
         import matplotlib.pyplot as plt
-        if matplotlib.get_backend() != 'macosx':
-            plt.switch_backend('MacOSX')
+
+        # os detection
+        if sys.platform.startswith('linux'):  # generic *nix
+            plt.switch_backend('TkAgg')
+        elif sys.platform.startswith('darwin'):  # Mac OS X
+            if matplotlib.get_backend() != 'MacOSX':
+                plt.switch_backend('MacOSX')
+        # use interactive mode if requested:
         plt.interactive(interactive)
+
         # get the figure:
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -540,9 +547,16 @@ class Hohlraum(object):
         :param interactive: (optional) whether to use the interactive mode {default=False} """
         import matplotlib
         import matplotlib.pyplot as plt
-        if matplotlib.get_backend() != 'macosx':
-            plt.switch_backend('MacOSX')
+
+        # os detection
+        if sys.platform.startswith('linux'):  # generic *nix
+            plt.switch_backend('TkAgg')
+        elif sys.platform.startswith('darwin'):  # Mac OS X
+            if matplotlib.get_backend() != 'MacOSX':
+                plt.switch_backend('MacOSX')
+        # use interactive mode if requested:
         plt.interactive(interactive)
+
         # get the figure:
         fig = plt.figure()
         ax = fig.add_subplot(111)

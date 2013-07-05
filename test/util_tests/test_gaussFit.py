@@ -11,6 +11,9 @@ __author__ = 'Alex Zylstra'
 
 class TestGaussFit(TestCase):
     """Test the Gaussian fitting utility."""
+    # flag for verbosity
+    verbose = False
+
     # where the test data is:
     path = os.path.dirname(__file__)
 
@@ -29,7 +32,9 @@ class TestGaussFit(TestCase):
 
         # speed test
         t = timeit.timeit(stmt="Gaussian(0,1,1,1)",  setup="from util.GaussFit import Gaussian", number=int(1e3))
-        print("Evaluating Gaussian: " + '{:.2f}'.format(1e3*t) + " us per call")
+
+        if self.verbose:
+            print("Evaluating Gaussian: " + '{:.2f}'.format(1e3*t) + " us per call")
 
     def test_do_fit(self):
         """Test the fit itself."""
@@ -51,7 +56,8 @@ class TestGaussFit(TestCase):
         for i in range(100):
             self.fit.do_fit()
         t1 = datetime.now()
-        print('{:.2f}'.format(10*(t1 - t0).total_seconds()) + "ms per fit call")
+        if self.verbose:
+            print('{:.2f}'.format(10*(t1 - t0).total_seconds()) + "ms per fit call")
 
     def test_eval_fit(self):
         """Test evaluation of the fit."""

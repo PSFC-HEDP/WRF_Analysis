@@ -1,5 +1,7 @@
 # A database wrapper for hohlraum info
 
+__author__ = 'Alex Zylstra'
+
 import DB.Database as Database
 from DB.Generic_DB import *
 

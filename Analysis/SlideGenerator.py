@@ -16,9 +16,16 @@ def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', i
     """
     import matplotlib
     import matplotlib.pyplot as plt
-    if matplotlib.get_backend() != 'macosx':
-        plt.switch_backend('MacOSX')
+
+    # os detection
+    if sys.platform.startswith('linux'):  # generic *nix
+        plt.switch_backend('TkAgg')
+    elif sys.platform.startswith('darwin'):  # Mac OS X
+        if matplotlib.get_backend() != 'MacOSX':
+            plt.switch_backend('MacOSX')
+    # use interactive mode if requested:
     plt.interactive(interactive)
+
     # make the figure:
     make_slide(Fit, Hohl, Nxy, name, summary, results)
     plt.show()

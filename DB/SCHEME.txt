@@ -18,12 +18,12 @@ serial numbers used on shots, vac time, etc
 wrf_inventory ================================
 For keeping track of WRF usage and current status
 
+wrf_spectrum =================================
+Storage for the actual WRF spectra themselves.
+Both raw and corrected spectra are stored in this table,
+and are differentiated by a bit column.
 
 TODO:
-
-wrf_spectra_raw
-
-wrf_spectra_corr
 
 wrf_analysis_raw
 
