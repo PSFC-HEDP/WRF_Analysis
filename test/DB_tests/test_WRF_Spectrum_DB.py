@@ -16,7 +16,7 @@ class TestWRF_Spectrum_DB(TestCase):
     db = 0
 
     def setUp(self):
-        """Do initialization for the generic database tests."""
+        """Do initialization for the database tests."""
         import os
         try:
             os.makedirs(Database.TEST_DIR)
@@ -82,20 +82,34 @@ class TestWRF_Spectrum_DB(TestCase):
         self.assertEqual(dim[0], '0-0')
 
     def test_get_positions(self):
+        """Test retrieval of positions for given shot and DIM"""
         pos = self.db.get_positions('N130520-002-999', '0-0')
         self.assertEqual(1, pos[0])
 
     def test_get_dates(self):
+        """Test retrieval of analysis date"""
         date = self.db.get_dates('N130520-002-999', '0-0', 1)
         self.assertEquals(date[0], '2013-06-10 08:32')
 
+    def test_get_wrf_id(self):
+        """Test retrieval of WRF ID from the DB"""
+        WRF_ID = self.db.get_wrf_id('N130520-002-999', '0-0', 1)
+        self.assertEqual(WRF_ID[0], '13425888-g058')
+
+    def test_get_cr39_id(self):
+        """Test retrieval of CR-39 ID from the DB"""
+        CR39_ID = self.db.get_cr39_id('N130520-002-999', '0-0', 1)
+        self.assertEqual(CR39_ID[0], '13511794')
+
     def test_get_corrected(self):
+        """test retrieval of whether spectrum is corrected"""
         import datetime
         date = datetime.datetime.strptime('2013-06-10 08:32','%Y-%m-%d %H:%M')
         corr = self.db.get_corrected('N130520-002-999', '0-0', 1, '2013-06-10 08:32')
         self.assertEqual(corr[0], False)
 
     def test_insert(self):
+        """Test insertion of additional rows"""
         # this one is basically tested implicitly, but let's try adding another row
         len_init = self.db.num_rows()
 
@@ -121,3 +135,17 @@ class TestWRF_Spectrum_DB(TestCase):
         self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, energy, Y, err)
 
         self.assertEqual(self.db.num_rows(), len_init+len(data))
+
+    def test_get_spectrum(self):
+        """Test functionality to retrieve a spectrum from the database."""
+        # first try without specifying the date:
+        data = self.db.get_spectrum('N130520-002-999', '0-0', 1, 0)
+        orig_data =     [[4.375, 8.274e+05, 2.294e+06],
+                    [4.625, 6.173e+06, 2.990e+06],
+                    [4.875, 3.159e+06, 2.192e+06],
+                    [5.125, 1.187e+06, 1.675e+06]]
+        self.assertListEqual(data, orig_data)
+
+        # now try again with given date:
+        data = self.db.get_spectrum('N130520-002-999', '0-0', 1, 0, '2013-06-10 08:32')
+        self.assertListEqual(data, orig_data)

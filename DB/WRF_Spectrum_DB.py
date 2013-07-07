@@ -22,7 +22,7 @@ import datetime
 class WRF_Spectrum_DB(Generic_DB):
     """Provide a wrapper for WRF spectra.
     :author: Alex Zylstra
-    :date: 2013/07/05
+    :date: 2013/07/07
     """
     ## name of the table for the snout data
     TABLE = Database.WRF_SPECTRUM_TABLE
@@ -82,15 +82,38 @@ class WRF_Spectrum_DB(Generic_DB):
                                (shot, dim, position,))
         return flatten(array_convert(query))
 
+    def get_wrf_id(self, shot, dim, position) -> str:
+        """Get the WRF ID used for the given shot, DIM, and position.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999'
+        :param dim: the DIM as a string, e.g. '0-0'
+        :param position: the position as an integer, e.g. 1
+        :returns: the WRF ID as a str
+        """
+        query = self.c.execute('SELECT wrf_id from %s where shot=? AND dim=? AND position=?' % self.TABLE,
+                               (shot, dim, position,))
+        return flatten(array_convert(query))
+
+    def get_cr39_id(self, shot, dim, position) -> str:
+        """Get the CR-39 ID used for the given shot, DIM, and position.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999'
+        :param dim: the DIM as a string, e.g. '0-0'
+        :param position: the position as an integer, e.g. 1
+        :returns: the CR-39 ID as a str
+        """
+        query = self.c.execute('SELECT cr39_id from %s where shot=? AND dim=? AND position=?' % self.TABLE,
+                               (shot, dim, position,))
+        return flatten(array_convert(query))
+
     def get_corrected(self, shot, dim, position, date) -> list:
         """Generally spectra can be available in either raw or corrected forms, or both. Return list contains False
            if the raw data is available, and True if the hohlraum-corrected data is.
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
-        :param date: the date and time of analysis, in format YYYY-MM-DD HH:MM:SS """
-        query = self.c.execute('SELECT Distinct hohl_corr from %s '
-                               'where shot=? AND dim=? AND position=? AND date=?' % self.TABLE,
+        :param date: the date and time of analysis, in format YYYY-MM-DD HH:MM:SS
+        """
+        query = self.c.execute('SELECT Distinct hohl_corr from %s where shot=? AND dim=? AND position=? AND date=?'
+                               % self.TABLE,
                                (shot, dim, position, date,))
         result = flatten(array_convert(query))
 
@@ -103,6 +126,31 @@ class WRF_Spectrum_DB(Generic_DB):
                 ret.append(True)
 
         return ret
+
+    def get_spectrum(self, shot, dim, position, corr, date=None) -> list:
+        """Get a spectrum.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999'
+        :param dim: the DIM as a string, e.g. '0-0'
+        :param position: the position as an integer, e.g. 1
+        :param corr: boolean, whether the hohlraum was used or not
+        :param date: (optional) the date and time of analysis, in format YYYY-MM-DD HH:MM:SS [default=None, get latest]
+        """
+        # get the latest date if one is not supplied:
+        if date is None:
+            query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=? AND hohl_corr=?'
+                                   % self.TABLE,
+                                  (shot, dim, position, corr,))
+
+            # array conversion:
+            avail_date = flatten(array_convert(query))
+            date = avail_date[0]
+
+        # get the data:
+        query = self.c.execute('SELECT energy,yield,error from %s where shot=? AND dim=? AND position=? AND hohl_corr=? AND date=?'
+                               % self.TABLE,
+                               (shot, dim, position, corr, date,))
+
+        return array_convert(query)
 
     def insert(self, shot, dim, position, wrf_id, cr39_id, date, hohl_corr, energy, Y, error):
         """Insert a new row of data into the database.
