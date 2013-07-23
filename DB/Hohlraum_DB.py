@@ -12,7 +12,7 @@ from DB.Generic_DB import *
 class Hohlraum_DB(Generic_DB):
     """Provide a wrapper for hohlraum DB actions.
     :author: Alex Zylstra
-    :date: 2013/06/11
+    :date: 2013/07/11
     """
     ## name of the table for the hohlraum data
     TABLE = Database.HOHLRAUM_TABLE
@@ -41,6 +41,7 @@ class Hohlraum_DB(Generic_DB):
     def get_names(self) -> list:
         """Get a list of unique hohlraum names in the table.
         :returns: a list containing the unique names (as str)
+        :rtype: list
         """
         #assert isinstance(self.c,sqlite3.Connection)
 
@@ -56,17 +57,25 @@ class Hohlraum_DB(Generic_DB):
 
     def get_drawing_name(self, drawing) -> str:
         """Get the name for a drawing number.
-        :param drawing: the drawing number to query
+        :param drawing: the drawing number to query as str
         :returns a unique name found for the drawing number
+        :rtype: str
         """
+        # sanity check:
+        assert isinstance(drawing, str)
+
         query = self.c.execute('SELECT Distinct name from %s where drawing=(?)' % self.TABLE, (drawing,))
         return flatten(array_convert(query))
 
     def get_name_drawing(self, name) -> str:
         """Get the drawing number for a given name.
-        :param name: the hohlraum design name you want to query
+        :param name: the hohlraum design name you want to query (as str)
         :returns: a unique drawing number found for that name
+        :rtype: str
         """
+        # sanity check
+        assert isinstance(name, str)
+
         query = self.c.execute('SELECT Distinct drawing from %s where name=(?)' % self.TABLE, (name,))
         return flatten(array_convert(query))
 
@@ -74,11 +83,16 @@ class Hohlraum_DB(Generic_DB):
         """Get a list of (unique) layers defined for the given hohlraum name or drawing number.
             If you specify one of name or drawing, that will be used for match.
             If both are given, then the returned result must match both.
-        :param name: the hohlraum name
-        :param drawing: the drawing number
+        :param name: the hohlraum name (as str)
+        :param drawing: the drawing number (as str)
         :returns: a python array of layer indices (integers)
+        :rtype: list
         """
-        # sanity check: if both string are empty, we cannot query
+        # sanity check for types
+        assert isinstance(name, str)
+        assert isinstance(drawing, str)
+
+        # further sanity check: if both string are empty, we cannot query
         if name == '' and drawing == '':
             return
         # if both arguments have text, match both:
@@ -96,13 +110,21 @@ class Hohlraum_DB(Generic_DB):
 
     def insert(self, drawing, name, layer, material, r, z):
         """Insert a new row of data into the table.
-        :param drawing: the hohlraum drawing number
-        :param name: the hohlraum configuration name
+        :param drawing: the hohlraum drawing number (as str)
+        :param name: the hohlraum configuration name (as str)
         :param layer: the material wall index (0,1,2,..)
-        :param material: the wall material for this layer
+        :param material: the wall material for this layer (as str)
         :param r: r radius in cm
         :param z: z length in cm
         """
+        # sanity checks:
+        assert isinstance(drawing, str)
+        assert isinstance(name, str)
+        assert (isinstance(layer, str) or isinstance(layer, int))
+        assert isinstance(material, str)
+        assert isinstance(r, str) or isinstance(r, int) or isinstance(r, float)
+        assert isinstance(z, str) or isinstance(z, int) or isinstance(z, float)
+
         # first check for duplicates:
         query = self.c.execute('SELECT * from %s where name=? and drawing=? and layer=? and material=? and r=? and z=?'
                                % self.TABLE, (name, drawing, layer, material, r, z,))
@@ -117,27 +139,40 @@ class Hohlraum_DB(Generic_DB):
 
     def drop(self, drawing, layer):
         """Drop a wall in the table.
-        :param drawing: the hohlraum drawing
+        :param drawing: the hohlraum drawing (as str)
         :param layer: the layer index (0,1,2...)
         """
+        # sanity checks:
+        assert isinstance(drawing, str)
+        assert (isinstance(layer, str) or isinstance(layer, int))
+
         s = 'DELETE FROM %s WHERE drawing=? AND layer=?' % self.TABLE
         self.c.execute(s, (drawing, layer,))
         self.db.commit()
 
     def query_drawing(self, drawing, layer) -> list:
         """Find data specified by drawing and position.
-        :param drawing: the hohlraum drawing number
+        :param drawing: the hohlraum drawing number (as str)
         :param layer: the wall layer index
         :returns: all rows found which match name and layer
+        :rtype: list
         """
+        # sanity checks:
+        assert isinstance(drawing, str)
+        assert (isinstance(layer, str) or isinstance(layer, int))
+
         query = self.c.execute('SELECT * from %s where drawing=? and layer=?' % self.TABLE, (drawing, layer,))
         return array_convert(query)
 
     def query_name(self, name, layer):
         """Find data specified by name and position.
-        :param name: the hohlraum configuration name
+        :param name: the hohlraum configuration name (as str)
         :param layer: the wall layer index
         :returns: all rows found which match name and layer
         """
+        # sanity checks:
+        assert isinstance(name, str)
+        assert (isinstance(layer, str) or isinstance(layer, int))
+
         query = self.c.execute('SELECT * from %s where name=? and layer=?' % self.TABLE, (name, layer,))
         return array_convert(query)

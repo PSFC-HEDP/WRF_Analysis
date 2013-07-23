@@ -85,8 +85,8 @@ class TestHohlraum(TestCase):
         """Test uncertainties due to the hohlraum for the test data."""
         unc = self.hohl.get_unc()
         # compare to expected values for the test data:
-        self.assertAlmostEqual(unc[0][0], 4408.5, delta=1)
-        self.assertAlmostEqual(unc[0][1], 4056.38, delta=1)
+        self.assertAlmostEqual(unc[0][0], 4664.5, delta=1)
+        self.assertAlmostEqual(unc[0][1], 3966.38, delta=1)
         self.assertAlmostEqual(unc[1][0], 0.05847, places=3)
         self.assertAlmostEqual(unc[1][1], 0.05827, places=3)
         self.assertAlmostEqual(unc[2][0], 0.00232, places=4)

@@ -22,7 +22,7 @@ import datetime
 class WRF_Spectrum_DB(Generic_DB):
     """Provide a wrapper for WRF spectra.
     :author: Alex Zylstra
-    :date: 2013/07/07
+    :date: 2013/07/23
     """
     ## name of the table for the snout data
     TABLE = Database.WRF_SPECTRUM_TABLE
@@ -89,6 +89,12 @@ class WRF_Spectrum_DB(Generic_DB):
         :param position: the position as an integer, e.g. 1
         :returns: the WRF ID as a str
         """
+        # some sanity checking
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, str) or isinstance(position, int)
+
+        # SQL query:
         query = self.c.execute('SELECT wrf_id from %s where shot=? AND dim=? AND position=?' % self.TABLE,
                                (shot, dim, position,))
         return flatten(array_convert(query))
@@ -99,7 +105,14 @@ class WRF_Spectrum_DB(Generic_DB):
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
         :returns: the CR-39 ID as a str
+        :rtype: str
         """
+        # some sanity checking
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, str) or isinstance(position, int)
+
+        # SQL query:
         query = self.c.execute('SELECT cr39_id from %s where shot=? AND dim=? AND position=?' % self.TABLE,
                                (shot, dim, position,))
         return flatten(array_convert(query))
@@ -112,6 +125,13 @@ class WRF_Spectrum_DB(Generic_DB):
         :param position: the position as an integer, e.g. 1
         :param date: the date and time of analysis, in format YYYY-MM-DD HH:MM:SS
         """
+        # some sanity checking
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, str) or isinstance(position, int)
+        assert isinstance(date, str)
+
+        # SQL query:
         query = self.c.execute('SELECT Distinct hohl_corr from %s where shot=? AND dim=? AND position=? AND date=?'
                                % self.TABLE,
                                (shot, dim, position, date,))
@@ -135,15 +155,15 @@ class WRF_Spectrum_DB(Generic_DB):
         :param corr: boolean, whether the hohlraum was used or not
         :param date: (optional) the date and time of analysis, in format YYYY-MM-DD HH:MM:SS [default=None, get latest]
         """
+        # some sanity checking
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, str) or isinstance(position, int)
+        assert isinstance(corr, int) or isinstance(corr, bool)
+
         # get the latest date if one is not supplied:
         if date is None:
-            query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=? AND hohl_corr=?'
-                                   % self.TABLE,
-                                  (shot, dim, position, corr,))
-
-            # array conversion:
-            avail_date = flatten(array_convert(query))
-            date = avail_date[0]
+            date = self.__latest_date__(shot, dim, position)
 
         # get the data:
         query = self.c.execute('SELECT energy,yield,error from %s where shot=? AND dim=? AND position=? AND hohl_corr=? AND date=?'
@@ -207,3 +227,23 @@ class WRF_Spectrum_DB(Generic_DB):
             dy = error[i]
             newval = (shot, dim, position, wrf_id, cr39_id, date, hohl_corr, x, y, dy,)
             self.c.execute('INSERT INTO %s values (?,?,?,?,?,?,?,?,?,?)' % self.TABLE, newval)
+
+    def __latest_date__(self, shot, dim, position):
+        """Get the latest (i.e. most recent) date available for the given shot, DIM, and position.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
+        :param dim: the DIM as a string, e.g. '0-0' (as str)
+        :param position: the position as an integer or str, e.g. 1
+        """
+        # sanity checks:
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, int) or isinstance(position, str)
+
+        query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=?'
+                               % self.TABLE,
+                              (shot, dim, position,))
+
+        # array conversion:
+        avail_date = flatten(array_convert(query))
+        avail_date.sort()
+        return avail_date[-1]

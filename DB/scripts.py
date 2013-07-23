@@ -10,6 +10,7 @@ from DB.WRF_Inventory_DB import *
 from DB.WRF_Setup_DB import *
 from DB.WRF_Spectrum_DB import *
 from DB.WRF_InitAnalysis_DB import *
+from DB.WRF_Analysis_DB import *
 import os
 
 
@@ -22,6 +23,7 @@ def initialize():
     WRF_Setup_DB(Database.FILE)
     WRF_Spectrum_DB(Database.FILE)
     WRF_InitAnalysis_DB(Database.FILE)
+    WRF_Analysis_DB(Database.FILE)
 
 
 def export_all():
@@ -47,7 +49,10 @@ def export_all():
     wspec.csv_export(Database.DIR + 'csv/wrf_spectrum.csv')
 
     winit = WRF_InitAnalysis_DB(Database.FILE)
-    winit.csv_excport(Database.DIR + 'csv/wrf_init_analysis.csv')
+    winit.csv_export(Database.DIR + 'csv/wrf_init_analysis.csv')
+
+    DB = WRF_Analysis_DB(Database.FILE)
+    DB.csv_export(Database.DIR + 'csv/wrf_analysis.csv')
 
 
 def import_all():
@@ -73,4 +78,7 @@ def import_all():
     wspec.csv_import(Database.DIR + 'csv/wrf_spectrum.csv')
 
     winit = WRF_InitAnalysis_DB(Database.FILE)
-    winit.csv_export(Database.DIR + 'csv/wrf_init_analysis.csv')
+    winit.csv_import(Database.DIR + 'csv/wrf_init_analysis.csv')
+
+    DB = WRF_Analysis_DB(Database.FILE)
+    DB.csv_import(Database.DIR + 'csv/wrf_analysis.csv')

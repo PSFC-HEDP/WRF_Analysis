@@ -5,7 +5,7 @@ from DB.Generic_DB import *
 class Shot_DB(Generic_DB):
     """Provide a wrapper for shot DB actions.
     :author: Alex Zylstra
-    :date: 2013/06/11
+    :date: 2013/07/11
     """
 
     # name of the table for the shot data
@@ -40,8 +40,10 @@ class Shot_DB(Generic_DB):
 
     def insert(self, shot):
         """Add a new shot to the table. Data insertion done via update method ONLY (for shot db).
-        :param shot: the new shot name
+        :param shot: the new shot name (as str)
         """
+        assert isinstance(shot, str)
+
         # first check for duplicates:
         query = self.c.execute('SELECT * from %s where shot=?' % self.TABLE, (shot,))
 
@@ -55,28 +57,39 @@ class Shot_DB(Generic_DB):
 
     def update(self, shot, col, val):
         """Update a value in the table.
-        :param shot: the shot number
-        :param col: the column name to alter
+        :param shot: the shot number (as str)
+        :param col: the column name to alter (as str)
         :param val: the column value
         """
+        # sanity checks:
+        assert isinstance(shot, str)
+        assert isinstance(col, str)
+        assert isinstance(val, str) or isinstance(val, int) or isinstance(val, float)
+
         s = 'UPDATE %s SET [%s]=? WHERE shot=?' % (self.TABLE, col,)
         self.c.execute(s, (val, shot,))
         self.db.commit()
 
     def query(self, shot):
         """Find data rows specified by shot number.
-        :param shot: the shot number to query
+        :param shot: the shot number to query (as str)
         :returns: the rows found for the shot from the SQL query
         """
+        assert isinstance(shot, str)
+
         query = self.c.execute('SELECT * from %s where shot=?' % self.TABLE, (shot,))
         return array_convert(query)[0]
 
     def query_col(self, shot, col):
         """Get data for a specific shot and column.
-        :param shot: the shot to query
-        :param col: name of the column you want
+        :param shot: the shot to query (as str)
+        :param col: name of the column you want (as str)
         :returns: column's value, or a 2 value tuple if there is an associated error bar
         """
+        # sanity checks:
+        assert isinstance(shot, str)
+        assert isinstance(col, str)
+
         query = self.c.execute('SELECT [%s] from %s where shot=?' % (col, self.TABLE), (shot,))
         value = array_convert(query)[0][0]
 

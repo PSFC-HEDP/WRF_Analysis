@@ -108,7 +108,7 @@ class TestRhoR_Model(TestCase):
         # try all:
         for R in self.Rcm:
             r1, r2, r3 = self.model.get_Abl_radii(R)
-            self.assertTrue(r1 < r2 < r3 and r1 > 0 and r3 < 3 * self.model.Ro,
+            self.assertTrue(r3 > r2 > r1 > 0 and r3 < 3 * self.model.Ro,
                             "Failed test of ablated radii. Got: "
                             + str(r1) + "," + str(r2) + "," + str(r3) +
                             "; for params Rcm = " + str(R))
