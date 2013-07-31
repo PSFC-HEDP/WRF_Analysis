@@ -82,7 +82,7 @@ class Hohlraum(object):
     layer_mat = []
     angles = []
 
-    def __init__(self, raw, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3)):
+    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3)):
         """Constructor for the hohlraum. You must supply either the thickness array or an array containing wall data plus view angles.
         :param raw: the raw spectrum
         :param wall: python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
@@ -106,19 +106,21 @@ class Hohlraum(object):
             self.DU = 0
             self.Al = 0
 
-        # copy the raw data to a class variable:
-        self.raw = numpy.copy(raw)
-
         # set the uncertainties:
         self.d_Au = d_Thickness[0]
         self.d_DU = d_Thickness[1]
         self.d_Al = d_Thickness[2]
 
-        # correct the spectrum:
-        self.__correct_spectrum__()
+        # do spectral stuff only if not none:
+        if raw is not None:
+            # copy the raw data to a class variable:
+            self.raw = numpy.copy(raw)
 
-        # fit to the data:
-        self.__fit_data__()
+            # correct the spectrum:
+            self.__correct_spectrum__()
+
+            # fit to the data:
+            self.__fit_data__()
 
     def __calc_from_wall__(self, wall, angles):
         """Calculate the material thicknesses from a wall definition. Sets the class variables Au, DU, and Al.

@@ -26,59 +26,63 @@ def initialize():
     WRF_Analysis_DB(Database.FILE)
 
 
-def export_all():
-    """Export all tables as CSV."""
-    os.makedirs(Database.DIR, exist_ok=True)
+def export_all(export_dir=os.path.join(Database.DIR,'csv')):
+    """Export all tables as CSV.
+    :param export_dir: (optional) where to export CSV files to [default=Database.DIR+'csv']
+    """
+    os.makedirs(export_dir, exist_ok=True)
 
     s = Shot_DB(Database.FILE)
-    s.csv_export(Database.DIR + 'csv/shot.csv')
+    s.csv_export(os.path.join(export_dir, 'shot.csv'))
 
     s2 = Snout_DB(Database.FILE)
-    s2.csv_export(Database.DIR + 'csv/snout.csv')
+    s2.csv_export(os.path.join(export_dir, 'snout.csv'))
 
     h = Hohlraum_DB(Database.FILE)
-    h.csv_export(Database.DIR + 'csv/hohlraum.csv')
+    h.csv_export(os.path.join(export_dir, 'hohlraum.csv'))
 
     wi = WRF_Inventory_DB(Database.FILE)
-    wi.csv_export(Database.DIR + 'csv/wrf_inventory.csv')
+    wi.csv_export(os.path.join(export_dir, 'wrf_inventory.csv'))
 
     ws = WRF_Setup_DB(Database.FILE)
-    ws.csv_export(Database.DIR + 'csv/wrf_setup.csv')
+    ws.csv_export(os.path.join(export_dir, 'wrf_setup.csv'))
 
     wspec = WRF_Spectrum_DB(Database.FILE)
-    wspec.csv_export(Database.DIR + 'csv/wrf_spectrum.csv')
+    wspec.csv_export(os.path.join(export_dir, 'wrf_spectrum.csv'))
 
     winit = WRF_InitAnalysis_DB(Database.FILE)
-    winit.csv_export(Database.DIR + 'csv/wrf_init_analysis.csv')
+    winit.csv_export(os.path.join(export_dir, 'wrf_init_analysis.csv'))
 
     DB = WRF_Analysis_DB(Database.FILE)
-    DB.csv_export(Database.DIR + 'csv/wrf_analysis.csv')
+    DB.csv_export(os.path.join(export_dir, 'wrf_analysis.csv'))
 
 
-def import_all():
-    """Import all tables from CSV files."""
-    os.makedirs(Database.DIR, exist_ok=True)
+def import_all(import_dir=os.path.join(Database.DIR,'csv')):
+    """Import all tables from CSV files.
+    :param import_dir: (optional) where to import CSV files from [default=Database.DIR]
+    """
+    os.makedirs(import_dir, exist_ok=True)
 
     s = Shot_DB(Database.FILE)
-    s.csv_import(Database.DIR + 'csv/shot.csv')
+    s.csv_import(os.path.join(import_dir, 'shot.csv'))
 
     s2 = Snout_DB(Database.FILE)
-    s2.csv_import(Database.DIR + 'csv/snout.csv')
+    s2.csv_import(os.path.join(import_dir, 'snout.csv'))
 
     h = Hohlraum_DB(Database.FILE)
-    h.csv_import(Database.DIR + 'csv/hohlraum.csv')
+    h.csv_import(os.path.join(import_dir, 'hohlraum.csv'))
 
     wi = WRF_Inventory_DB(Database.FILE)
-    wi.csv_import(Database.DIR + 'csv/wrf_inventory.csv')
+    wi.csv_import(os.path.join(import_dir, 'wrf_inventory.csv'))
 
     ws = WRF_Setup_DB(Database.FILE)
-    ws.csv_import(Database.DIR + 'csv/wrf_setup.csv')
+    ws.csv_import(os.path.join(import_dir, 'wrf_setup.csv'))
 
     wspec = WRF_Spectrum_DB(Database.FILE)
-    wspec.csv_import(Database.DIR + 'csv/wrf_spectrum.csv')
+    wspec.csv_import(os.path.join(import_dir, 'wrf_spectrum.csv'))
 
     winit = WRF_InitAnalysis_DB(Database.FILE)
-    winit.csv_import(Database.DIR + 'csv/wrf_init_analysis.csv')
+    winit.csv_import(os.path.join(import_dir, 'wrf_init_analysis.csv'))
 
     DB = WRF_Analysis_DB(Database.FILE)
-    DB.csv_import(Database.DIR + 'csv/wrf_analysis.csv')
+    DB.csv_import(os.path.join(import_dir, 'wrf_analysis.csv'))

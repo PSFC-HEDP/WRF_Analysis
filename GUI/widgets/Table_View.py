@@ -9,25 +9,6 @@ except ImportError:
 
 import ttk
 
-tree_columns = ("country", "capital", "currency")
-tree_data = [
-    ("Argentina",      "Buenos Aires",     "ARS"),
-    ("Australia",      "Canberra",         "AUD"),
-    ("Brazil",         "Brazilia",         "BRL"),
-    ("Canada",         "Ottawa",           "CAD"),
-    ("China",          "Beijing",          "CNY"),
-    ("France",         "Paris",            "EUR"),
-    ("Germany",        "Berlin",           "EUR"),
-    ("India",          "New Delhi",        "INR"),
-    ("Italy",          "Rome",             "EUR"),
-    ("Japan",          "Tokyo",            "JPY"),
-    ("Mexico",         "Mexico City",      "MXN"),
-    ("Russia",         "Moscow",           "RUB"),
-    ("South Africa",   "Pretoria",         "ZAR"),
-    ("United Kingdom", "London",           "GBP"),
-    ("United States",  "Washington, D.C.", "USD")
-    ]
-
 def sortby(tree, col, descending):
     """Sort tree contents when a column is clicked on."""
     # grab values to sort
@@ -42,32 +23,38 @@ def sortby(tree, col, descending):
     tree.heading(col,
         command=lambda col=col: sortby(tree, col, int(not descending)))
 
-class Table2(Tkinter.Toplevel):
-    def __init__(self, parent):
-        super(Table2, self).__init__(parent)
-        self.tree = None
-        self._setup_widgets()
-        self._build_tree()
+class Table_Viewer(Tkinter.Toplevel):
+    """Implement a top-level window to display info in a tabular fashion. It's intended that this class is extended"""
 
-    def _setup_widgets(self):
-        msg = ttk.Label(self, wraplength="4i", justify="left", anchor="n",
-            padding=(10, 2, 10, 6),
-            text=("Ttk is the new Tk themed widget set. One of the widgets it "
-                  "includes is a tree widget, which can be configured to "
-                  "display multiple columns of informational data without "
-                  "displaying the tree itself. This is a simple way to build "
-                  "a listbox that has multiple columns. Clicking on the "
-                  "heading for a column will sort the data by that column. "
-                  "You can also change the width of the columns by dragging "
-                  "the boundary between them."))
-        msg.pack(fill='x')
+    header_widgets = []  # control widgets to display at the top of the window
+    tree_columns = ("Quantity", "Value")  # the column headings
+    tree_data = [("",      "",)]  # the tree data
+
+    def __init__(self, parent=None, build=True):
+        """Initialize the table.
+        :param parent: (optional) The parent of this window [default=None]
+        :param build: (optional) Whether to call the widget building functions in the constructor [default=True]
+        """
+        super(Table_Viewer, self).__init__(parent)
+        self.tree = None
+
+        if build:
+            self.__setup_widgets__()
+            self.__build_tree__()
+
+        self.protocol("WM_DELETE_WINDOW", self.withdraw)
+
+    def __setup_widgets__(self):
+        """Add the widgets and table to the GUI"""
+        # add header widgets to the GUI:
+        for widget in self.header_widgets:
+            widget.pack()
 
         container = ttk.Frame(self)
         container.pack(fill='both', expand=True)
 
-        # XXX Sounds like a good support class would be one for constructing
-        #     a treeview with scrollbars.
-        self.tree = ttk.Treeview(container, columns=tree_columns, show="headings")
+        # a treeview with scrollbars.
+        self.tree = ttk.Treeview(container, columns=self.tree_columns, show="headings")
         vsb = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview)
         hsb = ttk.Scrollbar(container, orient="horizontal", command=self.tree.xview)
         self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -78,19 +65,23 @@ class Table2(Tkinter.Toplevel):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-    def _build_tree(self):
-        for col in tree_columns:
+    def __build_tree__(self):
+        """Build the tree part of the widget"""
+        # start by clearing everything already in the tree:
+        map(self.tree.delete, self.tree.get_children())
+
+        # add in new data:
+        for col in self.tree_columns:
             self.tree.heading(col, text=col.title(),
                 command=lambda c=col: sortby(self.tree, c, 0))
-            # XXX tkFont.Font().measure expected args are incorrect according
-            #     to the Tk docs
+            # set up with width based on font
             self.tree.column(col, width=tkFont.Font().measure(col.title()))
 
-        for item in tree_data:
+        for item in self.tree_data:
             self.tree.insert('', 'end', values=item)
 
-            # adjust columns lenghts if necessary
+            # adjust columns lengths if necessary
             for indx, val in enumerate(item):
                 ilen = tkFont.Font().measure(val)
-                if self.tree.column(tree_columns[indx], width=None) < ilen:
-                    self.tree.column(tree_columns[indx], width=ilen)
+                if self.tree.column(self.tree_columns[indx], width=None) < ilen:
+                    self.tree.column(self.tree_columns[indx], width=ilen)

@@ -5,10 +5,19 @@ __date__ = '2013-07-30'
 
 import tkinter as tk
 import ttk
-from GUI.widgets.Table_View import *
-from GUI.widgets.WRF_Progress_Dialog import *
+from GUI.WRF_Progress_Dialog import *
 from GUI.DB_Info import *
-import tkinter.font as tkFont
+from GUI.ShotDB_Viewer import *
+from GUI.ShotDB_Editor import *
+from GUI.SQL_Query import *
+from GUI.SnoutDB_Viewer import *
+from GUI.SnoutDB_Editor import *
+from GUI.InventoryDB_Editor import *
+from GUI.InventoryDB_Viewer import *
+from GUI.SetupDB_Viewer import *
+from GUI.SetupDB_Editor import *
+from GUI.HohlraumDB_Plot import *
+from GUI.HohlraumDB_Import import *
 #import tkinter.tkFont as tkFont
 
 class Application(tk.Tk):
@@ -16,6 +25,8 @@ class Application(tk.Tk):
     #bigFont = tk.font(family='Arial', size=14, weight='bold')
     bigFont = ("Arial", "14", "bold")
     Font = ("Arial", "12")
+
+    windows = []  # created windows
 
     def __init__(self):
         super(Application, self).__init__(None)
@@ -37,6 +48,8 @@ class Application(tk.Tk):
         self.label1.grid(row=0, column=0)
         self.DBInfoButton = tk.Button(self, text="Info", command=self.DB_Info, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.DBInfoButton.grid(row=1, column=0)
+        self.SQLCommandButton = tk.Button(self, text="SQL", command=self.SQL_Query, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.SQLCommandButton.grid(row=1, column=1)
 
         ttk_sep_1 = ttk.Separator(self, orient="vertical")
         ttk_sep_1.grid(row=2, column=0, columnspan=3, sticky='ew')
@@ -61,74 +74,94 @@ class Application(tk.Tk):
         self.snoutEditButton = tk.Button(self, text='Edit', command=self.editSnoutDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.snoutEditButton.grid(row=5, column=2, sticky=tk.N)
 
+        # Hohlraum DB controls
+        self.hohlraum_info = tk.Label(self, text="Hohlraum DB", font=self.Font, bg='lightgray')
+        self.hohlraum_info.grid(row=6, column=0)
+        self.hohlraum_plot_button = tk.Button(self, text='Plot', command=self.plotHohlraum, font=self.Font, bg='lightgray', highlightbackground='lightgray')
+        self.hohlraum_plot_button.grid(row=6, column=1, sticky=tk.N)
+        self.hohlraum_import_button = tk.Button(self, text='Import', command=self.importHohlraum, font=self.Font, bg='lightgray', highlightbackground='lightgray')
+        self.hohlraum_import_button.grid(row=6, column=2, sticky=tk.N)
+
         # Inventory DB controls:
         self.inventoryInfo = tk.Label(self, text="Inventory DB", font=self.Font, background='lightgray')
-        self.inventoryInfo.grid(row=6, column=0)
+        self.inventoryInfo.grid(row=7, column=0)
         self.inventoryViewButton = tk.Button(self, text='View', command=self.viewInventoryDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.inventoryViewButton.grid(row=6, column=1, sticky=tk.N)
+        self.inventoryViewButton.grid(row=7, column=1, sticky=tk.N)
         self.inventoryEditButton = tk.Button(self, text='Edit', command=self.editInventoryDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.inventoryEditButton.grid(row=6, column=2, sticky=tk.N)
+        self.inventoryEditButton.grid(row=7, column=2, sticky=tk.N)
 
         # Setup DB controls:
         self.setupInfo = tk.Label(self, text="Setup DB", font=self.Font, background='lightgray')
-        self.setupInfo.grid(row=7, column=0)
+        self.setupInfo.grid(row=8, column=0)
         self.setupViewButton = tk.Button(self, text='View', command=self.viewSetupDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.setupViewButton.grid(row=7, column=1, sticky=tk.N)
+        self.setupViewButton.grid(row=8, column=1, sticky=tk.N)
         self.setupEditButton = tk.Button(self, text='Edit', command=self.editSetupDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.setupEditButton.grid(row=7, column=2, sticky=tk.N)
+        self.setupEditButton.grid(row=8, column=2, sticky=tk.N)
 
         # Analysis DB controls:
         self.analysisInfo = tk.Label(self, text="Analysis DB", font=self.Font, background='lightgray')
-        self.analysisInfo.grid(row=8, column=0)
+        self.analysisInfo.grid(row=9, column=0)
         self.initialAnalysisViewButton = tk.Button(self, text='Initial', command=self.viewInitialAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.initialAnalysisViewButton.grid(row=8, column=1, sticky=tk.N)
+        self.initialAnalysisViewButton.grid(row=9, column=1, sticky=tk.N)
         self.finalAnalysisViewButton = tk.Button(self, text='Final', command=self.viewFinalAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.finalAnalysisViewButton.grid(row=8, column=2, sticky=tk.N)
+        self.finalAnalysisViewButton.grid(row=9, column=2, sticky=tk.N)
 
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
-        ttk_sep_2.grid(row=9, column=0, columnspan=3, sticky='ew')
+        ttk_sep_2.grid(row=10, column=0, columnspan=3, sticky='ew')
 
         # options for adding data, etc
         self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
-        self.label3.grid(row=10, column=0)
+        self.label3.grid(row=11, column=0)
         self.addWRFButton = tk.Button(self, text='Add WRF', command=self.addWRF, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addWRFButton.grid(row=11, column=0)
+        self.addWRFButton.grid(row=12, column=0)
         self.addShotButton = tk.Button(self, text='Add Shot', command=self.addShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addShotButton.grid(row=11, column=1)
+        self.addShotButton.grid(row=12, column=1)
         self.csvExportButton = tk.Button(self, text='Export CSV', command=self.exportCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvExportButton.grid(row=12, column=0)
+        self.csvExportButton.grid(row=13, column=0)
         self.csvImportButton = tk.Button(self, text='Import CSV', command=self.importCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvImportButton.grid(row=12, column=1)
+        self.csvImportButton.grid(row=13, column=1)
 
         self.quitButton = tk.Button(self, text='Quit', command=self.quit, font=self.Font, bg='lightgray', highlightbackground='lightgray')
-        self.quitButton.grid(row=13, column=0)
+        self.quitButton.grid(row=14, column=0, columnspan=3, sticky='S')
 
     def DB_Info(self):
-        t = DB_Info()
+        DB_Info()
+
+    def SQL_Query(self):
+        from tkinter.messagebox import askyesno
+        result = askyesno('Do manual SQL?', 'Are you sure you want to do that?')
+        if result:
+            SQL_Query()
 
     def viewShotDB(self):
-        t = Table2(None)
+        ShotDB_Viewer()
 
     def editShotDB(self):
-        t = 1
+        ShotDB_Editor()
 
     def viewSnoutDB(self):
-        asdf = 1
+        SnoutDB_Viewer()
 
     def editSnoutDB(self):
-        asdf = 1
+        SnoutDB_Editor()
+
+    def plotHohlraum(self):
+        HohlraumDB_Plot()
+
+    def importHohlraum(self):
+        HohlraumDB_Import()
 
     def viewInventoryDB(self):
-        asdf = 1
+        InventoryDB_Viewer()
 
     def editInventoryDB(self):
-        asdf = 1
+        InventoryDB_Editor()
 
     def viewSetupDB(self):
-        asdf = 1
+        SetupDB_Viewer()
 
     def editSetupDB(self):
-        asdf = 1
+        SetupDB_Editor()
 
     def viewInitialAnalysisDB(self):
         asdf = 1
@@ -140,16 +173,39 @@ class Application(tk.Tk):
         asdf = 1
 
     def addWRF(self):
-        import time
         foo = WRF_Progress_Dialog(None)
         foo.progress_bar.start()
 
 
     def exportCSV(self):
-        asdf = 1
+        """Save the database information to CSV files."""
+        # get a new file:
+        from tkinter.filedialog import askdirectory
+        FILEOPENOPTIONS = dict(title='Export CSV to',
+                       initialdir=Database.DIR,
+                       mustexist=False)
+        save_dir = askdirectory(**FILEOPENOPTIONS)
+
+        # check to see if it exists, create it otherwise:
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir, exist_ok=True)
+
+        # call the export script:
+        from DB.scripts import export_all
+        export_all(export_dir=save_dir)
 
     def importCSV(self):
-        asdf = 1
+        """Import the database information from CSV files."""
+        # get an existing directory
+        from tkinter.filedialog import askdirectory
+        FILEOPENOPTIONS = dict(title='Import CSV from',
+                       initialdir=Database.DIR,
+                       mustexist=True)
+        open_dir = askdirectory(**FILEOPENOPTIONS)
+
+        # call the import script:
+        from DB.scripts import import_all
+        import_all(import_dir=open_dir)
 
 def main():
     #root = Tkinter.Tk()

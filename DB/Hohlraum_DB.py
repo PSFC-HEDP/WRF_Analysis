@@ -4,6 +4,7 @@ __author__ = 'Alex Zylstra'
 
 import DB.Database as Database
 from DB.Generic_DB import *
+import os
 
 # The table is arranged with columns:
 # (name text, layer int, material text, r real, z real)
@@ -12,7 +13,7 @@ from DB.Generic_DB import *
 class Hohlraum_DB(Generic_DB):
     """Provide a wrapper for hohlraum DB actions.
     :author: Alex Zylstra
-    :date: 2013/07/11
+    :date: 2013/07/31
     """
     ## name of the table for the hohlraum data
     TABLE = Database.HOHLRAUM_TABLE
@@ -37,6 +38,21 @@ class Hohlraum_DB(Generic_DB):
 
         # finish changes:
         self.db.commit()
+
+    def add_from_file(self, fname):
+        """Add a set of points to the database from a CSV file.
+        :param fname: the file to open
+        """
+        assert os.path.isfile(fname)  # sanity check
+
+        # open as a CSV:
+        from util.CSV import read_csv
+        data = read_csv(fname, cols=[2,4,5])
+
+        # data format is:
+        #  drawing, name, layer, material, r, z
+        for row in data:
+            self.insert(*row)
 
     def get_names(self) -> list:
         """Get a list of unique hohlraum names in the table.
@@ -120,7 +136,7 @@ class Hohlraum_DB(Generic_DB):
         # sanity checks:
         assert isinstance(drawing, str)
         assert isinstance(name, str)
-        assert (isinstance(layer, str) or isinstance(layer, int))
+        assert (isinstance(layer, str) or isinstance(layer, int) or isinstance(layer, float))
         assert isinstance(material, str)
         assert isinstance(r, str) or isinstance(r, int) or isinstance(r, float)
         assert isinstance(z, str) or isinstance(z, int) or isinstance(z, float)
@@ -150,29 +166,35 @@ class Hohlraum_DB(Generic_DB):
         self.c.execute(s, (drawing, layer,))
         self.db.commit()
 
-    def query_drawing(self, drawing, layer) -> list:
+    def query_drawing(self, drawing, layer=None) -> list:
         """Find data specified by drawing and position.
         :param drawing: the hohlraum drawing number (as str)
-        :param layer: the wall layer index
+        :param layer: (optional) the wall layer index [default = all layers]
         :returns: all rows found which match name and layer
         :rtype: list
         """
         # sanity checks:
         assert isinstance(drawing, str)
-        assert (isinstance(layer, str) or isinstance(layer, int))
 
-        query = self.c.execute('SELECT * from %s where drawing=? and layer=?' % self.TABLE, (drawing, layer,))
+        if layer is None:
+            query = self.c.execute('SELECT * from %s where drawing=?' % self.TABLE, (drawing,))
+        else:
+            assert (isinstance(layer, str) or isinstance(layer, int))
+            query = self.c.execute('SELECT * from %s where drawing=? and layer=?' % self.TABLE, (drawing, layer,))
         return array_convert(query)
 
-    def query_name(self, name, layer):
+    def query_name(self, name, layer=None):
         """Find data specified by name and position.
         :param name: the hohlraum configuration name (as str)
-        :param layer: the wall layer index
+        :param layer: (optional) the wall layer index [default = all layers]
         :returns: all rows found which match name and layer
         """
         # sanity checks:
         assert isinstance(name, str)
-        assert (isinstance(layer, str) or isinstance(layer, int))
 
-        query = self.c.execute('SELECT * from %s where name=? and layer=?' % self.TABLE, (name, layer,))
+        if layer is None:
+            query = self.c.execute('SELECT * from %s where name=?' % self.TABLE, (name,))
+        else:
+            assert (isinstance(layer, str) or isinstance(layer, int))
+            query = self.c.execute('SELECT * from %s where name=? and layer=?' % self.TABLE, (name, layer,))
         return array_convert(query)
