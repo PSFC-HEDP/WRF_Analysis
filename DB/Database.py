@@ -15,10 +15,12 @@ elif sys.platform.startswith('darwin'):
     # Directory where the tests are stored
     TEST_DIR = '/Users/alex/test/'
 
+import os
+
 # Database file
-FILE = DIR + 'NIF.db'
+FILE = os.path.join(DIR, 'NIF.db')
 # Test database file
-FILE_TEST = TEST_DIR + 'test.db'
+FILE_TEST = os.path.join(TEST_DIR, 'test.db')
 
 # Define table names:
 SNOUT_TABLE = 'snout'
