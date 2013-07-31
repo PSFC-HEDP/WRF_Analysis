@@ -41,16 +41,16 @@ class WRF_Analysis_DB(Generic_Analysis_DB):
         if query.fetchone()[0] == 0: # table does not exist
             self.c.execute('''CREATE TABLE %s
                 (shot text, dim text, position int, analysis_date datetime,
-                E_raw real, E_raw_posunc real, E_raw_negunc real, E_corr real, E_corr_posunc real, E_corr_negunc real,
-                Au real, Au_unc real, DU real, DU_ucn real, Al real, Al_unc real,
+                E_raw real, E_raw_ran_unc real, E_raw_sys_unc real,
+                Au real, Au_unc real, DU real, DU_unc real, Al real, Al_unc real,
                 Hohl_Y_posunc real, Hohl_Y_negunc real,
                 Hohl_E_posunc real, Hohl_E_negunc real,
                 Hohl_sigma_posunc real, Hohl_sigma_negunc real,
                 Yield real, Yield_ran_unc real, Yield_sys_unc real,
                 Energy real, Energy_ran_unc real, Energy_sys_unc real,
                 Sigma real, Sigma_ran_unc real, Sigma_sys_unc real,
-                rhoR real, rhoR_ran_unc real, rhoR_sys_unc real,
-                Rcm real, Rcm_ran_unc real, Rcm_sys_unc real)''' % self.TABLE)
+                rhoR real, rhoR_ran_unc real, rhoR_sys_unc real, rhoR_model_unc real,
+                Rcm real, Rcm_ran_unc real, Rcm_sys_unc real, Rcm_model_unc real)''' % self.TABLE)
             self.c.execute('CREATE INDEX analysis_index on %s(shot)' % self.TABLE)
 
         # finish changes:

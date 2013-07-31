@@ -23,27 +23,40 @@ def diff(a, b):
 
 
 # noinspection PyListCreation,PyListCreation,PyUnusedLocal
-def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, name="", summary=True, plots=True,
-                     verbose=True, rhoR_plots=False):
+def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, name="", summary="", plots=True,
+                     verbose=True, rhoR_plots=False, OutputDir=None):
     """Analyze a NIF WRF spectrum.
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
     :param spectrum_systematic: Systematic total error bars in spectrum as [dY,dE,dsigma]
     :param LOS: The line of sight of this wedge, and [theta,phi]
     :param hohl_wall: Hohlraum wall info, requires a 2-D list with columns [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
-    :param name: Name of this wedge
-    :param summary: Any summary info to display
-    :param plots: Whether to make plots
-    :param verbose: Whether to print out summary info
-    :param rhoR_plots: Whether to generate rhoR model plots as well
+    :param name: (optional) Name of this wedge [default=""]
+    :param summary: (optional) Any summary info to display [default=""]
+    :param plots: (optional) Whether to make plots [default=True]
+    :param verbose: (optional) Whether to print out summary info [default=True]
+    :param rhoR_plots: (optional) Whether to generate rhoR model plots as well [default=False]
+    :param OutputDir: (optional) Where to put the output files [default = pwd + 'AnalysisOutputs']
     :author: Alex Zylstra
-    :date: 2013/06/29
+    :date: 2013/07/30
     """
-    OutputDir = 'AnalysisOutputs'
+    # sanity checking on the inputs:
+    assert isinstance(data, list) or isinstance(data, numpy.ndarray)
+    assert isinstance(spectrum_random, list) or isinstance(spectrum_random, numpy.ndarray)
+    assert isinstance(spectrum_systematic, list) or isinstance(spectrum_systematic, numpy.ndarray)
+    assert isinstance(LOS, list) or isinstance(LOS, numpy.ndarray)
+
+    # set up the output directory:
+    if OutputDir is None:  # default case
+        path = os.path.dirname(__file__)
+        OutputDir = os.path.join(path, 'AnalysisOutputs')
     # check to see if OutputDir exists:
     if not os.path.isdir(OutputDir):
         # create it:
         os.makedirs(OutputDir, exist_ok=True)
+
+    # set up a return dict
+    results = dict({})
 
     # if we are in verbose mode, then we spit out data to a file:
     log_file = csv.writer(open(os.path.join(OutputDir, name + '_Analysis.csv'), 'w'))
@@ -92,21 +105,40 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     else:
         corr_data = data
 
+    # add info to the return dict
+    results['Au'] = hohl.Au
+    results['Au_unc'] = hohl.d_Au
+    results['DU'] = hohl.DU
+    results['DU_unc'] = hohl.d_DU
+    results['Al'] = hohl.Al
+    results['Al_unc'] = hohl.d_Al
+
+    results['Hohl_Y_posunc'] = unc_hohl[0][0]
+    results['Hohl_Y_negunc'] = unc_hohl[0][1]
+    results['Hohl_E_posunc'] = unc_hohl[1][0]
+    results['Hohl_E_negunc'] = unc_hohl[1][1]
+    results['Hohl_sigma_posunc'] = unc_hohl[2][0]
+    results['Hohl_sigma_negunc'] = unc_hohl[2][1]
+
+
     # -----------------------------
     # 		Energy analysis
     # -----------------------------
     t1 = datetime.now()
     print(name + ' energy analysis...')
-    # First, we need to perform a Gaussian fit:
+    # First, we need to perform a Gaussian fit to both raw and corrected data:
+    FitObjRaw = GaussFit(data, name=name)
     FitObj = GaussFit(corr_data, name=name)
     # get the fit and uncertainty:
     fit = FitObj.get_fit()
+    fit_raw = FitObjRaw.get_fit()
     t2 = datetime.now()
     print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
 
     t1 = datetime.now()
     print(name + ' energy error analysis...')
     unc_fit = FitObj.chi2_fit_unc()
+    unc_fit_raw = FitObjRaw.chi2_fit_unc()
 
     # make a plot of the fit:
     if plots:
@@ -127,6 +159,20 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         log_file.writerow(['Yield', fit[0], yield_random, yield_systematic])
         log_file.writerow(['Energy (MeV)', fit[1], energy_random, energy_systematic])
         log_file.writerow(['Sigma (MeV)', fit[2], sigma_random, sigma_systematic])
+
+    # add to the return dict:
+    results['E_raw'] = fit_raw[1]
+    results['E_raw_ran_unc'] = spectrum_random[1]
+    results['E_raw_sys_unc'] = spectrum_systematic[1]
+    results['Yield'] = fit[0]
+    results['Yield_ran_unc'] = yield_random
+    results['Yield_sys_unc'] = yield_systematic
+    results['Energy'] = fit[1]
+    results['Energy_ran_unc'] = energy_random
+    results['Energy_sys_unc'] = energy_systematic
+    results['Sigma'] = fit[2]
+    results['Sigma_ran_unc'] = sigma_random
+    results['Sigma_sys_unc'] = sigma_systematic
 
     t2 = datetime.now()
     print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
@@ -183,6 +229,12 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     t2 = datetime.now()
     print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
 
+    # add info to the return dict:
+    results['rhoR'] = rhoR
+    results['rhoR_ran_unc'] = rhoR_random
+    results['rhoR_sys_unc'] = rhoR_systematic
+    results['rhoR_model_unc'] = rhoR_model_systematic
+
     # -----------------------------
     # 		Rcm analysis
     # -----------------------------
@@ -219,13 +271,18 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     t2 = datetime.now()
     print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
 
+    # add info to the return dict:
+    results['Rcm'] = Rcm
+    results['Rcm_ran_unc'] = Rcm_random
+    results['Rcm_sys_unc'] = Rcm_systematic
+    results['Rcm_model_unc'] = Rcm_model_systematic
+
     # -----------------------------
     # 		Make summary Figs
     # -----------------------------
     t1 = datetime.now()
     print(name + ' generate summary...')
-    summary = r'foo'
-    results = [r'$Y_p$ = ' + r'{:.2e}'.format(float(fit[0]))
+    result_text = [r'$Y_p$ = ' + r'{:.2e}'.format(float(fit[0]))
                 + r' $\pm$ ' + r'{:.1e}'.format(float(yield_random)) + r'$_{(ran)}$ $\pm$ '
                 + r'{:.1e}'.format(float(yield_systematic)) + r'$_{(sys)}$'
                 , r'$E_p$ (MeV) = ' + r'{:.2f}'.format(float(fit[1]))
@@ -248,7 +305,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
 
     fname = os.path.join(OutputDir, name + '_Summary.eps')
     # noinspection PyUnboundLocalVariable
-    save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=results)
+    save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text)
 
     t2 = datetime.now()
     print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+
+    return results

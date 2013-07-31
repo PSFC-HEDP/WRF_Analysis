@@ -4,14 +4,14 @@ import numpy
 import csv
 import os
 
-def float_perc(input):
+def float_perc(str_in):
     """Convert a string to float with correction for percent symbols.
         i.e. 10% converts to 0.1."""
-    assert isinstance(input,str)
+    assert isinstance(str_in,str)
 
-    input = input.replace('%','e-2')
+    str_in = str_in.replace('%','e-2')
 
-    return float(input)
+    return float(str_in)
 
 
 class WRF_CSV(object):

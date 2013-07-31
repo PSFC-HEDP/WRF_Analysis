@@ -22,4 +22,6 @@ angles = [theta-dtheta,theta+dtheta]
 random = [1e7,0.085,0.05]
 systematic = [1e7,0.075,0.05]
 
-Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles, rhoR_plots=True)
+result = Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles, rhoR_plots=True)
+
+print(result)
