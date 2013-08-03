@@ -23,6 +23,26 @@ class Generic_Analysis_DB(Generic_DB):
         super(Generic_Analysis_DB, self).__init__(fname) # call super constructor
 
 
+    def get_shots(self):
+        """Return all shots available in the database."""
+        query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
+        return array_convert(query)
+
+    def get_dims(self, shot):
+        """Get all DIMs present for a given shot.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
+        """
+        query = self.c.execute('SELECT Distinct dim from %s WHERE shot=?' % self.TABLE, (shot,))
+        return array_convert(query)
+
+    def get_pos(self, shot, dim):
+        """Get available positions for a given shot and DIM.
+        :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
+        :param dim: the DIM as a string, e.g. '0-0' (as str)
+        """
+        query = self.c.execute('SELECT Distinct dim from %s WHERE shot=? AND dim=?' % self.TABLE, (shot,dim,))
+        return array_convert(query)
+
     def insert(self, shot, dim, position, analysis_date):
         """ Insert a new row of data into the table. This is done with a minimum amount of info, add more via set_column
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)

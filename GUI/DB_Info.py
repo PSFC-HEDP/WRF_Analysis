@@ -110,7 +110,7 @@ class DB_Info(tk.Toplevel):
         # get a new file:
         from tkinter.filedialog import asksaveasfilename
         FILEOPENOPTIONS = dict(defaultextension='.db',
-                       filetypes=[('sqlite3 database','*.db'), ('All files','*.*')],
+                       filetypes=[('sqlite3 database','*.db')],
                        initialdir=Database.DIR)
         filename = asksaveasfilename(**FILEOPENOPTIONS)
 

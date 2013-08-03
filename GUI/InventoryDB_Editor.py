@@ -25,6 +25,6 @@ class InventoryDB_Editor(Generic_Editor):
 
         try:
             self.db.insert(WRF, shots, status)
-            showinfo('', 'Database updated')
+            showinfo('', 'Database updated', parent=self)
         except:
-            showerror('An error occurred', sys.exc_info()[0])
+            showerror('An error occurred', sys.exc_info()[0], parent=self)

@@ -93,7 +93,7 @@ class ShotDB_Editor(tk.Toplevel):
             value = self.db.query_col(shot, col)
             if value != self.value_entry_var.get():
                 from tkinter.messagebox import askyesno
-                result = askyesno('Save value?', 'New data was entered. Save?')
+                result = askyesno('Save value?', 'New data was entered. Save?', parent=self)
                 if result:
                     self.write()
 

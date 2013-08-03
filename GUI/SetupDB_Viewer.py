@@ -21,7 +21,8 @@ class SetupDB_Viewer(Table_Viewer):
         self.header_widgets.append(label1)
 
         self.shot_var = tk.StringVar()
-        self.shot_selector = tk.OptionMenu(self, self.shot_var, '')
+        shots = self.db.get_shots()
+        self.shot_selector = tk.OptionMenu(self, self.shot_var, shots)
         self.shot_var.trace('w', self.update_data)
         self.header_widgets.append(self.shot_selector)
 

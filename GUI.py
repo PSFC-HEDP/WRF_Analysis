@@ -18,7 +18,10 @@ from GUI.SetupDB_Viewer import *
 from GUI.SetupDB_Editor import *
 from GUI.HohlraumDB_Plot import *
 from GUI.HohlraumDB_Import import *
-#import tkinter.tkFont as tkFont
+from GUI.InitialAnalysis_Viewer import *
+from GUI.FinalAnalysis_Viewer import *
+from GUI.WRF_Importer import *
+from GUI.AddShot import *
 
 class Application(tk.Tk):
     """docstring for Application"""
@@ -106,30 +109,39 @@ class Application(tk.Tk):
         self.finalAnalysisViewButton = tk.Button(self, text='Final', command=self.viewFinalAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.finalAnalysisViewButton.grid(row=9, column=2, sticky=tk.N)
 
+        # spectrum DB controls
+        self.spectrumInfo = tk.Label(self, text="Spectra", font=self.Font, background='lightgray')
+        self.spectrumInfo.grid(row=10, column=0)
+        self.spectrumPlotButton = tk.Button(self, text='Plot', command=self.plotSpectrum, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.spectrumPlotButton.grid(row=10, column=1)
+
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
-        ttk_sep_2.grid(row=10, column=0, columnspan=3, sticky='ew')
+        ttk_sep_2.grid(row=11, column=0, columnspan=3, sticky='ew')
 
         # options for adding data, etc
         self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
-        self.label3.grid(row=11, column=0)
+        self.label3.grid(row=12, column=0)
         self.addWRFButton = tk.Button(self, text='Add WRF', command=self.addWRF, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addWRFButton.grid(row=12, column=0)
+        self.addWRFButton.grid(row=13, column=0)
         self.addShotButton = tk.Button(self, text='Add Shot', command=self.addShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addShotButton.grid(row=12, column=1)
+        self.addShotButton.grid(row=13, column=1)
         self.csvExportButton = tk.Button(self, text='Export CSV', command=self.exportCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvExportButton.grid(row=13, column=0)
+        self.csvExportButton.grid(row=14, column=0)
         self.csvImportButton = tk.Button(self, text='Import CSV', command=self.importCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvImportButton.grid(row=13, column=1)
+        self.csvImportButton.grid(row=14, column=1)
+
+        ttk_sep_3 = ttk.Separator(self, orient="vertical")
+        ttk_sep_3.grid(row=15, column=0, columnspan=3, sticky='ew')
 
         self.quitButton = tk.Button(self, text='Quit', command=self.quit, font=self.Font, bg='lightgray', highlightbackground='lightgray')
-        self.quitButton.grid(row=14, column=0, columnspan=3, sticky='S')
+        self.quitButton.grid(row=16, column=0, columnspan=3, sticky='S')
 
     def DB_Info(self):
         DB_Info()
 
     def SQL_Query(self):
         from tkinter.messagebox import askyesno
-        result = askyesno('Do manual SQL?', 'Are you sure you want to do that?')
+        result = askyesno('Do manual SQL?', 'Are you sure you want to do that?', parent=self)
         if result:
             SQL_Query()
 
@@ -164,18 +176,21 @@ class Application(tk.Tk):
         SetupDB_Editor()
 
     def viewInitialAnalysisDB(self):
-        asdf = 1
+        InitAnalysis_Viewer()
 
     def viewFinalAnalysisDB(self):
-        asdf = 1
+        FinalAnalysis_Viewer()
+
+    def plotSpectrum(self):
+        asdf=1
 
     def addShot(self):
-        asdf = 1
+        AddShot()
 
     def addWRF(self):
-        foo = WRF_Progress_Dialog(None)
-        foo.progress_bar.start()
-
+        WRF_Importer()
+        #foo = WRF_Progress_Dialog(None)
+        #foo.progress_bar.start()
 
     def exportCSV(self):
         """Save the database information to CSV files."""

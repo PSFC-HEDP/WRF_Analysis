@@ -49,4 +49,4 @@ class SQL_Query(tk.Toplevel):
         for row in array_convert(query):
             result_str += str(row) + '\n'
         from tkinter.messagebox import showinfo
-        showinfo('Result', result_str)
+        showinfo('Result', result_str, parent=self)
