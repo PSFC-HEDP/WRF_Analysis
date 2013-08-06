@@ -90,7 +90,6 @@ class WRF_Setup_DB(Generic_DB):
                 shot, wrf_type, shot_name, hohl_drawing, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id, poly_1, poly_2,
                 vacuum_pre, vacuum_post,)
             self.c.execute('INSERT INTO %s values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)' % self.TABLE, newval)
-
         # if the row exists already, do an update instead:
         else:
             # update relevant columns one at a time:

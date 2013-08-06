@@ -95,3 +95,36 @@ class TestSnout_DB(TestCase):
         """Test a query of existing data."""
         testPass = (self.snout.query("Generic","90-78",2)[0] == ["Generic",'90-78',2,76.371,75.171,49.91] )
         self.assertTrue(testPass, "Failed DB.Snout_DB.query")
+
+    def test_get_r(self):
+        """Test method that gets the radius"""
+        # first test
+        r = self.snout.get_r('Generic', '90-78', 1)[0]
+        self.assertEqual(r, 49.91)
+
+        # second test:
+        r = self.snout.get_r('Generic2', '90-78', 4)[0]
+        self.assertEqual(r, 49.91)
+
+        # add a new row:
+        self.snout.insert("Generic2",'90-78',5,103.629,75.171,47.47)
+        # and test it:
+        r = self.snout.get_r('Generic2', '90-78', 5)[0]
+        self.assertEqual(r, 47.47)
+
+    def test_get_theta(self):
+        """Test method that gets the polar angle"""
+        theta = self.snout.get_theta('Generic', '90-78', 1)[0]
+        self.assertEqual(theta, 1.0)
+
+        # try a second one:
+        theta = self.snout.get_theta('Generic', '90-78', 3)[0]
+        self.assertEqual(theta, 103.629)
+
+    def test_get_phi(self):
+        """Test method that gets the azimuthal angle"""
+        phi = self.snout.get_phi('Generic', '90-78', 1)[0]
+        self.assertEqual(phi, 82.329)
+
+        phi = self.snout.get_phi('Generic', '90-78', 2)[0]
+        self.assertEqual(phi, 75.171)

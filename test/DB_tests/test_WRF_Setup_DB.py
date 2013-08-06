@@ -30,10 +30,10 @@ class TestWRF_Setup_DB(TestCase):
         self.wrf = WRF_Setup_DB(Database.FILE_TEST)
         assert isinstance(self.wrf, WRF_Setup_DB)
 
-        self.wrf.insert('N130227-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
-        self.wrf.insert('N130228-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',2,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
-        self.wrf.insert('N130229-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',3,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
-        self.wrf.insert('N130229-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',3,'foo','13511730','13511716','',100,'','32:40:00','0:34:00')
+        self.wrf.insert('N130227-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
+        self.wrf.insert('N130228-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',2,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
+        self.wrf.insert('N130229-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',3,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
+        self.wrf.insert('N130229-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',3,'foo','13511730','13511716','',100,'','32:40:00','0:34:00')
         self.wrf.update('N130229-001-999','90-78','Generic',3,'wrf_id','12345')
         self.wrf.update('N130229-001-999','90-78','Generic',3,'cr39_1_id','12345')
 
@@ -65,24 +65,24 @@ class TestWRF_Setup_DB(TestCase):
 
     def test_insert(self):
         """Test the method DB.WRF_Setup_DB.insert"""
-        self.wrf.insert('N123456-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
-        testPass = (self.wrf.query('N123456-001-999') == [['N123456-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00']] )
+        self.wrf.insert('N123456-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00')
+        testPass = (self.wrf.query('N123456-001-999') == [['N123456-001-999','AAA10-108020-10','I_Shap_2DConA_Lgth_S05','AAA10-0123456_AA', '90-78',50,'Generic',1,'13425857','13511730','13511716','',100,'','32:40:00','0:34:00']] )
         self.assertTrue(testPass, "Failed DB.WRF_Setup_DB.insert")
 
     def test_update(self):
         """Test the method DB.WRF_Setup_DB.update"""
         self.wrf.update('N130229-001-999','90-78','Generic',3,'cr39_2_id','09876')
-        testPass = (self.wrf.query_col('N130229-001-999','cr39_2_id')[0] == '09876')
+        testPass = (self.wrf.query_col('N130229-001-999','90-78',3,'cr39_2_id')[0] == '09876')
         self.assertTrue(testPass, "Failed DB.WRF_Setup_DB.update")
 
     def test_query(self):
         """Test the method DB.WRF_Setup_DB.query"""
-        testPass = ( self.wrf.query('N130229-001-999') == [['N130229-001-999', 'AAA10-108020-10', 'I_Shap_2DConA_Lgth_S05', '90-78', 50.0, 'Generic', 3, '12345', '12345', '13511716', '', 100.0, '', '32:40:00', '0:34:00']] )
+        testPass = ( self.wrf.query('N130229-001-999') == [['N130229-001-999', 'AAA10-108020-10', 'I_Shap_2DConA_Lgth_S05', 'AAA10-0123456_AA', '90-78', 50.0, 'Generic', 3, '12345', '12345', '13511716', '', 100.0, '', '32:40:00', '0:34:00']] )
         self.assertTrue(testPass, "Failed DB.WRF_Setup_DB.query")
 
     def test_query_col(self):
         """Test the method DB.WRF_Setup_DB.query_col"""
-        testPass = ( self.wrf.query_col('N130227-001-999',"wrf_id") == ['13425857'] )
+        testPass = ( self.wrf.query_col('N130227-001-999', '90-78', 1, "wrf_id") == ['13425857'] )
         self.assertTrue(testPass, "Failed DB.WRF_Setup_DB.query_col")
 
     def test_find_wrf(self):

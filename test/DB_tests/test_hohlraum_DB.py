@@ -32,6 +32,7 @@ class TestHohlraum_DB(TestCase):
                 print("Using existing directory")
         self.h = Hohlraum_DB(Database.FILE_TEST)
         assert isinstance(self.h, Hohlraum_DB)
+        self.h.clear()
 
         self.h.insert('AAA123',"Generic_Au_575",0,"Au",5,10)
         self.h.insert('AAA123',"Generic_Au_575",0,"Au",5,11)
@@ -58,6 +59,17 @@ class TestHohlraum_DB(TestCase):
                 cls.s.db.commit()
                 cls.s.db.close()
 
+    def test_add_from_file(self):
+        """Test the functionality for loading data from files"""
+        fname = os.path.join(os.path.dirname(__file__), 'AAA12-119365_AA.csv')
+        init_rows = self.h.num_rows()
+        self.h.add_from_file(fname)
+        self.assertEqual(self.h.num_rows(), init_rows+1120)
+
+        # also verify that the data appears correct:
+        self.assertTrue('AAA12-119365_AA' in self.h.get_drawings())
+        self.assertListEqual(self.h.get_layers(drawing='AAA12-119365_AA'), [0,1,2,3])
+        self.assertTrue('CONA2D_575.1013_AU_CH5.47S_T78_L337' in self.h.get_names())
 
     def test_get_names(self):
         """Test name retreival from the database"""
@@ -121,3 +133,19 @@ class TestHohlraum_DB(TestCase):
         testPass = testPass and (self.h.query_name('Generic_Au_575',1) == [])
 
         self.assertTrue(testPass,"Failed DB.Hohlraum_DB.query_name")
+
+    def test_get_wall(self):
+        """Test the method which retrieves all info for a given wall"""
+        # load the data from test file:
+        fname = os.path.join(os.path.dirname(__file__), 'AAA12-119365_AA.csv')
+        self.h.add_from_file(fname)
+
+        # get the wall by drawing, and test its dimensions:
+        wall = self.h.get_wall(name='CONA2D_575.1013_AU_CH5.47S_T78_L337')
+        self.assertEqual(len(wall), 1120)
+        self.assertEqual(len(wall[0]), 6)
+
+        # now try getting the wall via drawing number
+        wall = self.h.get_wall(drawing='AAA12-119365_AA')
+        self.assertEqual(len(wall), 1120)
+        self.assertEqual(len(wall[0]), 6)

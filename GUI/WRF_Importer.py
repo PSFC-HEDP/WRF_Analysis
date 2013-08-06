@@ -29,6 +29,10 @@ class WRF_Importer(tk.Toplevel):
 
         self.title('Import a WRF')
 
+        # a couple key bindings:
+        self.bind('<Return>', self.do_import)
+        self.bind('<Escape>', self.withdraw)
+
     def __create_widgets__(self):
         """Create the UI elements for the import"""
         # controls for selecting a CSV and image file:
@@ -91,7 +95,7 @@ class WRF_Importer(tk.Toplevel):
         short = os.path.split(self.image_filename)[-1]
         self.label_image.configure(text=short)
 
-    def do_import(self):
+    def do_import(self, *args):
         """Using the information above, import the data and run the analysis if requested."""
         # sanity check:
         if not os.path.exists(self.csv_filename):

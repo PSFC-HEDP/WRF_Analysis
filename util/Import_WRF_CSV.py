@@ -236,6 +236,7 @@ class WRF_CSV(object):
                     self.CR39_ID = part
 
         # Parse the spectrum:
+        self.spectrum = []
         spectrum_index = 0;
         for i in range(len(fileData)):
             if 'PROTON SPECTRUM' in fileData[i]:

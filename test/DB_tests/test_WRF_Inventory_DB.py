@@ -85,3 +85,22 @@ class TestWRF_Inventory_DB(TestCase):
         testPass = (42 == self.wrf.get_shots('3'))
         testPass = testPass and ('47' == self.wrf.get_status('3'))
         self.assertTrue(testPass, "Failed DB.WRF_Inventory_DB.update")
+
+    def test_increment(self):
+        """Test the method which increments WRF usage"""
+        self.wrf.increment('1')
+        self.assertEqual(self.wrf.get_shots('1'), 4)
+
+    def test_refresh_from_setup(self):
+        """Test a method which refreshes the usage from the setup DB"""
+        # this one is a bit trickier. Make a test setup DB:
+        setup_DB = WRF_Setup_DB(Database.FILE_TEST)
+        setup_DB.clear()
+        self.wrf.setup_db = setup_DB
+
+        setup_DB.insert('N123456', '', '', '', '', '', '', '', '1', '', '', '', '', '', '', '')
+        self.wrf.refresh_from_setup()
+
+        self.assertEqual(self.wrf.get_shots('1'), 1)
+
+        setup_DB.clear()

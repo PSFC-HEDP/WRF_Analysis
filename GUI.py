@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: add hohlraum-corrected spectrum to database
+
 __author__ = 'Alex Zylstra'
 __date__ = '2013-07-30'
 
@@ -23,8 +25,8 @@ from GUI.FinalAnalysis_Viewer import *
 from GUI.WRF_Importer import *
 from GUI.AddShot import *
 from GUI.WRF_Analyzer import WRF_Analyzer
+from GUI.Plot_Spectrum import Plot_Spectrum
 
-# TODO: bindings for UI windows
 
 class Application(tk.Tk):
     """docstring for Application"""
@@ -47,6 +49,9 @@ class Application(tk.Tk):
         tk.Grid.columnconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 1, weight=1)
         tk.Grid.columnconfigure(self, 2, weight=1)
+
+        # add a key binding to close:
+        self.bind('<Escape>', self.quit)
 
     def createWidgets(self):
         # database utilities:
@@ -121,9 +126,6 @@ class Application(tk.Tk):
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
         ttk_sep_2.grid(row=11, column=0, columnspan=3, sticky='ew')
 
-        # TODO: implement spectrum plotter
-        # TODO: analyze WRF button
-
         # options for adding data, etc
         self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
         self.label3.grid(row=12, column=0)
@@ -190,7 +192,7 @@ class Application(tk.Tk):
         FinalAnalysis_Viewer()
 
     def plotSpectrum(self):
-        asdf=1
+        Plot_Spectrum()
 
     def Analyze(self):
         WRF_Analyzer()

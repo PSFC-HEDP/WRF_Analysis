@@ -32,7 +32,6 @@ class Analysis_Viewer(Table_Viewer):
         label3.grid(row=2, column=0)
 
         shots = self.db.get_shots()
-        print(shots)
         if len(shots) == 0:
             shots = ['']
 
@@ -60,6 +59,9 @@ class Analysis_Viewer(Table_Viewer):
         # invoke the widget construction manually:
         self.__setup_widgets__()
         self.__build_tree__()
+
+        # a couple key bindings:
+        self.bind('<Escape>', self.close)
 
     def update_shot(self, *args):
         """Called to update displayed info when the shot selection is updated."""
@@ -93,7 +95,6 @@ class Analysis_Viewer(Table_Viewer):
 
         # get available positions:
         positions = self.db.get_pos(shot, dim)
-        print(positions)
 
         # update position menu:
         self.pos_selector['menu'].delete(0, "end")

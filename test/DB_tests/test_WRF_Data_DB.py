@@ -2,6 +2,7 @@ from unittest import TestCase
 from DB.WRF_Data_DB import *
 import DB.Database as Database
 import numpy
+import os
 
 __author__ = 'Alex Zylstra'
 
@@ -65,6 +66,21 @@ class TestWRF_Data_DB(TestCase):
             if isinstance(cls.db.db, sqlite3.Connection):
                 cls.db.db.commit()
                 cls.db.db.close()
+
+    def test_add_data_from_file(self):
+        """Test the method to add data from files"""
+        rows = self.db.num_rows()
+        path = os.path.dirname(__file__)
+        csv_fname = os.path.join(path, 'N130711-002-999_WRF_Pos1_3_13425865_AL_13511088_S1_40x_5hr_ANALYSIS.CSV')
+        img_fname_list = [os.path.join(path, 'Pos1.bmp'),
+                          os.path.join(path, 'Pos1.jpg'),
+                          os.path.join(path, 'Pos1.png')]
+
+        for img_fname in img_fname_list:
+            self.db.add_data_from_file(csv_fname, img_fname)
+
+        self.assertEqual(self.db.num_rows(), rows+1)
+        self.assertTrue('N130711-002-999' in self.db.get_shots())
 
     def test_get_shots(self):
         """Test retrieval of shots from database."""
@@ -151,3 +167,28 @@ class TestWRF_Data_DB(TestCase):
         image = self.db.get_Nxy('N130520-002-999', '0-0', 1, 0, '2013-06-10 08:32')
         image = image.tolist()
         self.assertListEqual(image, original)
+
+    def test_latest_date(self):
+        """Test the method that infers the latest date"""
+        date = self.db.__latest_date__('N130520-002-999', '0-0', 1)
+        self.assertEqual(date, '2013-06-10 08:32')
+
+        # add a new row with newer date
+        shot = 'N130520-002-999'
+        dim = '0-0'
+        position = 1
+        wrf_id = '13425888-g058'
+        cr39_id = '13511794'
+        date = '2013-06-10 08:47'
+        hohl_corr = False
+        data =     [[4.375, 8.274e+05, 2.294e+06],
+                    [4.625, 6.173e+06, 2.990e+06],
+                    [4.875, 3.159e+06, 2.192e+06],
+                    [5.125, 1.187e+06, 1.675e+06]]
+        image =    numpy.array([[0,1,2], [42,47,42], [0,0,0]])
+
+        self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, data, image)
+
+        # now try the date method again:
+        date = self.db.__latest_date__(shot, dim, position)
+        self.assertEqual(date, '2013-06-10 08:47')

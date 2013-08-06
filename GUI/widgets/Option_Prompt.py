@@ -19,6 +19,10 @@ class Option_Prompt(tk.Toplevel):
 
         self.protocol("WM_DELETE_WINDOW", self.cancel)
 
+        # a couple key bindings:
+        self.bind('<Return>', self.ok)
+        self.bind('<Escape>', self.cancel)
+
         self.wait_window(self)
 
     def __create_widgets__(self, title, text, options):

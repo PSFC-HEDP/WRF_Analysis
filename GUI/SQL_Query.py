@@ -25,6 +25,10 @@ class SQL_Query(tk.Toplevel):
         self.__createUI__()
         self.title('Execute command')
 
+        # a couple key bindings:
+        self.bind('<Return>', self.execute)
+        self.bind('<Escape>', self.withdraw)
+
     def __createUI__(self):
         """Helper method to create the UI elements"""
 
@@ -41,7 +45,7 @@ class SQL_Query(tk.Toplevel):
         self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
         self.cancel_button.grid(row=2, column=1)
 
-    def execute(self):
+    def execute(self, *args):
         """Execute the entered query"""
         query = self.c.execute(self.command_var.get())
         # display the result:

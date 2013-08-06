@@ -42,7 +42,12 @@ class Table_Viewer(Tkinter.Toplevel):
             self.__setup_widgets__()
             self.__build_tree__()
 
-        self.protocol("WM_DELETE_WINDOW", self.withdraw)
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+        # a couple key bindings:
+        self.bind('<Escape>', self.close)
+        self.bind('<Control-r>', self.refresh)
+        self.bind('<Command-r>', self.refresh)
 
     def __setup_widgets__(self):
         """Add the widgets and table to the GUI"""
@@ -68,7 +73,8 @@ class Table_Viewer(Tkinter.Toplevel):
     def __build_tree__(self):
         """Build the tree part of the widget"""
         # start by clearing everything already in the tree:
-        map(self.tree.delete, self.tree.get_children())
+        for iid in self.tree.get_children():
+            self.tree.delete(iid)
 
         # add in new data:
         for col in self.tree_columns:
@@ -85,3 +91,12 @@ class Table_Viewer(Tkinter.Toplevel):
                 ilen = tkFont.Font().measure(val)
                 if self.tree.column(self.tree_columns[indx], width=None) < ilen:
                     self.tree.column(self.tree_columns[indx], width=ilen)
+
+    def refresh(self, *args):
+        """Refresh the display"""
+        self.update_data()
+        self.__build_tree__()
+
+    def close(self, *args):
+        """Close the window"""
+        self.withdraw()

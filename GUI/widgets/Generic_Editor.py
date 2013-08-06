@@ -20,6 +20,10 @@ class Generic_Editor(tk.Toplevel):
         tk.Grid.columnconfigure(self, 1, weight=1)
         self.__createUI__(column_names)
 
+        # a couple key bindings:
+        self.bind('<Return>', self.write)
+        self.bind('<Escape>', self.close)
+
     def __createUI__(self, columns=None):
         """Helper method to create the UI elements"""
         # get a list of columns
@@ -54,6 +58,6 @@ class Generic_Editor(tk.Toplevel):
         self.close_button = tk.Button(self, text='Close', command=self.close)
         self.close_button.grid(row=len(columns), column=1, sticky='s')
 
-    def close(self):
+    def close(self, *args):
         """Close this window."""
         self.withdraw()

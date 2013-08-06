@@ -13,6 +13,7 @@ class WRF_Inventory_DB(Generic_DB):
     """
     # name of the table for the snout data
     TABLE = Database.WRF_INVENTORY_TABLE
+    setup_db = WRF_Setup_DB()
 
     def __init__(self, fname=Database.FILE):
         """Initialize the WRF inventory database wrapper and connect to the database.
@@ -127,14 +128,10 @@ class WRF_Inventory_DB(Generic_DB):
         # get a list of all wedges in the table:
         wrfs = self.get_ids()
 
-        db = WRF_Setup_DB()
-        for id in wrfs:
-            query = 'SELECT Distinct shot from %s WHERE wrf_id=?' % db.TABLE
-            values = (id,)
-            result = db.sql_query(query, values)
-            result = flatten(array_convert(result))
+        for wrf_id in wrfs:
+            result = self.setup_db.find_wrf(wrf_id)
 
             # now update usage in the inventory table:
-            self.update(id, len(result))
+            self.update(wrf_id, len(result))
 
         self.db.commit()

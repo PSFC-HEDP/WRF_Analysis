@@ -1,8 +1,6 @@
 *.pyc
-*.csv
 *.eps
 .idea
 *.so
-*.png
-*.bmp
-*.jpg
+StopPow.py
+test/runAnalysis/AnalysisOutputs

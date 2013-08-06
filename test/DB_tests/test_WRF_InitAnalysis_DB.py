@@ -53,6 +53,40 @@ class TestWRF_InitAnalysis_DB(TestCase):
                 cls.db.db.commit()
                 cls.db.db.close()
 
+    def test_get_shots(self):
+        """Test the generic method which retrieves a list of all shots."""
+        shots = self.db.get_shots()
+        self.assertListEqual(shots, ['N123456', 'N130520'])
+
+    def test_get_dims(self):
+        """Test the generic method, which retrieves a list of DIMs for given shot"""
+        dims = self.db.get_dims('N130520')
+        self.assertListEqual(dims, ['90-78'])
+        dims = self.db.get_dims('N123456')
+        self.assertListEqual(dims, ['0-0'])
+
+    def test_get_pos(self):
+        """Test the method which retrieves positions"""
+        pos = self.db.get_pos('N123456', '0-0')
+        self.assertListEqual(pos, [1])
+        pos = self.db.get_pos('N130520', '90-78')
+        self.assertListEqual(pos, [3])
+
+    def test_latest_date(self):
+        """Test the method which gets the latest date."""
+        date = self.db.__latest_date__('N123456', '0-0', 1)
+        self.assertEqual(date, '2013-07-07 01:23')
+
+        # now add a new row:
+        self.db.insert('N123456', '0-0', 1, '2013-07-08 01:23')
+        date = self.db.__latest_date__('N123456', '0-0', 1)
+        self.assertEqual(date, '2013-07-08 01:23')
+
+        # and another:
+        self.db.insert('N123456', '0-0', 1, '2013-07-08 13:47')
+        date = self.db.__latest_date__('N123456', '0-0', 1)
+        self.assertEqual(date, '2013-07-08 13:47')
+
     def test_insert(self):
         """Test insertion of a new row."""
         n0 = self.db.num_rows()
@@ -85,8 +119,6 @@ class TestWRF_InitAnalysis_DB(TestCase):
 
         # two queries should be equal:
         self.assertListEqual(row, row2)
-
-        print(len(row))
 
         # make sure trying with a bogus list gives nothing:
         row3 = self.db.get_row('N130520', '90-78', 3, '2013-03-04 13:47')

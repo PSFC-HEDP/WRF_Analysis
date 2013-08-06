@@ -16,7 +16,6 @@ class SnoutDB_Viewer(Table_Viewer):
         self.minsize(300,200)
         self.maxsize(600,400)
 
-        # set the data
         self.update_data()
 
         # invoke the widget construction manually:
@@ -26,7 +25,7 @@ class SnoutDB_Viewer(Table_Viewer):
     def update_data(self, *args):
         """Retrieve all data from the DB to display."""
         # set the columns:
-        self.tree_columns = ['Name', 'DIM', 'Pos', 'r (cm)', 'θ (deg)', 'ϕ (deg)']
+        self.tree_columns = ['Name', 'DIM', 'Pos', 'θ (deg)', 'ϕ (deg)', 'r (cm)']
         self.tree_data = []
 
         names = self.db.get_names()
