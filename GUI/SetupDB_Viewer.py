@@ -22,8 +22,8 @@ class SetupDB_Viewer(Table_Viewer):
 
         self.shot_var = tk.StringVar()
         shots = self.db.get_shots()
-        self.shot_selector = tk.OptionMenu(self, self.shot_var, shots)
-        self.shot_var.trace('w', self.update_data)
+        self.shot_selector = tk.OptionMenu(self, self.shot_var, *shots)
+        self.shot_var.trace('w', self.update)
         self.header_widgets.append(self.shot_selector)
 
         # set the data
@@ -45,3 +45,8 @@ class SetupDB_Viewer(Table_Viewer):
         for row in raw:
             tree_row = [row[0], row[2], row[3], row[6], row[4], row[7], row[8]]
             self.tree_data.append(tree_row)
+
+    def update(self, *args):
+        """Triggered when the shot selection is changed."""
+        self.update_data()
+        self.__build_tree__()

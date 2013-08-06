@@ -1,11 +1,12 @@
 from unittest import TestCase
-from DB.WRF_Spectrum_DB import *
+from DB.WRF_Data_DB import *
 import DB.Database as Database
+import numpy
 
 __author__ = 'Alex Zylstra'
 
 
-class TestWRF_Spectrum_DB(TestCase):
+class TestWRF_Data_DB(TestCase):
     # verbosity
     # 0 = no output
     # 1 = moderate output
@@ -23,8 +24,8 @@ class TestWRF_Spectrum_DB(TestCase):
         except FileExistsError:
             if self.verbose == 2:
                 print("Using existing directory")
-        self.db = WRF_Spectrum_DB(Database.FILE_TEST)
-        assert isinstance(self.db, WRF_Spectrum_DB)
+        self.db = WRF_Data_DB(Database.FILE_TEST)
+        assert isinstance(self.db, WRF_Data_DB)
 
         shot = 'N130520-002-999'
         dim = '0-0'
@@ -37,18 +38,12 @@ class TestWRF_Spectrum_DB(TestCase):
                     [4.625, 6.173e+06, 2.990e+06],
                     [4.875, 3.159e+06, 2.192e+06],
                     [5.125, 1.187e+06, 1.675e+06]]
-        energy = []
-        Y = []
-        err = []
-        for row in data:
-            energy.append(row[0])
-            Y.append(row[1])
-            err.append(row[2])
+        image =    numpy.array([[0,1,2], [42,47,42], [0,0,0]])
 
-        self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, energy, Y, err)
+        self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, data, image)
 
         shot2 = 'N123456-007-999'
-        self.db.insert(shot2, dim, position, wrf_id, cr39_id, date, hohl_corr, energy, Y, err)
+        self.db.insert(shot2, dim, position, wrf_id, cr39_id, date, hohl_corr, data, image)
 
         self.db.db.commit()
 
@@ -66,7 +61,7 @@ class TestWRF_Spectrum_DB(TestCase):
         """Clean up the test class after the whole suite is complete."""
         if cls.verbose == 2:
             print("Tearing down...")
-        if isinstance(cls.db, WRF_Spectrum_DB):
+        if isinstance(cls.db, WRF_Data_DB):
             if isinstance(cls.db.db, sqlite3.Connection):
                 cls.db.db.commit()
                 cls.db.db.close()
@@ -124,22 +119,16 @@ class TestWRF_Spectrum_DB(TestCase):
                     [4.625, 6.173e+06, 2.990e+06],
                     [4.875, 3.159e+06, 2.192e+06],
                     [5.125, 1.187e+06, 1.675e+06]]
-        energy = []
-        Y = []
-        err = []
-        for row in data:
-            energy.append(row[0])
-            Y.append(row[1])
-            err.append(row[2])
 
-        self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, energy, Y, err)
+        self.db.insert(shot, dim, position, wrf_id, cr39_id, date, hohl_corr, data)
 
-        self.assertEqual(self.db.num_rows(), len_init+len(data))
+        self.assertEqual(self.db.num_rows(), len_init+1)
 
     def test_get_spectrum(self):
         """Test functionality to retrieve a spectrum from the database."""
         # first try without specifying the date:
         data = self.db.get_spectrum('N130520-002-999', '0-0', 1, 0)
+        data = data.tolist()
         orig_data =     [[4.375, 8.274e+05, 2.294e+06],
                     [4.625, 6.173e+06, 2.990e+06],
                     [4.875, 3.159e+06, 2.192e+06],
@@ -148,4 +137,17 @@ class TestWRF_Spectrum_DB(TestCase):
 
         # now try again with given date:
         data = self.db.get_spectrum('N130520-002-999', '0-0', 1, 0, '2013-06-10 08:32')
+        data = data.tolist()
         self.assertListEqual(data, orig_data)
+
+    def test_get_Nxy(self):
+        """Test functionality for retrieving image data from the DB."""
+        image = self.db.get_Nxy('N130520-002-999', '0-0', 1, 0)
+        image = image.tolist()
+        original = [[0,1,2], [42,47,42], [0,0,0]]
+        self.assertListEqual(image, original)
+
+        # try again with specified date:
+        image = self.db.get_Nxy('N130520-002-999', '0-0', 1, 0, '2013-06-10 08:32')
+        image = image.tolist()
+        self.assertListEqual(image, original)

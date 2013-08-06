@@ -8,7 +8,7 @@ from DB.Hohlraum_DB import *
 from DB.Snout_DB import *
 from DB.WRF_Inventory_DB import *
 from DB.WRF_Setup_DB import *
-from DB.WRF_Spectrum_DB import *
+from DB.WRF_Data_DB import *
 from DB.WRF_InitAnalysis_DB import *
 from DB.WRF_Analysis_DB import *
 import os
@@ -21,7 +21,7 @@ def initialize():
     Hohlraum_DB(Database.FILE)
     WRF_Inventory_DB(Database.FILE)
     WRF_Setup_DB(Database.FILE)
-    WRF_Spectrum_DB(Database.FILE)
+    WRF_Data_DB(Database.FILE)
     WRF_InitAnalysis_DB(Database.FILE)
     WRF_Analysis_DB(Database.FILE)
 
@@ -47,7 +47,7 @@ def export_all(export_dir=os.path.join(Database.DIR,'csv')):
     ws = WRF_Setup_DB(Database.FILE)
     ws.csv_export(os.path.join(export_dir, 'wrf_setup.csv'))
 
-    wspec = WRF_Spectrum_DB(Database.FILE)
+    wspec = WRF_Data_DB(Database.FILE)
     wspec.csv_export(os.path.join(export_dir, 'wrf_spectrum.csv'))
 
     winit = WRF_InitAnalysis_DB(Database.FILE)
@@ -78,7 +78,7 @@ def import_all(import_dir=os.path.join(Database.DIR,'csv')):
     ws = WRF_Setup_DB(Database.FILE)
     ws.csv_import(os.path.join(import_dir, 'wrf_setup.csv'))
 
-    wspec = WRF_Spectrum_DB(Database.FILE)
+    wspec = WRF_Data_DB(Database.FILE)
     wspec.csv_import(os.path.join(import_dir, 'wrf_spectrum.csv'))
 
     winit = WRF_InitAnalysis_DB(Database.FILE)

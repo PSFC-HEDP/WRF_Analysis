@@ -11,7 +11,7 @@ class Shot_DB(Generic_DB):
     # name of the table for the shot data
     TABLE = Database.SHOT_TABLE
 
-    def __init__(self, fname):
+    def __init__(self, fname=Database.FILE):
         """Initialize the shot database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """

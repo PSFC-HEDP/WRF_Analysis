@@ -2,6 +2,14 @@ __author__ = 'Alex Zylstra'
 
 import tkinter as tk
 from DB import Database
+from DB.WRF_Data_DB import *
+from DB.WRF_InitAnalysis_DB import *
+from DB.WRF_Inventory_DB import *
+from GUI.WRF_Progress_Dialog import *
+from GUI.WRF_Analyzer import *
+from util.Import_WRF_CSV import WRF_CSV
+from util.Import_Nxy import load_image
+import os
 
 class WRF_Importer(tk.Toplevel):
     """Implement a GUI dialog for importing a WRF analysis."""
@@ -23,6 +31,7 @@ class WRF_Importer(tk.Toplevel):
 
     def __create_widgets__(self):
         """Create the UI elements for the import"""
+        # controls for selecting a CSV and image file:
         self.label1 = tk.Label(self, text='Select CSV')
         self.label1.grid(row=0, column=0)
 
@@ -41,10 +50,17 @@ class WRF_Importer(tk.Toplevel):
         self.image_button = tk.Button(self, text='Open N(x,y)', command=self.select_Nxy)
         self.image_button.grid(row=2, column=1)
 
+        # option to run analysis
+        self.run_analysis_var = tk.BooleanVar()
+        self.run_analysis = tk.Checkbutton(self, text='Run analysis', variable=self.run_analysis_var)
+        self.run_analysis.select()  # start activated
+        self.run_analysis.grid(row=4, column=0, columnspan=2)
+
+        # control buttons at the bottom:
         self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
-        self.cancel_button.grid(row=4, column=0)
-        self.go_button = tk.Button(self, text='Go', command=self.do_analysis)
-        self.go_button.grid(row=4, column=1)
+        self.cancel_button.grid(row=5, column=0)
+        self.go_button = tk.Button(self, text='Go', command=self.do_import)
+        self.go_button.grid(row=5, column=1)
 
     def select_csv(self):
         """Select a CSV file containing the wedge analysis."""
@@ -55,7 +71,9 @@ class WRF_Importer(tk.Toplevel):
                     filetypes=[('CSV','*.csv')],
                     multiple=False)
         self.csv_filename = askopenfilename(**opts)
-        self.label_csv.configure(text=self.csv_filename)
+        # condense for display
+        short = os.path.split(self.csv_filename)[-1]
+        self.label_csv.configure(text=short)
 
     def select_Nxy(self):
         """Select an image file to use as N(x,y)"""
@@ -69,7 +87,36 @@ class WRF_Importer(tk.Toplevel):
                                ('PNG','*.png')],
                     multiple=False)
         self.image_filename = askopenfilename(**opts)
-        self.label_image.configure(text=self.image_filename)
+        # condense for display
+        short = os.path.split(self.image_filename)[-1]
+        self.label_image.configure(text=short)
 
-    def do_analysis(self):
-        asdf=1
+    def do_import(self):
+        """Using the information above, import the data and run the analysis if requested."""
+        # sanity check:
+        if not os.path.exists(self.csv_filename):
+            return
+
+        # make a progress bar, since this can be lengthy:
+        self.iconify()
+
+        # use the DB's method to load the data
+        db = WRF_Data_DB()
+        raw = WRF_CSV(self.csv_filename)
+        if os.path.exists(self.image_filename):
+            image = load_image(self.image_filename)
+        else:
+            image = None
+        db.add_data(raw, image)
+
+        # also now call function to add to the initial analysis DB
+        db = WRF_InitAnalysis_DB()
+        db.import_csv(raw)
+
+        if self.run_analysis_var.get():
+            WRF_Analyzer(shot=raw.shot, dim=raw.dim, pos=raw.pos)
+
+        db = WRF_Inventory_DB()
+        db.refresh_from_setup()
+
+        self.withdraw()

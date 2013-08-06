@@ -39,6 +39,8 @@ class WRF_CSV(object):
     distance = 0
     # WRF ID
     WRF_ID = ""
+    # CR-39 serial number
+    CR39_ID = ""
     # Blast filter thickness:
     Al_Blast_Filter = 0
     # Calibration info:
@@ -49,6 +51,10 @@ class WRF_CSV(object):
     BG1_Limits = (-1,-1,-1,-1)
     # Background #2 limits:
     BG2_Limits = (-1,-1,-1,-1)
+    # contrast limit
+    Contrast_Limit = 0
+    # eccentricity limit
+    Ecc_Limit = 0
     # Diameter limits:
     Dia_Limits = (-1,-1)
     # Whether diameter limits were chosen automatically
@@ -97,8 +103,8 @@ class WRF_CSV(object):
         self.fname = fname
 
         # try to determine shot/dim/pos from the file name:
-        print(fname)
-        fname_components = fname.split('_')
+        fname_sub = os.path.split(fname)[-1]  # get rid of leading folders from file name
+        fname_components = fname_sub.split('_')
 
         # loop over:
         for part in fname_components:
@@ -222,6 +228,12 @@ class WRF_CSV(object):
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
                     self.Unc_CalProc = (dE,ds,dY)
+
+        # now go back to the filename to extract the CR39 ID #
+        for part in fname_components:
+            if part.startswith('134') or part.startswith('135'):  # look for CR39 IDs
+                if not(part in self.WRF_ID):  # rule out the wedge ID, which is also in file name
+                    self.CR39_ID = part
 
         # Parse the spectrum:
         spectrum_index = 0;

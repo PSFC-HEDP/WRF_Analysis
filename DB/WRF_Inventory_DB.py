@@ -1,6 +1,7 @@
 
 import DB.Database as Database
 from DB.Generic_DB import *
+from DB.WRF_Setup_DB import *
 
 # The table is arranged with columns:
 # (id text, shots int, status text )
@@ -13,7 +14,7 @@ class WRF_Inventory_DB(Generic_DB):
     # name of the table for the snout data
     TABLE = Database.WRF_INVENTORY_TABLE
 
-    def __init__(self, fname):
+    def __init__(self, fname=Database.FILE):
         """Initialize the WRF inventory database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
@@ -87,7 +88,7 @@ class WRF_Inventory_DB(Generic_DB):
         # save change:
         self.db.commit()
 
-    def update(self, wrf_id, shots, status):
+    def update(self, wrf_id, shots, status=None):
         """Update data for a wedge already in the table.
         :param wrf_id: the wedge wrf_id to update [str]
         :param shots: the number of shots this wedge has been used on [int or str]
@@ -96,13 +97,44 @@ class WRF_Inventory_DB(Generic_DB):
         # sanity checks:
         assert isinstance(wrf_id, str)
         assert isinstance(shots, int) or isinstance(shots, str)
-        assert isinstance(status, str)
+        assert isinstance(status, str) or status is None
 
         # update columns one at a time:
         s = 'UPDATE %s SET shots=? WHERE id=?' % self.TABLE
         self.c.execute( s , (shots,wrf_id,) )
-        s = 'UPDATE %s SET status=? WHERE id=?' % self.TABLE
-        self.c.execute( s , (status,wrf_id,) )
+        if status is not None:
+            s = 'UPDATE %s SET status=? WHERE id=?' % self.TABLE
+            self.c.execute( s , (status,wrf_id,) )
 
         # save changes to db:
+        self.db.commit()
+
+    def increment(self, wrf_id):
+        """Increase the number of shots used by a wedge by one."""
+        # sanity check
+        assert isinstance(wrf_id, str)
+
+        # get current usage:
+        num_shots = self.get_shots(wrf_id)
+        # update:
+        command = 'UPDATE %s SET shots=? WHERE id=?' % self.TABLE
+        self.c.execute(command, (num_shots+1, wrf_id,))
+
+        self.db.commit()
+
+    def refresh_from_setup(self):
+        """Clear the shot usage in the table and update it based on the WRF setup table."""
+        # get a list of all wedges in the table:
+        wrfs = self.get_ids()
+
+        db = WRF_Setup_DB()
+        for id in wrfs:
+            query = 'SELECT Distinct shot from %s WHERE wrf_id=?' % db.TABLE
+            values = (id,)
+            result = db.sql_query(query, values)
+            result = flatten(array_convert(result))
+
+            # now update usage in the inventory table:
+            self.update(id, len(result))
+
         self.db.commit()

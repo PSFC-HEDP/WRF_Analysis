@@ -2,7 +2,7 @@ import DB.Database as Database
 from DB.Generic_DB import *
 
 # The table is arranged with columns:
-# (shot text, wrf_type text, shot_name text, dim text, r real, snout text, position int,
+# (shot text, wrf_type text, shot_name text, hohl_drawing text, dim text, r real, snout text, position int,
 #	wrf_id text, cr39_1_id text, cr39_2_id text, cr39_3_id text, poly_1 real, poly_2 real,
 #   vacuum_pre time, vacuum_post time)
 
@@ -14,7 +14,7 @@ class WRF_Setup_DB(Generic_DB):
     ## name of the table for the snout data
     TABLE = Database.WRF_SETUP_TABLE
 
-    def __init__(self, fname):
+    def __init__(self, fname=Database.FILE):
         """Initialize the WRF setup database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
@@ -29,7 +29,7 @@ class WRF_Setup_DB(Generic_DB):
         # create new table:
         if query.fetchone()[0] == 0: # table does not exist
             self.c.execute('''CREATE TABLE %s
-                (shot text, wrf_type text, shot_name text, dim text, r real, snout text, position int,
+                (shot text, wrf_type text, shot_name text, hohl_drawing text, dim text, r real, snout text, position int,
                     wrf_id text, cr39_1_id text, cr39_2_id text, cr39_3_id text, poly_1 real, poly_2 real, vacuum_pre time, vacuum_post time)''' % self.TABLE)
             self.c.execute('CREATE INDEX wrf_setup_index on %s(shot)' % self.TABLE)
 
@@ -42,12 +42,13 @@ class WRF_Setup_DB(Generic_DB):
         query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
         return flatten(array_convert(query))
 
-    def insert(self, shot, wrf_type, shot_name, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id,
+    def insert(self, shot, wrf_type, shot_name, hohl_drawing, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id,
                poly_1, poly_2, vacuum_pre, vacuum_post):
         """Insert a new row of data into the table.
         :param shot: the shot ID (eg 'N130102-001-999')
         :param wrf_type: the WRF module drawing # (eg AAA10-108020-10)
         :param shot_name: text description of the shot
+        :param hohl_drawing: the hohlraum's drawing number as identification
         :param dim: the DIM (eg '90-78')
         :param r: the radius from tcc in cm
         :param snout: name of the snout used
@@ -65,6 +66,7 @@ class WRF_Setup_DB(Generic_DB):
         assert isinstance(shot, str)
         assert isinstance(wrf_type, str)
         assert isinstance(shot_name, str)
+        assert isinstance(hohl_drawing, str)
         assert isinstance(dim, str)
         assert isinstance(r, str) or isinstance(r, int) or isinstance(r, float)
         assert isinstance(snout, str)
@@ -85,15 +87,16 @@ class WRF_Setup_DB(Generic_DB):
         # not found:
         if len(query.fetchall()) <= 0: # not found in table:
             newval = (
-                shot, wrf_type, shot_name, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id, poly_1, poly_2,
+                shot, wrf_type, shot_name, hohl_drawing, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id, poly_1, poly_2,
                 vacuum_pre, vacuum_post,)
-            self.c.execute('INSERT INTO %s values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)' % self.TABLE, newval)
+            self.c.execute('INSERT INTO %s values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)' % self.TABLE, newval)
 
         # if the row exists already, do an update instead:
         else:
             # update relevant columns one at a time:
             self.update(shot, dim, snout, position, 'wrf_type', wrf_type)
             self.update(shot, dim, snout, position, 'shot_name', shot_name)
+            self.update(shot, dim, snout, position, 'hohl_drawing', hohl_drawing)
             self.update(shot, dim, snout, position, 'r', r)
             self.update(shot, dim, snout, position, 'wrf_id', wrf_id)
             self.update(shot, dim, snout, position, 'cr39_1_id', cr39_1_id)
@@ -136,20 +139,25 @@ class WRF_Setup_DB(Generic_DB):
         assert isinstance(shot, str)
 
         # SQL query:
-        query = self.c.execute('SELECT * from %s where shot=?' % self.TABLE, (shot,))
+        query = self.c.execute('SELECT * from %s WHERE shot=?' % self.TABLE, (shot,))
         return array_convert(query)
 
-    def query_col(self, shot, col):
+    def query_col(self, shot, dim, position, col):
         """Get data for a specific shot and column.
         :param shot the shot to query
+        :param dim: the DIM (eg '90-78')
+        :param position: the WRF position # (1,2,3,4,...)
         :param col name of the column you want
         :returns: the column's value"""
         # sanity checks:
         assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, str) or isinstance(position, int)
         assert isinstance(col, str)
 
         # SQL query
-        query = self.c.execute('SELECT [%s] from %s where shot=?' % (col, self.TABLE), (shot,))
+        query = self.c.execute('SELECT [%s] from %s WHERE shot=? AND dim=? AND position=?'
+                               % (col, self.TABLE), (shot, dim, position,))
         converted_query = array_convert(query)
         if len(converted_query) > 0:
             value = converted_query[0]

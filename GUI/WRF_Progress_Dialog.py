@@ -19,7 +19,8 @@ class WRF_Progress_Dialog(tk.Toplevel):
         self.label = tk.Label(self, text="Importing WRF")
         self.label.grid(sticky='N', padx=2, pady=2)
 
-        self.progress_bar = ttk.Progressbar(self)
+        self.counter = tk.IntVar()
+        self.progress_bar = ttk.Progressbar(self, variable=self.counter)
         self.progress_bar.grid(sticky='N', padx=2, pady=2)
 
         self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel)

@@ -32,11 +32,12 @@ class Analysis_Viewer(Table_Viewer):
         label3.grid(row=2, column=0)
 
         shots = self.db.get_shots()
+        print(shots)
         if len(shots) == 0:
             shots = ['']
 
         self.shot_var = tk.StringVar()
-        self.shot_selector = tk.OptionMenu(frame, self.shot_var, shots)
+        self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
@@ -92,6 +93,7 @@ class Analysis_Viewer(Table_Viewer):
 
         # get available positions:
         positions = self.db.get_pos(shot, dim)
+        print(positions)
 
         # update position menu:
         self.pos_selector['menu'].delete(0, "end")
@@ -100,7 +102,7 @@ class Analysis_Viewer(Table_Viewer):
         for val in positions:
             self.pos_selector['menu'].add_command(label=val,
                              command=lambda value=val:
-                                  self.dim_var.set(value))
+                                  self.pos_var.set(value))
 
 
     def update_data(self, *args):
@@ -118,6 +120,8 @@ class Analysis_Viewer(Table_Viewer):
             return
 
         columns = self.db.get_column_names()
-        values = self.db.get_row(shot, dim, pos)
-        for i in range(len(columns)):
-            self.tree_data.append([columns[i], values[i]])
+        for col in columns:
+            value = self.db.get_value(shot, dim, pos, col)
+            self.tree_data.append([col, value[0]])
+
+        self.__build_tree__()

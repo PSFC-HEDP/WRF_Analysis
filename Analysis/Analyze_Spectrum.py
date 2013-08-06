@@ -21,10 +21,34 @@ def diff(a, b):
     """
     return abs(max(a, b) - min(a, b))
 
+def myprint(text, ProgressBar=None):
+    """Handle output for the analysis. Either prints to command line (if ProgressBar is None) or updates the bar.
+    :param text: The text to either display or print
+    :param ProgressBar: The ProgressBar to use for GUI mode
+    """
+    # CLI mode:
+    if ProgressBar is None:
+        print(text)            
+    # GUI mode:
+    #else:
+        #ProgressBar.set_text(text)
+        
+def mytime(time, inc, ProgressBar=None):
+    """Display a time elapsed on CLI or update ProgressBar.
+    :param inc: How much to increment the progress bar
+    :param time: If in CLI mode, displays a time elapsed in seconds
+    :param ProgressBar: The ProgressBar to use for GUI mode
+    """
+    # CLI:
+    if ProgressBar is None:
+        print('{:.1f}'.format(time) + "s elapsed")
+    else:
+        current = ProgressBar.counter.get()
+        ProgressBar.counter.set(current+inc)
 
 # noinspection PyListCreation,PyListCreation,PyUnusedLocal
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, name="", summary="", plots=True,
-                     verbose=True, rhoR_plots=False, OutputDir=None):
+                     verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False):
     """Analyze a NIF WRF spectrum.
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
@@ -37,14 +61,22 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param verbose: (optional) Whether to print out summary info [default=True]
     :param rhoR_plots: (optional) Whether to generate rhoR model plots as well [default=False]
     :param OutputDir: (optional) Where to put the output files [default = pwd + 'AnalysisOutputs']
+    :param Nxy: (optional) image data to display as N(x,y) {default=None}
+    :param ProgressBar: (optional) a progress bar of type WRF_Progress_Dialog to use for updates [default=None, uses CLI]
+    :param ShowSlide: (optional) set to True to display the summary slide after this method completes [default=False]
     :author: Alex Zylstra
-    :date: 2013/07/30
+    :date: 2013/08/06
     """
     # sanity checking on the inputs:
     assert isinstance(data, list) or isinstance(data, numpy.ndarray)
     assert isinstance(spectrum_random, list) or isinstance(spectrum_random, numpy.ndarray)
     assert isinstance(spectrum_systematic, list) or isinstance(spectrum_systematic, numpy.ndarray)
     assert isinstance(LOS, list) or isinstance(LOS, numpy.ndarray)
+
+    # for the progress bar:
+    if ProgressBar is not None:
+        from GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
+        assert isinstance(ProgressBar, WRF_Progress_Dialog)
 
     # set up the output directory:
     if OutputDir is None:  # default case
@@ -68,7 +100,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # is not needed:
     if hohl_wall is not None:
         t1 = datetime.now()
-        print(name + ' hohlraum correction...')
+        myprint(name + ' hohlraum correction...', ProgressBar=ProgressBar)
 
         hohl = Hohlraum(data,
                         wall=hohl_wall,
@@ -101,7 +133,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
             hohl.plot_hohlraum_file(hohl_plot2_fname)
 
         t2 = datetime.now()
-        print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+        mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
     else:
         corr_data = data
 
@@ -125,7 +157,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # 		Energy analysis
     # -----------------------------
     t1 = datetime.now()
-    print(name + ' energy analysis...')
+    myprint(name + ' energy analysis...', ProgressBar=ProgressBar)
     # First, we need to perform a Gaussian fit to both raw and corrected data:
     FitObjRaw = GaussFit(data, name=name)
     FitObj = GaussFit(corr_data, name=name)
@@ -133,10 +165,10 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     fit = FitObj.get_fit()
     fit_raw = FitObjRaw.get_fit()
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     t1 = datetime.now()
-    print(name + ' energy error analysis...')
+    myprint(name + ' energy error analysis...', ProgressBar=ProgressBar)
     unc_fit = FitObj.chi2_fit_unc()
     unc_fit_raw = FitObjRaw.chi2_fit_unc()
 
@@ -175,23 +207,23 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     results['Sigma_sys_unc'] = sigma_systematic
 
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     # -----------------------------
     # 		rhoR analysis
     # -----------------------------
     t1 = datetime.now()
-    print(name + ' rhoR analysis...')
+    myprint(name + ' rhoR analysis...', ProgressBar=ProgressBar)
     # set up the rhoR analysis:
     model = rhoR_Analysis()
     temp = model.Calc_rhoR(fit[1], breakout=True)
     rhoR = temp[0]
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     # error analysis for rR:
     t1 = datetime.now()
-    print(name + ' rhoR error analysis...')
+    myprint(name + ' rhoR error analysis...', ProgressBar=ProgressBar)
     rhoR_model_random = 0
     rhoR_model_systematic = temp[2][0]
 
@@ -227,7 +259,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         plot_rhoR_v_Rcm(model, os.path.join(OutputDir, name + '_rR_v_Rcm.eps'))
 
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     # add info to the return dict:
     results['rhoR'] = rhoR
@@ -239,7 +271,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # 		Rcm analysis
     # -----------------------------
     t1 = datetime.now()
-    print(name + ' Rcm analysis...')
+    myprint(name + ' Rcm analysis...', ProgressBar=ProgressBar)
     E0 = 14.7  # initial proton energy from D3He
     temp = model.Calc_Rcm(fit[1], 0)
     Rcm = temp[0]
@@ -269,10 +301,10 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         log_file.writerow(['Rcm (um)', Rcm, Rcm_random, Rcm_systematic, Rcm_model_systematic])
 
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     # add info to the return dict:
-    results['Rcm'] = Rcm
+    results['Rcm'] = Rcm[()]
     results['Rcm_ran_unc'] = Rcm_random
     results['Rcm_sys_unc'] = Rcm_systematic
     results['Rcm_model_unc'] = Rcm_model_systematic
@@ -281,7 +313,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # 		Make summary Figs
     # -----------------------------
     t1 = datetime.now()
-    print(name + ' generate summary...')
+    myprint(name + ' generate summary...', ProgressBar=ProgressBar)
     result_text = [r'$Y_p$ = ' + r'{:.2e}'.format(float(fit[0]))
                 + r' $\pm$ ' + r'{:.1e}'.format(float(yield_random)) + r'$_{(ran)}$ $\pm$ '
                 + r'{:.1e}'.format(float(yield_systematic)) + r'$_{(sys)}$'
@@ -305,9 +337,11 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
 
     fname = os.path.join(OutputDir, name + '_Summary.eps')
     # noinspection PyUnboundLocalVariable
-    save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text)
+    save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy)
+    if ShowSlide:
+        show_slide(Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy, interactive=True)
 
     t2 = datetime.now()
-    print('{:.1f}'.format((t2 - t1).total_seconds()) + "s elapsed")
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
     return results

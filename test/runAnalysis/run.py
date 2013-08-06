@@ -9,6 +9,7 @@ from util.CSV import *
 from Analysis.Analyze_Spectrum import *
 from Analysis.Hohlraum import *
 import numpy
+from util.Import_Nxy import *
 
 # read in the raw data:
 data = read_csv('TestData.csv',3)
@@ -22,6 +23,7 @@ angles = [theta-dtheta,theta+dtheta]
 random = [1e7,0.085,0.05]
 systematic = [1e7,0.075,0.05]
 
-result = Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles, rhoR_plots=True)
+Nxy = load_image('Pos1.bmp')
+result = Analyze_Spectrum(data,random,systematic,name=name,hohl_wall=hohl_wall,LOS=angles, rhoR_plots=True, OutputDir='AnalysisOutputs', Nxy=Nxy)
 
 print(result)

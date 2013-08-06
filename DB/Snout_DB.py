@@ -14,13 +14,13 @@ from DB.Generic_DB import *
 class Snout_DB(Generic_DB):
     """Provide a wrapper for snout DB actions.
     :author: Alex Zylstra
-    :date: 2013/07/11
+    :date: 2013/08/05
     """
 
     # name of the table for the snout data
     TABLE = Database.SNOUT_TABLE
 
-    def __init__(self, fname):
+    def __init__(self, fname=Database.FILE):
         """Initialize the snout database wrapper and connects to the database.
         :param fname: the file location/name for the database
         """
@@ -146,3 +146,51 @@ class Snout_DB(Generic_DB):
         query = self.c.execute( 'SELECT * from %s where name=? and DIM=? and pos=?'
              % self.TABLE , (name,DIM,pos,))
         return array_convert(query)
+
+    def get_r(self, name, DIM, pos):
+        """Get the position for given parameters.
+        :param name: the name of the configuration you want (as str)
+        :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
+        :param pos: the WRF position # (int)
+        """
+        # sanity checks:
+        assert isinstance(name, str)
+        assert isinstance(DIM, str)
+        assert isinstance(pos, str) or isinstance(pos, int)
+
+        # SQL query:
+        query = self.c.execute( 'SELECT r from %s where name=? and DIM=? and pos=?'
+             % self.TABLE , (name,DIM,pos,))
+        return flatten(array_convert(query))
+
+    def get_theta(self, name, DIM, pos):
+        """Get the polar angle for given parameters.
+        :param name: the name of the configuration you want (as str)
+        :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
+        :param pos: the WRF position # (int)
+        """
+        # sanity checks:
+        assert isinstance(name, str)
+        assert isinstance(DIM, str)
+        assert isinstance(pos, str) or isinstance(pos, int)
+
+        # SQL query:
+        query = self.c.execute( 'SELECT theta from %s where name=? and DIM=? and pos=?'
+             % self.TABLE , (name,DIM,pos,))
+        return flatten(array_convert(query))
+
+    def get_phi(self, name, DIM, pos):
+        """Get the azimuthal for given parameters.
+        :param name: the name of the configuration you want (as str)
+        :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
+        :param pos: the WRF position # (int)
+        """
+        # sanity checks:
+        assert isinstance(name, str)
+        assert isinstance(DIM, str)
+        assert isinstance(pos, str) or isinstance(pos, int)
+
+        # SQL query:
+        query = self.c.execute( 'SELECT phi from %s where name=? and DIM=? and pos=?'
+             % self.TABLE , (name,DIM,pos,))
+        return flatten(array_convert(query))

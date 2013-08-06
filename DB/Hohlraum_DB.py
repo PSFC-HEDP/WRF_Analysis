@@ -18,7 +18,7 @@ class Hohlraum_DB(Generic_DB):
     ## name of the table for the hohlraum data
     TABLE = Database.HOHLRAUM_TABLE
 
-    def __init__(self, fname):
+    def __init__(self, fname=Database.FILE):
         """Initialize the hohlraum database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
@@ -197,4 +197,33 @@ class Hohlraum_DB(Generic_DB):
         else:
             assert (isinstance(layer, str) or isinstance(layer, int))
             query = self.c.execute('SELECT * from %s where name=? and layer=?' % self.TABLE, (name, layer,))
+        return array_convert(query)
+
+    def get_wall(self, name='', drawing=''):
+        """Get the hohlraum wall data for the given hohlraum name or drawing number.
+            If you specify one of name or drawing, that will be used for match.
+            If both are given, then the returned result must match both.
+        :param name: the hohlraum name (as str)
+        :param drawing: the drawing number (as str)
+        :returns: a python array of layer indices (integers)
+        :rtype: list
+        """
+        # sanity check for types
+        assert isinstance(name, str)
+        assert isinstance(drawing, str)
+
+        # further sanity check: if both string are empty, we cannot query
+        if name == '' and drawing == '':
+            return
+        # if both arguments have text, match both:
+        elif name != '' and drawing != '':
+            query = self.c.execute('SELECT * from %s where name=? and drawing=?'
+                                   % self.TABLE, (name, drawing,))
+        # match name only:
+        elif name != '':
+            query = self.c.execute('SELECT * from %s where name=?' % self.TABLE, (name,))
+        # match drawing only:
+        else:
+            query = self.c.execute('SELECT * from %s where drawing=?' % self.TABLE, (drawing,))
+
         return array_convert(query)

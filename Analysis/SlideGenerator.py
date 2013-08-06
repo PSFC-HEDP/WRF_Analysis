@@ -1,6 +1,7 @@
 # Make a single slide summarizing the analysis
 
 import sys
+import numpy
 
 __author__ = 'Alex Zylstra'
 
@@ -8,7 +9,7 @@ def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', i
     """Make a summary slide and show it on the screen.
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
-    :param Nxy: (optional) an image, i.e. from {code: mpimg.imread('file')}, to display as N(x,y) {default=None}
+    :param Nxy: (optional) image data to display as N(x,y) {default=None}
     :param name: (optional) a short identifier for the data (EG 'N123456 90-78 Pos 1') {default=''}
     :param summary: (optional) a text description {default=''}
     :param results: (optional) a text description of the final results {default=''}
@@ -35,7 +36,7 @@ def save_slide(fname, Fit=None, Hohl=None, Nxy=None, name='', summary='', result
     """Make a summary slide and save it to a file.
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
-    :param Nxy: (optional) an image, i.e. from {code: mpimg.imread('file')}, to display as N(x,y) {default=None}
+    :param Nxy: (optional) image data to display as N(x,y) {default=None}
     :param name: (optional) a short identifier for the data (EG 'N123456 90-78 Pos 1') {default=''}
     :param summary: (optional) a text description {default=''}
     :param results: (optional) a text description of the final results {default=''}
@@ -52,7 +53,7 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     """Make a summary slide.
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
-    :param Nxy: (optional) an image, i.e. from {code: mpimg.imread('file')}, to display as N(x,y) {default=None}
+    :param Nxy: (optional) image data to display as N(x,y) {default=None}
     :param name: (optional) a short identifier for the data (EG 'N123456 90-78 Pos 1') {default=''}
     :param summary: (optional) a text description {default=''}
     :param results: (optional) a text description of the final results {default=''}
@@ -60,6 +61,7 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     import matplotlib.rcsetup
     import matplotlib.gridspec as gridspec
     import matplotlib.pyplot as plt
+    import matplotlib.image as mpimg
 
     fig = plt.figure(figsize=(11, 8.5))
     gs = gridspec.GridSpec(2, 2,
@@ -84,7 +86,7 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
 
     # top left box for N(x,y):
     if Nxy is not None:
-        ax1.imshow(Nxy)
+        ax1.imshow(Nxy, interpolation='nearest')
         ax1.set_title('N(x,y)')
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)

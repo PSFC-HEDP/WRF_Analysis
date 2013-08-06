@@ -22,6 +22,9 @@ from GUI.InitialAnalysis_Viewer import *
 from GUI.FinalAnalysis_Viewer import *
 from GUI.WRF_Importer import *
 from GUI.AddShot import *
+from GUI.WRF_Analyzer import WRF_Analyzer
+
+# TODO: bindings for UI windows
 
 class Application(tk.Tk):
     """docstring for Application"""
@@ -118,13 +121,18 @@ class Application(tk.Tk):
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
         ttk_sep_2.grid(row=11, column=0, columnspan=3, sticky='ew')
 
+        # TODO: implement spectrum plotter
+        # TODO: analyze WRF button
+
         # options for adding data, etc
         self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
         self.label3.grid(row=12, column=0)
+        self.addAnalysisButton = tk.Button(self, text='Analyze', command=self.Analyze, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.addAnalysisButton.grid(row=13, column=0)
         self.addWRFButton = tk.Button(self, text='Add WRF', command=self.addWRF, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addWRFButton.grid(row=13, column=0)
+        self.addWRFButton.grid(row=13, column=1)
         self.addShotButton = tk.Button(self, text='Add Shot', command=self.addShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addShotButton.grid(row=13, column=1)
+        self.addShotButton.grid(row=13, column=2)
         self.csvExportButton = tk.Button(self, text='Export CSV', command=self.exportCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.csvExportButton.grid(row=14, column=0)
         self.csvImportButton = tk.Button(self, text='Import CSV', command=self.importCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
@@ -184,6 +192,9 @@ class Application(tk.Tk):
     def plotSpectrum(self):
         asdf=1
 
+    def Analyze(self):
+        WRF_Analyzer()
+
     def addShot(self):
         AddShot()
 
@@ -201,6 +212,10 @@ class Application(tk.Tk):
                        mustexist=False)
         save_dir = askdirectory(**FILEOPENOPTIONS)
 
+        # check to see if the user cancelled:
+        if save_dir == '':
+            return
+
         # check to see if it exists, create it otherwise:
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir, exist_ok=True)
@@ -217,6 +232,10 @@ class Application(tk.Tk):
                        initialdir=Database.DIR,
                        mustexist=True)
         open_dir = askdirectory(**FILEOPENOPTIONS)
+
+        # check to see if the user cancelled:
+        if open_dir == '':
+            return
 
         # call the import script:
         from DB.scripts import import_all

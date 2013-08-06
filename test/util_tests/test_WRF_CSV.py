@@ -20,6 +20,7 @@ class TestWRF_CSV(TestCase):
         self.assertEqual(w.port, 'pos1_3')
         self.assertEqual(w.distance, 50)
         self.assertEqual(w.WRF_ID, '13425888-g058')
+        self.assertEqual(w.CR39_ID, '13511794')
         self.assertEqual(w.Al_Blast_Filter, 0)
         self.assertEqual(w.WRF_Cal, 'cal13.0225')
         self.assertTupleEqual(w.Data_Limits, (0, 89, 0, 63))
