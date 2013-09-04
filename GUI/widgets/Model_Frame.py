@@ -30,22 +30,22 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='Ri (μm)').grid(row=n, column=0)
         self.entry_Ri = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ri).grid(row=n, column=1)
-        self.entry_Ri.set(str(rhoR_Model.Ri*1e4))
+        self.entry_Ri.set(str(rhoR_Model.def_Ri*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Ri_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ri_err).grid(row=n, column=3)
-        self.entry_Ri_err.set(str(rhoR_Analysis.Ri_Err*1e4))
+        self.entry_Ri_err.set(str(rhoR_Analysis.def_Ri_Err*1e4))
 
         # entry for outer radius
         n+=1
         tk.Label(self.subFrame, text='Ro (μm)').grid(row=n, column=0)
         self.entry_Ro = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ro).grid(row=n, column=1)
-        self.entry_Ro.set(str(rhoR_Model.Ro*1e4))
+        self.entry_Ro.set(str(rhoR_Model.def_Ro*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Ro_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ro_err).grid(row=n, column=3)
-        self.entry_Ro_err.set(str(rhoR_Analysis.Ro_Err*1e4))
+        self.entry_Ro_err.set(str(rhoR_Analysis.def_Ro_Err*1e4))
 
         # entry for shell material
         n+=1
@@ -64,29 +64,29 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='ρ (g/cc)').grid(row=n, column=0)
         self.entry_shell_rho = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_shell_rho, state=tk.DISABLED).grid(row=n, column=1)
-        self.entry_shell_rho.set(str(rhoR_Model.__shell_rho__[rhoR_Model.shell_mat]))
+        self.entry_shell_rho.set(str(rhoR_Model.__shell_rho__[rhoR_Model.def_shell_mat]))
 
         # entry for mass remaining
         n+=1
         tk.Label(self.subFrame, text='Mrem').grid(row=n, column=0)
         self.entry_Mrem = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Mrem).grid(row=n, column=1)
-        self.entry_Mrem.set(str(rhoR_Model.Mrem))
+        self.entry_Mrem.set(str(rhoR_Model.def_Mrem))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Mrem_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Mrem_err).grid(row=n, column=3)
-        self.entry_Mrem_err.set(str(rhoR_Analysis.Mrem_Err))
+        self.entry_Mrem_err.set(str(rhoR_Analysis.def_Mrem_Err))
 
         # entry for in-flight thickness
         n+=1
         tk.Label(self.subFrame, text='Tshell (μm)').grid(row=n, column=0)
         self.entry_Tshell = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Tshell).grid(row=n, column=1)
-        self.entry_Tshell.set(str(rhoR_Model.Tshell*1e4))
+        self.entry_Tshell.set(str(rhoR_Model.def_Tshell*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Tshell_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Tshell_err).grid(row=n, column=3)
-        self.entry_Tshell_err.set(str(rhoR_Analysis.Tshell_Err*1e4))
+        self.entry_Tshell_err.set(str(rhoR_Analysis.def_Tshell_Err*1e4))
 
 
         # --------------------------
@@ -103,33 +103,33 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='P (atm)').grid(row=n, column=0)
         self.entry_P = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_P).grid(row=n, column=1)
-        self.entry_P.set(str(rhoR_Model.P0))
+        self.entry_P.set(str(rhoR_Model.def_P0))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_P_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_P_err).grid(row=n, column=3)
-        self.entry_P_err.set(str(rhoR_Analysis.P0_Err))
+        self.entry_P_err.set(str(rhoR_Analysis.def_P0_Err))
 
         # entry for deuterium fraction
         n+=1
         tk.Label(self.subFrame, text='fD').grid(row=n, column=0)
         self.entry_fD = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_fD).grid(row=n, column=1)
-        self.entry_fD.set(str(rhoR_Model.fD))
+        self.entry_fD.set(str(rhoR_Model.def_fD))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_fD_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_fD_err).grid(row=n, column=3)
-        self.entry_fD_err.set(str(rhoR_Analysis.fD_Err))
+        self.entry_fD_err.set(str(rhoR_Analysis.def_fD_Err))
 
         # entry for 3He fraction
         n+=1
         tk.Label(self.subFrame, text='f3He').grid(row=n, column=0)
         self.entry_f3He = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_f3He).grid(row=n, column=1)
-        self.entry_f3He.set(str(rhoR_Model.f3He))
+        self.entry_f3He.set(str(rhoR_Model.def_f3He))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_f3He_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_f3He_err).grid(row=n, column=3)
-        self.entry_f3He_err.set(str(rhoR_Analysis.f3He_Err))
+        self.entry_f3He_err.set(str(rhoR_Analysis.def_f3He_Err))
 
 
         # --------------------------
@@ -146,45 +146,45 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='ρ Abl Max (g/cc)').grid(row=n, column=0)
         self.entry_rho_Abl_Max = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Max).grid(row=n, column=1)
-        self.entry_rho_Abl_Max.set(str(rhoR_Model.rho_Abl_Max))
+        self.entry_rho_Abl_Max.set(str(rhoR_Model.def_rho_Abl_Max))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_rho_Abl_Max_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Max_err).grid(row=n, column=3)
-        self.entry_rho_Abl_Max_err.set(str(rhoR_Analysis.rho_Abl_Max_Err))
+        self.entry_rho_Abl_Max_err.set(str(rhoR_Analysis.def_rho_Abl_Max_Err))
 
         # entry for ablated mass min density
         n+=1
         tk.Label(self.subFrame, text='ρ Abl Min (g/cc)').grid(row=n, column=0)
         self.entry_rho_Abl_Min = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Min).grid(row=n, column=1)
-        self.entry_rho_Abl_Min.set(str(rhoR_Model.rho_Abl_Min))
+        self.entry_rho_Abl_Min.set(str(rhoR_Model.def_rho_Abl_Min))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_rho_Abl_Min_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Min_err).grid(row=n, column=3)
-        self.entry_rho_Abl_Min_err.set(str(rhoR_Analysis.rho_Abl_Min_Err))
+        self.entry_rho_Abl_Min_err.set(str(rhoR_Analysis.def_rho_Abl_Min_Err))
 
         # entry for ablated mass gradient scale length
         n+=1
         tk.Label(self.subFrame, text='Scale (μm)').grid(row=n, column=0)
         self.entry_rho_Abl_Scale = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Scale).grid(row=n, column=1)
-        self.entry_rho_Abl_Scale.set(str(rhoR_Model.rho_Abl_Scale*1e4))
+        self.entry_rho_Abl_Scale.set(str(rhoR_Model.def_rho_Abl_Scale*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_rho_Abl_Scale_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_rho_Abl_Scale_err).grid(row=n, column=3)
-        self.entry_rho_Abl_Scale_err.set(str(rhoR_Analysis.rho_Abl_Scale_Err*1e4))
+        self.entry_rho_Abl_Scale_err.set(str(rhoR_Analysis.def_rho_Abl_Scale_Err*1e4))
 
         # entry for ablated mass gradient scale length
         n+=1
         tk.Label(self.subFrame, text='Mix Fraction').grid(row=n, column=0)
         self.entry_MixF = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_MixF).grid(row=n, column=1)
-        self.entry_MixF.set(str(rhoR_Model.MixF))
+        self.entry_MixF.set(str(rhoR_Model.def_MixF))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_MixF_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_MixF_err).grid(row=n, column=3)
-        self.entry_MixF_err.set(str(rhoR_Analysis.MixF_Err))
-        self.entry_f3He_err.set(str(rhoR_Analysis.f3He_Err))
+        self.entry_MixF_err.set(str(rhoR_Analysis.def_MixF_Err))
+        self.entry_f3He_err.set(str(rhoR_Analysis.def_f3He_Err))
 
 
         # --------------------------
@@ -201,90 +201,54 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='Fuel Te (keV)').grid(row=n, column=0)
         self.entry_Te_Gas = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Gas).grid(row=n, column=1)
-        self.entry_Te_Gas.set(str(rhoR_Model.Te_Gas))
+        self.entry_Te_Gas.set(str(rhoR_Model.def_Te_Gas))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Te_Gas_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Gas_err).grid(row=n, column=3)
-        self.entry_Te_Gas_err.set(str(rhoR_Analysis.Te_Gas_Err))
+        self.entry_Te_Gas_err.set(str(rhoR_Analysis.def_Te_Gas_Err))
 
         # entry for shell Te
         n+=1
         tk.Label(self.subFrame, text='Shell Te (keV)').grid(row=n, column=0)
         self.entry_Te_Shell = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Shell).grid(row=n, column=1)
-        self.entry_Te_Shell.set(str(rhoR_Model.Te_Shell))
+        self.entry_Te_Shell.set(str(rhoR_Model.def_Te_Shell))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Te_Shell_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Shell_err).grid(row=n, column=3)
-        self.entry_Te_Shell_err.set(str(rhoR_Analysis.Te_Shell_Err))
+        self.entry_Te_Shell_err.set(str(rhoR_Analysis.def_Te_Shell_Err))
 
         # entry for ablated mass Te
         n+=1
         tk.Label(self.subFrame, text='Abl Mass Te (keV)').grid(row=n, column=0)
         self.entry_Te_Abl = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Abl).grid(row=n, column=1)
-        self.entry_Te_Abl.set(str(rhoR_Model.Te_Abl))
+        self.entry_Te_Abl.set(str(rhoR_Model.def_Te_Abl))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Te_Abl_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Abl_err).grid(row=n, column=3)
-        self.entry_Te_Abl_err.set(str(rhoR_Analysis.Te_Abl_Err))
+        self.entry_Te_Abl_err.set(str(rhoR_Analysis.def_Te_Abl_Err))
 
         # entry for mix mass Te
         n+=1
         tk.Label(self.subFrame, text='Mix Mass Te (keV)').grid(row=n, column=0)
         self.entry_Te_Mix = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Mix).grid(row=n, column=1)
-        self.entry_Te_Mix.set(str(rhoR_Model.Te_Mix))
+        self.entry_Te_Mix.set(str(rhoR_Model.def_Te_Mix))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Te_Mix_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Te_Mix_err).grid(row=n, column=3)
-        self.entry_Te_Mix_err.set(str(rhoR_Analysis.Te_Mix_Err))
+        self.entry_Te_Mix_err.set(str(rhoR_Analysis.def_Te_Mix_Err))
 
         # entry for initial proton energy
         n+=1
         tk.Label(self.subFrame, text='Ep (MeV)').grid(row=n, column=0)
         self.entry_E0 = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_E0).grid(row=n, column=1)
-        self.entry_E0.set(str(rhoR_Model.E0))
+        self.entry_E0.set(str(rhoR_Model.def_E0))
 
     def get_rhoR_Analysis(self):
         """Get a rhoR_Analysis object as specified by the option boxes in this frame"""
-        # get the various parameters:
-        shell_mat = self.entry_shell_mat.get()
-        Ri = float(self.entry_Ri.get()) / 1.e4  # convert to cm
-        Ro = float(self.entry_Ro.get()) / 1.e4  # convert to cm
-        fD = float(self.entry_fD.get())
-        f3He = float(self.entry_f3He.get())
-        P0 = float(self.entry_P.get())
-        Te_Gas = float(self.entry_Te_Gas.get())
-        Te_Shell = float(self.entry_Te_Shell.get())
-        Te_Abl = float(self.entry_Te_Abl.get())
-        Te_Mix = float(self.entry_Te_Mix.get())
-        rho_Abl_Max = float(self.entry_rho_Abl_Max.get())
-        rho_Abl_Min = float(self.entry_rho_Abl_Min.get())
-        rho_Abl_Scale = float(self.entry_rho_Abl_Scale.get()) / 1.e4
-        MixF = float(self.entry_MixF.get())
-        Tshell = float(self.entry_Tshell.get()) / 1.e4
-        Mrem = float(self.entry_Mrem.get())
-        E0 = float(self.entry_E0.get())
-
-        # and their uncertainties:
-        Ri_err = float(self.entry_Ri_err.get()) / 1.e4  # convert to cm
-        Ro_err = float(self.entry_Ro_err.get()) / 1.e4  # convert to cm
-        fD_err = float(self.entry_fD_err.get())
-        f3He_err = float(self.entry_f3He_err.get())
-        P0_err = float(self.entry_P_err.get())
-        Te_Gas_err = float(self.entry_Te_Gas_err.get())
-        Te_Shell_err = float(self.entry_Te_Shell_err.get())
-        Te_Abl_err = float(self.entry_Te_Abl_err.get())
-        Te_Mix_err = float(self.entry_Te_Mix_err.get())
-        rho_Abl_Max_err = float(self.entry_rho_Abl_Max_err.get())
-        rho_Abl_Min_err = float(self.entry_rho_Abl_Min_err.get())
-        rho_Abl_Scale_err = float(self.entry_rho_Abl_Scale_err.get()) / 1.e4
-        MixF_err = float(self.entry_MixF_err.get())
-        Tshell_err = float(self.entry_Tshell_err.get()) / 1.e4
-        Mrem_err = float(self.entry_Mrem_err.get())
-
         self.__update_param__()
 
         # create a new rhoR_Analysis with the passed parameters
@@ -301,25 +265,6 @@ class Model_Frame(Collapsible_Frame):
 
     def get_rhoR_Model(self):
         """Get a rhoR_Model object as specified by the option boxes in this frame"""
-        # get the various parameters:
-        shell_mat = self.entry_shell_mat.get()
-        Ri = float(self.entry_Ri.get()) / 1.e4  # convert to cm
-        Ro = float(self.entry_Ro.get()) / 1.e4  # convert to cm
-        fD = float(self.entry_fD.get())
-        f3He = float(self.entry_f3He.get())
-        P0 = float(self.entry_P.get())
-        Te_Gas = float(self.entry_Te_Gas.get())
-        Te_Shell = float(self.entry_Te_Shell.get())
-        Te_Abl = float(self.entry_Te_Abl.get())
-        Te_Mix = float(self.entry_Te_Mix.get())
-        rho_Abl_Max = float(self.entry_rho_Abl_Max.get())
-        rho_Abl_Min = float(self.entry_rho_Abl_Min.get())
-        rho_Abl_Scale = float(self.entry_rho_Abl_Scale.get()) / 1.e4
-        MixF = float(self.entry_MixF.get())
-        Tshell = float(self.entry_Tshell.get()) / 1.e4
-        Mrem = float(self.entry_Mrem.get())
-        E0 = float(self.entry_E0.get())
-
         self.__update_param__()
 
         # create a new rhoR_Analysis with the passed parameters

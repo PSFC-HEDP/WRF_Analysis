@@ -3,9 +3,9 @@
 from Analysis.rhoR_Analysis import *
 from numpy import arange, zeros
 import os
+import matplotlib
 
 __author__ = 'Alex Zylstra'
-
 
 def plot_rhoR_v_Energy(analysis, filename):
     """Plot rhoR model's curve versus energy.
@@ -55,7 +55,7 @@ def plot_rhoR_v_Energy(analysis, filename):
     ax.grid(True)
     # add labels:
     ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
-    ax.set_ylabel('Energy (MeV)')
+    ax.set_ylabel(r'Energy (MeV)')
     #ax.set_title(r'$\rho$R Model')
 
     #plt.show()
@@ -120,7 +120,7 @@ def plot_Rcm_v_Energy(analysis, filename):
     ax.grid(True)
     # add labels:
     ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
-    ax.set_ylabel('Energy (MeV)')
+    ax.set_ylabel(r'Energy (MeV)')
     #ax.set_title(r'$\rho$R Model')
 
     #plt.show()
@@ -204,9 +204,9 @@ def plot_profile(analysis, Rcm, filename):
     Tshell = analysis.Tshell[1]
     Mrem = analysis.Mrem[1]
     Rgas = Rcm - Tshell / 2
-    rho_Gas = analysis.model.rho_Gas(Rcm, Tshell)
+    rho_Gas = analysis.model.rho_Gas(Rcm)
     Rshell = Rcm + Tshell / 2
-    rho_Shell = analysis.model.rho_Shell(Rcm, Tshell, Mrem)
+    rho_Shell = analysis.model.rho_Shell(Rcm)
 
     # data for plotting gas profile:
     Gas_x = [0, Rgas * 1e4]
@@ -215,11 +215,11 @@ def plot_profile(analysis, Rcm, filename):
     Shell_x = [Rgas * 1e4, Rshell * 1e4]
     Shell_y = [rho_Shell, rho_Shell]
     # calculate ablated mass profile:
-    Abl_r1, Abl_r2, Abl_r3 = analysis.model.get_Abl_radii(Rcm, Tshell, Mrem)
+    Abl_r1, Abl_r2, Abl_r3 = analysis.model.get_Abl_radii(Rcm)
     Abl_x = []
     Abl_y = []
     for x in arange(Abl_r1 + 1e-5, Abl_r3, 5e-4):
-        Abl_y.append(analysis.model.rho_Abl(x, Rcm, Tshell, Mrem))
+        Abl_y.append(analysis.model.rho_Abl(x, Rcm))
         Abl_x.append(x * 1e4)
 
     # make a plot window:
@@ -240,5 +240,67 @@ def plot_profile(analysis, Rcm, filename):
     ax.set_ylabel(r'$\rho$ (g/cm$^3$)')
 
     #show the plot:
+    #plt.show()
+    fig.savefig(filename)
+
+
+def compare_rhoR_v_Energy(analyses, filename, names=None):
+    """Compare several rhoR models by plotting rhoR vs energy for them.
+    :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
+    :param filename: where to save the plot
+    :param names: Labels for the models, legend is only generated if names is not None
+    """
+    #sanity check:
+    assert isinstance(analyses, list)
+    for x in analyses:
+        assert isinstance(x, rhoR_Model)
+
+    # import matplotlib
+    import matplotlib
+    import matplotlib.pyplot as plt
+    if matplotlib.get_backend() != 'agg':
+        plt.switch_backend('Agg')
+
+    plot_x = []
+    plot_y = []
+
+    # iterate over models:
+    for analysis in analyses:
+        # lists of things to plot:
+        EnergyList = []
+        RhoRList = []
+
+        # energies:
+        dE = 0.2 #step for plot points
+        E0 = 14.7 #initial protons
+        Emax = 14.0 # Max plot energy
+        Emin = 5.0 # min plot energy
+        for i in arange(Emin, Emax, dE):
+            EnergyList.append(i)
+            # get result, then add it to the appropriate lists:
+            temp = analysis.Calc_rhoR(i)
+            RhoRList.append(temp[0])
+
+        plot_x.append(RhoRList)
+        plot_y.append(EnergyList)
+
+
+    # make a plot, and add curves for the rhoR model
+    # and its error bars:
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i in range(len(plot_x)):
+        ax.plot(plot_x[i], plot_y[i])
+    if names is not None:
+        ax.legend(names)
+
+    # set some options:
+    ax.set_ylim([0, 15])
+    ax.grid(True)
+    # add labels:
+    ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
+    ax.set_ylabel(r'Energy (MeV)')
+    #ax.set_title(r'$\rho$R Model')
+
     #plt.show()
     fig.savefig(filename)

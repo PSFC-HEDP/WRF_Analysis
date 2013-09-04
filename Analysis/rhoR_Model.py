@@ -11,19 +11,21 @@ __author__ = 'Alex Zylstra'
 class rhoR_Model(object):
     """3-part (shell, fuel, ablated mass) rhoR model.
     :author: Alex Zylstra
-    :date: 2013/09/03
+    :date: 2013/09/04
     """
 
-    # initial shell conditions:
     # values below are defaults
-    Ri = 900e-4  # initial inner radius [cm]
-    Ro = 1100e-4  # initial outer radius [cm]
-    P0 = 50  # initial pressure [atm]
-    fD = 0.3  # deuterium fraction in fuel
-    f3He = 0.7  # 3He fraction in fuel
+    # anything beginning with a def_ is replaced with a class variable
+
+    # initial shell conditions:
+    def_Ri = 900e-4  # initial inner radius [cm]
+    def_Ro = 1100e-4  # initial outer radius [cm]
+    def_P0 = 50  # initial pressure [atm]
+    def_fD = 0.3  # deuterium fraction in fuel
+    def_f3He = 0.7  # 3He fraction in fuel
 
     # a few densities and masses for the shell
-    shell_mat = 'CH'
+    def_shell_mat = 'CH'
     shell_opts = ['CH', 'HDC', 'SiO2']
     __shell_rho__ = {'CH': 1.044, 'HDC': 3.5, 'SiO2': 2.56}
     __shell_A__ = {'CH': [1,12], 'HDC': [12], 'SiO2': [28,16]}
@@ -35,42 +37,34 @@ class rhoR_Model(object):
     # some info for the gas:
     rho_D2_STP = 2 * 0.08988e-3  # density of D2 gas at STP [g/cc]
     rho_3He_STP = (3 / 4) * 0.1786e-3  # density of 3he gas at STP [g/cc]
-    rho0_Gas = 0  # initial gas density [atm]
+    # rho0_Gas = 0  # initial gas density [atm]
 
     # total masses in the system:
-    Mass_Shell_Total = 0  # total mass of shell in the implosion [g]
-    Mass_Mix_Total = 0  # total mix mass [g]
+    #def_Mass_Shell_Total = 0  # total mass of shell in the implosion [g]
+    #def_Mass_Mix_Total = 0  # total mix mass [g]
 
     # ASSUMED CONDITIONS
-    Te_Gas = 3  # keV
-    Te_Shell = 0.2  # keV
-    Te_Abl = 0.3  # keV
-    Te_Mix = 1  # keV
+    def_Te_Gas = 3  # keV
+    def_Te_Shell = 0.2  # keV
+    def_Te_Abl = 0.3  # keV
+    def_Te_Mix = 1  # keV
     # ablated mass is modeled as an exponential profile
     # specified by max, min, and length scale:
-    rho_Abl_Max = 1.5  # g/cc
-    rho_Abl_Min = 0.1  # g/cc
-    rho_Abl_Scale = 70e-4  # [cm]
+    def_rho_Abl_Max = 1.5  # g/cc
+    def_rho_Abl_Min = 0.1  # g/cc
+    def_rho_Abl_Scale = 70e-4  # [cm]
     # Fraction of CH mixed into the hot spot
-    MixF = 0.025
+    def_MixF = 0.025
     # thickness of the shell in-flight
-    Tshell = 40e-4  # [cm]
+    def_Tshell = 40e-4  # [cm]
     # mass remaining of the shell:
-    Mrem = 0.15  # fractional
+    def_Mrem = 0.15  # fractional
 
     # initial proton energy:
-    E0 = 14.7
+    def_E0 = 14.7
 
     # options for stop pow calculations:
     steps = 100  # steps in radius per region
-
-    # store precomputed data for a few things:
-    __RcmList__ = []
-    __EoutList__ = []
-    __rhoRList__ = []
-    __interp_Eout__ = 0
-    __interp_rhoR__ = 0
-    __interp_Rcm__ = 0
 
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
@@ -113,11 +107,14 @@ class rhoR_Model(object):
         self.Mrem = Mrem
         self.E0 = E0
 
-        # calculate initial gas density
+        # calculate initial gas density in g/cc
         self.rho0_Gas = P0 * ((fD / 2) * self.rho_D2_STP + f3He * self.rho_3He_STP)
 
         # calculate initial masses:
+        # total mass of shell in the implosion [g]
         self.Mass_Shell_Total = (4 * math.pi / 3) * self.__shell_rho__[self.shell_mat] * (Ro ** 3 - Ri ** 3)
+        # mix mass in g:
+        self.Mass_Mix_Total = self.Mass_Shell_Total * self.MixF
 
         # set up stopping power definitions
         # for the downshift calculations
@@ -170,9 +167,17 @@ class rhoR_Model(object):
         for i in range(1+len(A)):
             self.__TfAbl__[i] = self.Te_Abl
 
+        # set up arrays for precomputed data for a few things:
+        self.__RcmList__ = []
+        self.__EoutList__ = []
+        self.__rhoRList__ = []
+        self.__interp_Eout__ = 0
+        self.__interp_rhoR__ = 0
+        self.__interp_Rcm__ = 0
+
         # precompute Eout and rhoR vs Rcm
         r = self.Ri
-        dr = r/15.
+        dr = r/50.
         Eout = self.__precompute_Eout__(r)
         while Eout > 0.1:
             Eout = self.__precompute_Eout__(r)
@@ -184,7 +189,7 @@ class rhoR_Model(object):
 
             # decrement r:
             r -= dr
-            dr = r/20.
+            dr = r/50.
 
         # have to flip the arrays to make spline happy:
         self.__RcmList__ = self.__RcmList__[::-1]

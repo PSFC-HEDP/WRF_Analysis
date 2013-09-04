@@ -11,15 +11,15 @@ class WRF_Inventory_DB(Generic_DB):
     :author: Alex Zylstra
     :date: 2013/07/11
     """
-    # name of the table for the snout data
-    TABLE = Database.WRF_INVENTORY_TABLE
-    setup_db = WRF_Setup_DB()
 
     def __init__(self, fname=Database.FILE):
         """Initialize the WRF inventory database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(WRF_Inventory_DB,self).__init__(fname) # call super constructor
+        # name of the table for the snout data
+        self.TABLE = Database.WRF_INVENTORY_TABLE
+        self.setup_db = WRF_Setup_DB()
         self.__init_wrf_inventory__()
 
     def __init_wrf_inventory__(self):

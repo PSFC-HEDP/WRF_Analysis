@@ -16,7 +16,7 @@ class TestRhoR_Model(TestCase):
 
     # try a few parameters:
     Ri = model.Ri
-    Rcm = [Ri / 7., Ri / 6., Ri / 5., Ri / 4., Ri / 2.]
+    Rcm = [Ri / 6., Ri / 5., Ri / 4., Ri / 3., Ri / 2.]
     Eout = [5.0, 7.5, 10.0, 12.5]
 
     def test_Eout(self):
@@ -174,7 +174,7 @@ class TestRhoR_Model(TestCase):
 
         # test one specific case
         Eout = self.model.Eout_GasMix(14.7, 50, self.Ri/4.)
-        self.assertAlmostEqual(Eout, 14.586, places=2)
+        self.assertAlmostEqual(Eout, 14.331, places=2)
 
     def test_Eout_Shell(self):
         """Test getting the downshift through the shell."""
@@ -211,8 +211,8 @@ class TestRhoR_Model(TestCase):
         """Test the functionality for using different shell materials."""
         # try them all, with a simple Eout test at a CR of 3:
         model1 = rhoR_Model()  # all defaults
-        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 12.299, places=2)
+        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 11.747, places=2)
         model2 = rhoR_Model(shell_mat='HDC')
-        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 12.293, places=2)
+        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 7.26, places=2)
         model3 = rhoR_Model(shell_mat='SiO2')
-        self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 9.977, places=2)
+        self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 9.501, places=2)

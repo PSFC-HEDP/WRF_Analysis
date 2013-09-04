@@ -15,14 +15,14 @@ class Hohlraum_DB(Generic_DB):
     :author: Alex Zylstra
     :date: 2013/07/31
     """
-    ## name of the table for the hohlraum data
-    TABLE = Database.HOHLRAUM_TABLE
 
     def __init__(self, fname=Database.FILE):
         """Initialize the hohlraum database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(Hohlraum_DB, self).__init__(fname)  # call super constructor
+        # name of the table for the hohlraum data
+        self.TABLE = Database.HOHLRAUM_TABLE
         self.__init_hohlraum__()
 
     def __init_hohlraum__(self):

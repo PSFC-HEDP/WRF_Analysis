@@ -19,13 +19,6 @@ from Analysis.rhoR_Model import rhoR_Model
 
 class WRF_Analyzer(tk.Toplevel):
     """Implement a GUI dialog for providing input to the WRF analysis."""
-    # necessary databases:
-    init_db = WRF_InitAnalysis_DB()
-    data_db = WRF_Data_DB()
-    setup_db = WRF_Setup_DB()
-    hohl_db = Hohlraum_DB()
-    snout_db = Snout_DB()
-    analysis_db = WRF_Analysis_DB()
 
     def __init__(self, parent=None, shot=None, dim=None, pos=None):
         """Initialize the GUI.
@@ -35,6 +28,14 @@ class WRF_Analyzer(tk.Toplevel):
         :param pos: (optional) The WRF position used, as a str [default prompts user]
         """
         super(WRF_Analyzer, self).__init__(master=parent)
+
+        # necessary databases:
+        self.init_db = WRF_InitAnalysis_DB()
+        self.data_db = WRF_Data_DB()
+        self.setup_db = WRF_Setup_DB()
+        self.hohl_db = Hohlraum_DB()
+        self.snout_db = Snout_DB()
+        self.analysis_db = WRF_Analysis_DB()
 
         # stretch the column to fill all space:
         tk.Grid.columnconfigure(self, 0, weight=1)

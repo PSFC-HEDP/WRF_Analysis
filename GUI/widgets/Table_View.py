@@ -26,9 +26,6 @@ def sortby(tree, col, descending):
 class Table_Viewer(Tkinter.Toplevel):
     """Implement a top-level window to display info in a tabular fashion. It's intended that this class is extended"""
 
-    header_widgets = []  # control widgets to display at the top of the window
-    tree_columns = ("Quantity", "Value")  # the column headings
-    tree_data = [("",      "",)]  # the tree data
 
     def __init__(self, parent=None, build=True):
         """Initialize the table.
@@ -36,7 +33,11 @@ class Table_Viewer(Tkinter.Toplevel):
         :param build: (optional) Whether to call the widget building functions in the constructor [default=True]
         """
         super(Table_Viewer, self).__init__(parent)
+        # initializations:
         self.tree = None
+        self.header_widgets = []  # control widgets to display at the top of the window
+        self.tree_columns = ("Quantity", "Value")  # the column headings
+        self.tree_data = [("",      "",)]  # the tree data
 
         if build:
             self.__setup_widgets__()

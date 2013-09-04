@@ -19,14 +19,14 @@ class WRF_rhoR_Model_DB(Generic_Analysis_DB):
     :author: Alex Zylstra
     :date: 2013/09/03
     """
-    ## name of the table for the snout data
-    TABLE = Database.WRF_RHOR_MODEL_TABLE
 
     def __init__(self, fname=Database.FILE):
         """Initialize the WRF analysis database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(WRF_rhoR_Model_DB, self).__init__(fname)  # call super constructor
+        # name of the table for the snout data
+        self.TABLE = Database.WRF_RHOR_MODEL_TABLE
         self.__init_table__()
 
     def __init_table__(self):

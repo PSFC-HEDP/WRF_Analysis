@@ -17,14 +17,13 @@ class Snout_DB(Generic_DB):
     :date: 2013/08/05
     """
 
-    # name of the table for the snout data
-    TABLE = Database.SNOUT_TABLE
-
     def __init__(self, fname=Database.FILE):
         """Initialize the snout database wrapper and connects to the database.
         :param fname: the file location/name for the database
         """
         super(Snout_DB,self).__init__(fname) # call super constructor
+        # name of the table for the snout data
+        self.TABLE = Database.SNOUT_TABLE
         self.__init_snout__()
 
     def __init_snout__(self):

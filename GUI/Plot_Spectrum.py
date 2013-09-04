@@ -12,15 +12,17 @@ import numpy
 
 class Plot_Spectrum(tk.Toplevel):
     """Generic viewer for spectrum plots"""
-    db = WRF_Data_DB()
-    canvas = None
-    ax = None
 
     def __init__(self, parent=None):
         """Initialize the viewer window.
         :param db: The database object to use, which must be of type Generic_Analysis_DB
         """
         super(Plot_Spectrum, self).__init__(parent=parent)
+
+        # initializations
+        self.db = WRF_Data_DB()
+        self.canvas = None
+        self.ax = None
 
         # size limits
         #self.minsize(600,400)

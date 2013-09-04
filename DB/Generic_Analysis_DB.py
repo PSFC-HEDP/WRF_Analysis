@@ -14,15 +14,11 @@ class Generic_Analysis_DB(Generic_DB):
     :date: 2013/07/23
     """
 
-    # placeholder table
-    TABLE = ''
-
     def __init__(self, fname=Database.FILE):
         """Initialize the analysis database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(Generic_Analysis_DB, self).__init__(fname) # call super constructor
-
 
     def get_shots(self):
         """Return all shots available in the database."""

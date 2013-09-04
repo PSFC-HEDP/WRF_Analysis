@@ -10,42 +10,32 @@ class rhoR_Analysis(object):
     This class encapsulates the model itself, adding in
     error bars and sensitivity analysis.
     :author: Alex Zylstra
-    :date: 2013/06/29
+    :date: 2013/09/04
     """
 
     # set verbosity for console output:
     verbose = False
 
     # Error bars for various things:
-    Ri_Err = 5e-4
-    Ro_Err = 5e-4  # initial outer radius [cm]
-    P0_Err = 1  # initial pressure [atm]
-    fD_Err = 0.  # deuterium fraction in fuel
-    f3He_Err = 0.  # 3He fraction in fuel
-    Te_Gas_Err = 2  # keV
-    Te_Shell_Err = 0.1  # keV
-    Te_Abl_Err = 0.1  # keV
-    Te_Mix_Err = 0.2  # keV
+    def_Ri_Err = 5e-4
+    def_Ro_Err = 5e-4  # initial outer radius [cm]
+    def_P0_Err = 1  # initial pressure [atm]
+    def_fD_Err = 0.  # deuterium fraction in fuel
+    def_f3He_Err = 0.  # 3He fraction in fuel
+    def_Te_Gas_Err = 2  # keV
+    def_Te_Shell_Err = 0.1  # keV
+    def_Te_Abl_Err = 0.1  # keV
+    def_Te_Mix_Err = 0.2  # keV
     # ablated mass is modeled as an exponential profile
     # specified by max, min, and length scale:
-    rho_Abl_Max_Err = 0.5  # g/cc
-    rho_Abl_Min_Err = 0.05  # g/cc
-    rho_Abl_Scale_Err = 30e-4  # [cm]
+    def_rho_Abl_Max_Err = 0.5  # g/cc
+    def_rho_Abl_Min_Err = 0.05  # g/cc
+    def_rho_Abl_Scale_Err = 30e-4  # [cm]
     # Fraction of CH mixed into the hot spot
-    MixF_Err = 0.025
+    def_MixF_Err = 0.025
     # thickness and mass remaining:
-    Tshell_Err = 10e-4
-    Mrem_Err = 0.05
-
-    # the rhoR model itself:
-    model = 0
-
-    # a list of all parameters
-    AllParam = []
-
-    # a big python list of models where parameters are varied systematically
-    __varied_models__ = []  # a 2-D array containing models with varied parameters
-    __varied_model_names__ = []  # strings containing descriptions of which param was varied for the above
+    def_Tshell_Err = 10e-4
+    def_Mrem_Err = 0.05
 
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
@@ -116,6 +106,13 @@ class rhoR_Analysis(object):
         # start the rhoR model itself:
         self.model = rhoR_Model(self.shell_mat, Ri, Ro, fD, f3He, P0, Te_Gas, Te_Shell, Te_Abl, Te_Mix, rho_Abl_Max, rho_Abl_Min,
                                 rho_Abl_Scale, MixF, Tshell, Mrem, E0)
+
+        # a list of all parameters
+        self.AllParam = []
+
+        # a big python list of models where parameters are varied systematically
+        self.__varied_models__ = []  # a 2-D array containing models with varied parameters
+        self.__varied_model_names__ = []  # strings containing descriptions of which param was varied for the above
 
         # set up the models for error bar calculations:
         self.__setup_error_models__()
@@ -390,7 +387,7 @@ class rhoR_Analysis(object):
                 err = (val_max - val_min) / 2.0
                 if self.verbose:
                     print(values, err)
-                TotalError += numpy.abs(err**2.0)
+                TotalError += numpy.absolute(err**2.0)
 
                 # if requested, keep track of error sources:
                 if breakout:

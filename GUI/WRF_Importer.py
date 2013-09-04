@@ -13,12 +13,13 @@ import os
 
 class WRF_Importer(tk.Toplevel):
     """Implement a GUI dialog for importing a WRF analysis."""
-    csv_filename = ''
-    image_filename = ''
 
     def __init__(self, parent=None):
         """Initialize the GUI."""
         super(WRF_Importer, self).__init__(master=parent)
+
+        self.csv_filename = ''
+        self.image_filename = ''
 
         # create the unique UI:
         self.__create_widgets__()

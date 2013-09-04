@@ -51,7 +51,7 @@ def flatten(l) -> list:
 class Hohlraum(object):
     """Wrapper class for hohlraum corrections, and associated metrics
     :author: Alex Zylstra
-    :date: 2013/06/15"""
+    :date: 2013/09/04"""
     OutputDir = 'AnalysisOutputs'
 
     # set up SRIM calculators:
@@ -62,26 +62,6 @@ class Hohlraum(object):
     DU_SRIM = StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
-    raw = []  # raw spectrum
-    raw_fit = []  # Gaussian fit to the raw spectrum
-    corr = []  # corrected spectrum
-    corr_fit = []  # Gaussian fit to the corrected spectrum
-
-    # thickness in um of three hohlraum components:
-    Au = 0  # Calculated or given thickness of Au
-    DU = 0  # Calculated or given thickness of DU
-    Al = 0  # Calculated or given thickness of Al
-    # uncertainties in thickness:
-    d_Au = 0  # Calculated or given uncertainty in thickness of Au
-    d_DU = 0  # Calculated or given uncertainty in thickness of DU
-    d_Al = 0  # Calculated or given uncertainty in thickness of Al
-
-    #  r and z arrays for all wall layers:
-    all_r = []
-    all_z = []
-    layer_mat = []
-    angles = []
-
     def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3)):
         """Constructor for the hohlraum. You must supply either the thickness array or an array containing wall data plus view angles.
         :param raw: the raw spectrum
@@ -91,6 +71,27 @@ class Hohlraum(object):
         :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
         """
         super(Hohlraum, self).__init__() # super constructor
+
+        # initializations:
+        self.raw = []  # raw spectrum
+        self.raw_fit = []  # Gaussian fit to the raw spectrum
+        self.corr = []  # corrected spectrum
+        self.corr_fit = []  # Gaussian fit to the corrected spectrum
+
+        # thickness in um of three hohlraum components:
+        self.Au = 0  # Calculated or given thickness of Au
+        self.DU = 0  # Calculated or given thickness of DU
+        self.Al = 0  # Calculated or given thickness of Al
+        # uncertainties in thickness:
+        self.d_Au = 0  # Calculated or given uncertainty in thickness of Au
+        self.d_DU = 0  # Calculated or given uncertainty in thickness of DU
+        self.d_Al = 0  # Calculated or given uncertainty in thickness of Al
+
+        #  r and z arrays for all wall layers:
+        self.all_r = []
+        self.all_z = []
+        self.layer_mat = []
+        self.angles = []
 
         # if the wall is specified:
         if wall is not None and angles is not None:

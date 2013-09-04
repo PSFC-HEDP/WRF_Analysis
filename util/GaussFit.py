@@ -24,23 +24,6 @@ class GaussFit(object):
     """Wrapper class for performing Gaussian fits to data.
     :author: Alex Zylstra
     :date: 2013/07/05"""
-    data = []  # multi-dimensional array containing data
-    data_x = []  # x values of the data
-    data_y = []  # y values of the data
-    data_err = []  # error bars for the data
-    fit = []  # result of the fit
-    covariance = []  # covariance results of the fit
-
-    # Generic guesses for fitting:
-    GUESS = []
-
-    # if the chi2 calculations should restrict limits to 5sigma of the mean
-    OPT_RESTRICT_CHI2 = True
-
-    # name of the dataset / fit
-    name = ""
-
-    # method for fitting:
 
     def __init__(self, data, guess=[5e7, 10, 1], restrict_chi2=True, name=""):
         """Constructor.
@@ -51,6 +34,23 @@ class GaussFit(object):
         """
         # super constructor:
         super(GaussFit, self).__init__()
+
+        # initialization:
+        self.data = []  # multi-dimensional array containing data
+        self.data_x = []  # x values of the data
+        self.data_y = []  # y values of the data
+        self.data_err = []  # error bars for the data
+        self.fit = []  # result of the fit
+        self.covariance = []  # covariance results of the fit
+
+        # Generic guesses for fitting:
+        self.GUESS = []
+
+        # if the chi2 calculations should restrict limits to 5sigma of the mean
+        self.OPT_RESTRICT_CHI2 = True
+
+        # name of the dataset / fit
+        name = ""
 
         # copy data:
         self.data = numpy.copy(data)

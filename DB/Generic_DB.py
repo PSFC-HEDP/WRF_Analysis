@@ -11,12 +11,6 @@ class Generic_DB:
     :author: Alex Zylstra
     :date: 2013/06/11
     """
-    # database connector
-    db = 0
-    # database cursor
-    c = 0
-    # name of the table for the data
-    TABLE = ''
 
     def __init__(self, fname):
         """Class constructor, which connects to the database
@@ -30,10 +24,15 @@ class Generic_DB:
 
         # check if the file exists:
         try:
+            # database connector
             self.db = sqlite3.connect(fname)
+            # database cursor
             self.c = self.db.cursor()
         except sqlite3.OperationalError:
             print("Error opening database file.")
+
+        # name of the table for the data
+        self.TABLE = ''
 
     def __del__(self):
         """Properly close database objects."""

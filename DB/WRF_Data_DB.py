@@ -26,14 +26,14 @@ class WRF_Data_DB(Generic_DB):
     :author: Alex Zylstra
     :date: 2013/08/05
     """
-    ## name of the table for the snout data
-    TABLE = Database.WRF_DATA_TABLE
 
     def __init__(self, fname=Database.FILE):
         """Initialize the WRF setup database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(WRF_Data_DB, self).__init__(fname) # call super constructor
+        # name of the table for the snout data
+        self.TABLE = Database.WRF_DATA_TABLE
         self.__init_wrf_data__()
 
     def __init_wrf_data__(self):

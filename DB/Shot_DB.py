@@ -8,14 +8,13 @@ class Shot_DB(Generic_DB):
     :date: 2013/07/11
     """
 
-    # name of the table for the shot data
-    TABLE = Database.SHOT_TABLE
-
     def __init__(self, fname=Database.FILE):
         """Initialize the shot database wrapper and connect to the database.
         :param fname: the file location/name for the database
         """
         super(Shot_DB, self).__init__(fname)  # call super constructor
+        # name of the table for the shot data
+        self.TABLE = Database.SHOT_TABLE
         self.__init_shot__()
 
     def __init_shot__(self):
