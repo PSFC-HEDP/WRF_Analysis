@@ -162,6 +162,7 @@ class TestRhoR_Model(TestCase):
 
     def test_Eout_GasMix(self):
         """Test getting the gas mixture energy out."""
+        # test a variety of conditions:
         EpList = [12.5, 15.0, 17.5]
         xList = [50, 100, 150, 200]
         for Ep in EpList:
@@ -171,8 +172,13 @@ class TestRhoR_Model(TestCase):
                     self.assertTrue(0 <= Eout < Ep, "Failed Eout_GasMix at conditions Ep, x, R, T = " +
                                                     str(Ep) + "," + str(x) + "," + str(R))
 
+        # test one specific case
+        Eout = self.model.Eout_GasMix(14.7, 50, self.Ri/4.)
+        self.assertAlmostEqual(Eout, 14.586, places=2)
+
     def test_Eout_Shell(self):
         """Test getting the downshift through the shell."""
+        # test a variety of conditions:
         EpList = [10.0, 12.5, 15.0, 17.5]
         xList = [5, 10, 20, 30, 40]
         for Ep in EpList:
@@ -182,12 +188,31 @@ class TestRhoR_Model(TestCase):
                     self.assertTrue(0 <= Eout < Ep, "Failed Eout_Shell at conditions Ep, x, R, = " +
                                                     str(Ep) + "," + str(x) + "," + str(R))
 
+        # test one specific case
+        Eout = self.model.Eout_Shell(14.7, 50, self.Ri/4.)
+        self.assertAlmostEqual(Eout, 12.485, places=2)
+
     def test_dEdr_Abl(self):
         """Test getting the stopping power in the ablated material."""
+        # test a variety of conditions:
         EpList = [10.0, 12.5, 15.0, 17.5]
         for Ep in EpList:
             for R in self.Rcm:
                 for r in arange(R / 20., 0.9 * R, R / 50.):
                     Eout = self.model.dEdr_Abl(Ep, r, R)
-                    self.assertTrue(0 <= Eout < Ep, "Failed dEdr_Abl at conditions Ep, r, R, = " +
+                    self.assertTrue(0 <= Eout <= Ep, "Failed dEdr_Abl at conditions Ep, r, R, = " +
                                                     str(Ep) + "," + str(r) + "," + str(R))
+
+        # test one specific case
+        Eout = self.model.dEdr_Abl(14.7, self.Ri, self.Ri/4.)
+        self.assertAlmostEqual(Eout, -4.005, places=2)
+
+    def test_model_materials(self):
+        """Test the functionality for using different shell materials."""
+        # try them all, with a simple Eout test at a CR of 3:
+        model1 = rhoR_Model()  # all defaults
+        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 12.299, places=2)
+        model2 = rhoR_Model(shell_mat='HDC')
+        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 12.293, places=2)
+        model3 = rhoR_Model(shell_mat='SiO2')
+        self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 9.977, places=2)

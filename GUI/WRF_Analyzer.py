@@ -10,9 +10,12 @@ from DB.Hohlraum_DB import *
 from DB.Snout_DB import *
 from DB.WRF_Analysis_DB import *
 from GUI.widgets.Option_Prompt import Option_Prompt
+from GUI.widgets.Model_Frame import Model_Frame
 from GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
 import math
 from Analysis.Analyze_Spectrum import Analyze_Spectrum
+from Analysis.rhoR_Analysis import rhoR_Analysis
+from Analysis.rhoR_Model import rhoR_Model
 
 class WRF_Analyzer(tk.Toplevel):
     """Implement a GUI dialog for providing input to the WRF analysis."""
@@ -46,6 +49,8 @@ class WRF_Analyzer(tk.Toplevel):
 
         # create the unique UI:
         self.__create_widgets__()
+
+        self.minsize(300,200)
 
     def __create_widgets__(self):
         """Create the UI elements."""
@@ -102,15 +107,26 @@ class WRF_Analyzer(tk.Toplevel):
         sep2 = ttk.Separator(self, orient='vertical')
         sep2.grid(row=8, column=0, columnspan=2, sticky='ew')
 
+        self.__generate_adv__(9)
+
+        sep3 = ttk.Separator(self, orient='vertical')
+        sep3.grid(row=10, column=0, columnspan=2, sticky='ew')
+
         # buttons:
         go_button = tk.Button(self, text='Go', command=self.__run_analysis__)
-        go_button.grid(row=9, column=0)
+        go_button.grid(row=11, column=0)
         cancel_button = tk.Button(self, text='Cancel', command=self.__cancel__)
-        cancel_button.grid(row=9, column=1)
+        cancel_button.grid(row=11, column=1)
 
         # a couple key bindings:
         self.bind('<Return>', self.__run_analysis__)
         self.bind('<Escape>', self.__cancel__)
+
+    def __generate_adv__(self, row):
+        """Helper method to generate the GUI for advanced analysis options"""
+        # set up the frame:
+        self.adv_frame = Model_Frame(self, text='Advanced', relief=tk.RAISED, borderwidth=1)
+        self.adv_frame.grid(row=row, column=0, columnspan=2, sticky='nsew')
 
     def __run_analysis__(self, *args):
         """Run the analysis routine for the selected parameters"""
@@ -155,7 +171,10 @@ class WRF_Analyzer(tk.Toplevel):
         if OutputDir == '':  # user cancelled
             return
 
-        result = Analyze_Spectrum(spectrum,
+        # get the model
+        model = self.adv_frame.get_rhoR_Analysis()
+
+        result, corr_spec = Analyze_Spectrum(spectrum,
                                   random,
                                   systematic,
                                   angles,
@@ -168,12 +187,22 @@ class WRF_Analyzer(tk.Toplevel):
                                   OutputDir=OutputDir,
                                   Nxy=Nxy,
                                   ProgressBar=None,
-                                  ShowSlide=self.display_results.get())
-        # TODO: fix ProgressBar
+                                  ShowSlide=self.display_results.get(),
+                                  model=model)
 
         # add to DB:
         print(result)
         self.analysis_db.load_results(self.shot, self.dim, self.pos, result)
+        self.adv_frame.add_to_db(self.shot, self.dim, self.pos)
+        if corr_spec is not None:
+            wrf_id = self.data_db.get_wrf_id(self.shot, self.dim, self.pos)[0]
+            cr39_id = self.data_db.get_cr39_id(self.shot, self.dim, self.pos)[0]
+            # get the date and time:
+            import datetime
+            now = datetime.datetime.now()
+            analysis_date = now.strftime('%Y-%m-%d %H:%M')
+            print(wrf_id, cr39_id)
+            self.data_db.insert(self.shot, self.dim, self.pos, wrf_id, cr39_id, analysis_date, True, corr_spec)
 
         # finish by removing the window:
         self.__cancel__()

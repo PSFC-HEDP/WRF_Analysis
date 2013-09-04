@@ -32,10 +32,10 @@ class rhoR_Analysis(object):
     rho_Abl_Min_Err = 0.05  # g/cc
     rho_Abl_Scale_Err = 30e-4  # [cm]
     # Fraction of CH mixed into the hot spot
-    MixF_Err = 0.05
+    MixF_Err = 0.025
     # thickness and mass remaining:
     Tshell_Err = 10e-4
-    Mrem_Err = 0.025
+    Mrem_Err = 0.05
 
     # the rhoR model itself:
     model = 0
@@ -47,11 +47,16 @@ class rhoR_Analysis(object):
     __varied_models__ = []  # a 2-D array containing models with varied parameters
     __varied_model_names__ = []  # strings containing descriptions of which param was varied for the above
 
-    def __init__(self, Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
+    def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
-                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.05,
-                 Tshell=40e-4, Mrem=0.175, E0=14.7):
+                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.025,
+                 Tshell=40e-4, Mrem=0.175, E0=14.7,
+                 Ri_Err=5e-4, Ro_Err=5e-4, P0_Err=1, fD_Err=0, f3He_Err=0,
+                 Te_Gas_Err=2,Te_Shell_Err=0.1, Te_Abl_Err=0.1, Te_Mix_Err=0.2,
+                 rho_Abl_Max_Err=0.5, rho_Abl_Min_Err=0.05, rho_Abl_Scale_Err=30e-4,
+                 MixF_Err=0.025, Tshell_Err=10e-4, Mrem_Err=0.05):
         """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
+        :param shell_mat: (optional) the shell material to use {default='CH'}
         :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
         :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
         :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
@@ -69,6 +74,27 @@ class rhoR_Analysis(object):
         :param Mrem: (optional) shell mass remaining during the implosion [fractional] {default=0.175}
         :param E0: (optional) initial proton energy [MeV] {default=14.7}
         """
+        self.shell_mat = shell_mat  # shell material
+
+        # set the error bars appropriately:
+        self.Ri_Err = Ri_Err
+        self.Ro_Err = Ro_Err
+        self.fD_Err = fD_Err
+        self.f3He_Err = f3He_Err
+        self.P0_Err = P0_Err
+        self.Te_Gas_Err = Te_Gas_Err
+        self.Te_Shell_Err = Te_Shell_Err
+        self.Te_Abl_Err = Te_Abl_Err
+        self.Te_Mix_Err = Te_Mix_Err
+        self.rho_Abl_Max_Err = rho_Abl_Max_Err
+        self.rho_Abl_Min_Err = rho_Abl_Min_Err
+        self.rho_Abl_Scale_Err = rho_Abl_Scale_Err
+        self.MixF_Err = MixF_Err
+        self.Tshell_Err = Tshell_Err
+        self.Mrem_Err = Mrem_Err
+
+        # set the values themselves to be python lists
+        # [min, nom, max]
         self.Ri = [Ri - self.Ri_Err, Ri, Ri + self.Ri_Err]
         self.Ro = [Ro - self.Ro_Err, Ro, Ro + self.Ro_Err]
         self.fD = [fD - self.fD_Err, fD, fD + self.fD_Err]
@@ -88,7 +114,7 @@ class rhoR_Analysis(object):
         self.E0 = E0
 
         # start the rhoR model itself:
-        self.model = rhoR_Model(Ri, Ro, fD, f3He, P0, Te_Gas, Te_Shell, Te_Abl, Te_Mix, rho_Abl_Max, rho_Abl_Min,
+        self.model = rhoR_Model(self.shell_mat, Ri, Ro, fD, f3He, P0, Te_Gas, Te_Shell, Te_Abl, Te_Mix, rho_Abl_Max, rho_Abl_Min,
                                 rho_Abl_Scale, MixF, Tshell, Mrem, E0)
 
         # set up the models for error bar calculations:
@@ -170,7 +196,7 @@ class rhoR_Analysis(object):
         # Vary the inner radius:
         new_set = []
         for Ri in [self.Ri[0], self.Ri[2]]:  # vary inner radius:
-            new_set.append(rhoR_Model(Ri, self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, Ri, self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -180,7 +206,7 @@ class rhoR_Analysis(object):
         # Vary the outer radius:
         new_set = []
         for Ro in [self.Ro[0], self.Ro[2]]:  # vary Ro:
-            new_set.append(rhoR_Model(self.Ri[1], Ro, self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], Ro, self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -190,7 +216,7 @@ class rhoR_Analysis(object):
         # Vary the deuterium fraction:
         new_set = []
         for fD in [self.fD[0], self.fD[2]]:  # vary fD:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], fD, self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], fD, self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -200,7 +226,7 @@ class rhoR_Analysis(object):
         # Vary the 3He fraction::
         new_set = []
         for f3He in [self.f3He[0], self.f3He[2]]:  # vary f3He:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], f3He, self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], f3He, self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -210,7 +236,7 @@ class rhoR_Analysis(object):
         # Vary the initial pressure:
         new_set = []
         for P0 in [self.P0[0], self.P0[2]]:  # vary P0:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], P0,
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], P0,
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -220,7 +246,7 @@ class rhoR_Analysis(object):
         # Vary the gas electron temperature:
         new_set = []
         for Te_Gas in [self.Te_Gas[0], self.Te_Gas[2]]:  # vary Te_Gas:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       Te_Gas, self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -230,7 +256,7 @@ class rhoR_Analysis(object):
         # Vary the shell electron temperature:
         new_set = []
         for Te_Shell in [self.Te_Shell[0], self.Te_Shell[2]]:  # vary Te_Shell:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], Te_Shell, self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -240,7 +266,7 @@ class rhoR_Analysis(object):
         # Vary the ablated material electron temp:
         new_set = []
         for Te_Abl in [self.Te_Abl[0], self.Te_Abl[2]]:  # vary Te_Abl:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], Te_Abl, self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -250,7 +276,7 @@ class rhoR_Analysis(object):
         # Vary the Te_Mix:
         new_set = []
         for Te_Mix in [self.Te_Mix[0], self.Te_Mix[2]]:  # vary Te_Mix:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], Te_Mix,
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -260,7 +286,7 @@ class rhoR_Analysis(object):
         # Vary the maximum ablated material density:
         new_set = []
         for rho_Abl_Max in [self.rho_Abl_Max[0], self.rho_Abl_Max[2]]:  # vary rho_Abl_Max:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       rho_Abl_Max, self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -270,7 +296,7 @@ class rhoR_Analysis(object):
         # Vary the minimum ablated mass density:
         new_set = []
         for rho_Abl_Min in [self.rho_Abl_Min[0], self.rho_Abl_Min[2]]:  # vary rho_Abl_Min:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], rho_Abl_Min, self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -280,7 +306,7 @@ class rhoR_Analysis(object):
         # Vary the ablated mass scale length:
         new_set = []
         for rho_Abl_Scale in [self.rho_Abl_Scale[0], self.rho_Abl_Scale[2]]:  # vary rho_Abl_Scale:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], rho_Abl_Scale, self.MixF[1],
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -290,7 +316,7 @@ class rhoR_Analysis(object):
         # Vary the mix fraction:
         new_set = []
         for MixF in [self.MixF[0], self.MixF[2]]:  # vary MixF:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], MixF,
                                       self.Tshell[1], self.Mrem[1], self.E0))
@@ -300,7 +326,7 @@ class rhoR_Analysis(object):
         # Vary the shell thickness:
         new_set = []
         for Tshell in [self.Tshell[0], self.Tshell[2]]:  # vary Tshell:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       Tshell, self.Mrem[1], self.E0))
@@ -310,7 +336,7 @@ class rhoR_Analysis(object):
         # Vary the mass remaining::
         new_set = []
         for Mrem in [self.Mrem[0], self.Mrem[2]]:  # vary Mrem:
-            new_set.append(rhoR_Model(self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
+            new_set.append(rhoR_Model(self.shell_mat, self.Ri[1], self.Ro[1], self.fD[1], self.f3He[1], self.P0[1],
                                       self.Te_Gas[1], self.Te_Shell[1], self.Te_Abl[1], self.Te_Mix[1],
                                       self.rho_Abl_Max[1], self.rho_Abl_Min[1], self.rho_Abl_Scale[1], self.MixF[1],
                                       self.Tshell[1], Mrem, self.E0))

@@ -48,7 +48,8 @@ def mytime(time, inc, ProgressBar=None):
 
 # noinspection PyListCreation,PyListCreation,PyUnusedLocal
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, name="", summary="", plots=True,
-                     verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False):
+                     verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
+                     model=None):
     """Analyze a NIF WRF spectrum.
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
@@ -64,6 +65,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param Nxy: (optional) image data to display as N(x,y) {default=None}
     :param ProgressBar: (optional) a progress bar of type WRF_Progress_Dialog to use for updates [default=None, uses CLI]
     :param ShowSlide: (optional) set to True to display the summary slide after this method completes [default=False]
+    :param model: (optional) the rhoR model to use; default values are used if none is given.
     :author: Alex Zylstra
     :date: 2013/08/06
     """
@@ -214,8 +216,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # -----------------------------
     t1 = datetime.now()
     myprint(name + ' rhoR analysis...', ProgressBar=ProgressBar)
-    # set up the rhoR analysis:
-    model = rhoR_Analysis()
+    # set up the rhoR analysis if necessary:
+    if model is None:
+        model = rhoR_Analysis()
     temp = model.Calc_rhoR(fit[1], breakout=True)
     rhoR = temp[0]
     t2 = datetime.now()
@@ -344,4 +347,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     t2 = datetime.now()
     mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
-    return results
+
+    # return hohlraum corrected spectrum if appropriate
+    if hohl_wall is not None:
+        return results, corr_data
+    else:
+        return results, None

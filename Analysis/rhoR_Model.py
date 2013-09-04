@@ -11,7 +11,7 @@ __author__ = 'Alex Zylstra'
 class rhoR_Model(object):
     """3-part (shell, fuel, ablated mass) rhoR model.
     :author: Alex Zylstra
-    :date: 2013/06/29
+    :date: 2013/09/03
     """
 
     # initial shell conditions:
@@ -19,22 +19,33 @@ class rhoR_Model(object):
     Ri = 900e-4  # initial inner radius [cm]
     Ro = 1100e-4  # initial outer radius [cm]
     P0 = 50  # initial pressure [atm]
-    fD = 0.5  # deuterium fraction in fuel
-    f3He = 0.5  # 3He fraction in fuel
+    fD = 0.3  # deuterium fraction in fuel
+    f3He = 0.7  # 3He fraction in fuel
 
-    # a few densities and masses:
-    rho_CH = 1.044  # g/cc
+    # a few densities and masses for the shell
+    shell_mat = 'CH'
+    shell_opts = ['CH', 'HDC', 'SiO2']
+    __shell_rho__ = {'CH': 1.044, 'HDC': 3.5, 'SiO2': 2.56}
+    __shell_A__ = {'CH': [1,12], 'HDC': [12], 'SiO2': [28,16]}
+    __shell_AvgA__ = {'CH': 6.5, 'HDC': 12., 'SiO2': 20.}
+    __shell_Z__ = {'CH': [1,6], 'HDC': [6], 'SiO2': [14,8]}
+    __shell_AvgZ__ = {'CH': 3.5, 'HDC': 6., 'SiO2': 10.}
+    __shell_F__ = {'CH': [0.5,0.5], 'HDC': [1], 'SiO2': [0.333,0.667]}
+
+    # some info for the gas:
     rho_D2_STP = 2 * 0.08988e-3  # density of D2 gas at STP [g/cc]
     rho_3He_STP = (3 / 4) * 0.1786e-3  # density of 3he gas at STP [g/cc]
     rho0_Gas = 0  # initial gas density [atm]
-    Mass_CH_Total = 0  # total mass of plastic in the implosion [g]
+
+    # total masses in the system:
+    Mass_Shell_Total = 0  # total mass of shell in the implosion [g]
     Mass_Mix_Total = 0  # total mix mass [g]
 
     # ASSUMED CONDITIONS
-    Te_Gas = 1  # keV
+    Te_Gas = 3  # keV
     Te_Shell = 0.2  # keV
     Te_Abl = 0.3  # keV
-    Te_Mix = 0.3  # keV
+    Te_Mix = 1  # keV
     # ablated mass is modeled as an exponential profile
     # specified by max, min, and length scale:
     rho_Abl_Max = 1.5  # g/cc
@@ -61,15 +72,16 @@ class rhoR_Model(object):
     __interp_rhoR__ = 0
     __interp_Rcm__ = 0
 
-    def __init__(self, Ri=9e-2, Ro=11e-2, fD=0.5, f3He=0.5, P0=50,
-                 Te_Gas=1, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.3,
+    def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
+                 Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
                  rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.025,
                  Tshell=40e-4, Mrem=0.15, E0=14.7):
         """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
+        :param shell_mat: (optional) the shell material to use {default='CH'}
         :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
         :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
-        :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.5}
-        :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.5}
+        :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
+        :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
         :param P0: (optional) initial gas fill pressure [atm] {default=50}
         :param Te_Gas: (optional) gas electron temperature [keV] {default=1}
         :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
@@ -83,6 +95,7 @@ class rhoR_Model(object):
         :param Mrem: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
         :param E0: (optional) initial proton energy [MeV] {default=14.7}
         """
+        self.shell_mat = shell_mat
         self.Ri = Ri
         self.Ro = Ro
         self.fD = fD
@@ -98,13 +111,64 @@ class rhoR_Model(object):
         self.MixF = MixF
         self.Tshell = Tshell
         self.Mrem = Mrem
-        self.E0 = 14.7
+        self.E0 = E0
 
         # calculate initial gas density
         self.rho0_Gas = P0 * ((fD / 2) * self.rho_D2_STP + f3He * self.rho_3He_STP)
 
         # calculate initial masses:
-        self.Mass_CH_Total = (4 * math.pi / 3) * self.rho_CH * (Ro ** 3 - Ri ** 3)
+        self.Mass_Shell_Total = (4 * math.pi / 3) * self.__shell_rho__[self.shell_mat] * (Ro ** 3 - Ri ** 3)
+
+        # set up stopping power definitions
+        # for the downshift calculations
+        # shell material shorthand:
+        A = self.__shell_A__[self.shell_mat]
+        Z = self.__shell_Z__[self.shell_mat]
+        # Set up FloatVectors for gas plus mix stopping power
+        self.__mfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        self.__mfGasMix__[0] = me / mp
+        self.__mfGasMix__[1] = 2
+        self.__mfGasMix__[2] = 3
+        for i in range(len(A)):
+            self.__mfGasMix__[3+i] = A[i]
+        self.__ZfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        self.__ZfGasMix__[0] = -1
+        self.__ZfGasMix__[1] = 1
+        self.__ZfGasMix__[2] = 2
+        for i in range(len(Z)):
+            self.__ZfGasMix__[3+i] = Z[i]
+        self.__TfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        self.__TfGasMix__[0] = self.Te_Gas
+        self.__TfGasMix__[1] = self.Te_Gas
+        self.__TfGasMix__[2] = self.Te_Gas
+        for i in range(len(Z)):
+            self.__TfGasMix__[3+i] = self.Te_Mix
+
+        # some field particle info for the shell stopping power:
+        self.__mfShell__ = FloatVector(1+len(A))
+        self.__mfShell__[0] = me / mp
+        for i in range(len(A)):
+            self.__mfShell__[1+i] = A[i]
+        self.__ZfShell__ = FloatVector(1+len(Z))
+        self.__ZfShell__[0] = -1
+        for i in range(len(Z)):
+            self.__ZfShell__[1+i] = Z[i]
+        self.__TfShell__ = FloatVector(1+len(A))
+        for i in range(1+len(A)):
+            self.__TfShell__[i] = Te_Shell
+
+        # field particle info for the ablated material stopping power:
+        self.__mfAbl__ = FloatVector(1+len(A))
+        self.__mfAbl__[0] = me / mp
+        for i in range(len(A)):
+            self.__mfAbl__[1+i] = A[i]
+        self.__ZfAbl__ = FloatVector(1+len(Z))
+        self.__ZfAbl__[0] = -1
+        for i in range(len(Z)):
+            self.__ZfAbl__[1+i] = Z[i]
+        self.__TfAbl__ = FloatVector(1+len(A))
+        for i in range(1+len(A)):
+            self.__TfAbl__[i] = self.Te_Abl
 
         # precompute Eout and rhoR vs Rcm
         r = self.Ri
@@ -131,13 +195,11 @@ class rhoR_Model(object):
         self.__EoutList__ = self.__EoutList__[1:]
         self.__rhoRList__ = self.__rhoRList__[1:]
 
-        #for i in range(len(self.__RcmList__)):
-        #    print( self.__RcmList__[i], self.__EoutList__[i], self.__rhoRList__[i] )
-
         # set up interpolation:
         self.__interp_Eout__ = scipy.interpolate.interp1d(self.__RcmList__, self.__EoutList__, kind='linear', bounds_error=True)
         self.__interp_Rcm__ = scipy.interpolate.interp1d(self.__EoutList__, self.__RcmList__, kind='linear', bounds_error=True)
         self.__interp_rhoR__ = scipy.interpolate.interp1d(self.__RcmList__, self.__rhoRList__, kind='linear', bounds_error=True)
+
 
     def Eout(self, Rcm) -> float:
         """Main function, which calculates the proton energy downshift.
@@ -195,68 +257,6 @@ class rhoR_Model(object):
             return rhoR, Rcm
         except ValueError:
             return numpy.nan, numpy.nan
-        # a fast implementation: binary search
-        # min_r = max(self.Ri / 20, self.Tshell)
-        # max_r = self.Ri
-        # dE = 0.01  # accuracy goal
-        #
-        # # do a sanity check to avoid infinite loops:
-        # min_E = self.Eout(min_r, E0)
-        # max_E = self.Eout(max_r, E0)
-        # if E1 < min_E or E1 > max_E:
-        #     return numpy.nan, numpy.nan
-        #
-        # r = (max_r + min_r) / 2.0
-        # E = self.Eout(r, E0)
-        # rhoR = self.rhoR_Total(r)
-
-        # BINARY SEARCH
-        # while math.fabs(E1 - E) > dE and math.fabs(min_r-max_r) > 1e-6:
-        #     if E1 > E:  # need lower rhoR to explain E1
-        #         min_r = r
-        #     elif E1 < E:  # need higher rhoR to explain E1:
-        #         max_r = r
-        #     else:
-        #         break
-        #
-        #     r = (max_r + min_r) / 2.0
-        #     E = self.Eout(r, Tshell, Mrem, E0)
-        #
-        # # we can improve accuracy by doing an correction based on the derivative
-        # dr = r/50.
-        # dE = self.Eout(r+dr, Tshell, Mrem, E0) - E
-        #
-        # r += (E1-E)*dr/dE
-
-        # Newton's method
-        # while math.fabs(E1 - E) > dE:
-        #     dr = r/50.
-        #     dE = self.Eout(r+dr, Tshell, Mrem, E0) - E
-        #
-        #     # change r based on derivative:
-        #     delta = (E1-E)*dr/dE
-        #     delta = math.copysign(1,delta) * max(math.fabs(delta), r/10.)
-        #     r += delta
-        #
-        #     # sanity:
-        #     r = max(r, min_r)
-        #     r = min(r, max_r)
-        #
-        #     E = self.Eout(r, Tshell, Mrem, E0)
-
-
-        #rhoR = self.rhoR_Total(r)
-        #return rhoR, r
-
-        # solve with Newton's method via scipy
-        # def func(Rcm):
-        #    return E1 - self.Eout(Rcm, Tshell, Mrem, E0)
-        # min_r = max( self.Ri / 30 , Tshell )
-        # max_r = self.Ri
-        # Rcm = scipy.optimize.brenth(func, min_r, max_r, maxiter=50, xtol=0.01, disp=True)
-        # rhoR = self.rhoR_Total(Rcm, Tshell, Mrem)
-        #
-        # return rhoR, Rcm
 
     # ----------------------------------------------------------------
     #         Calculators for rho, rhoR, n
@@ -308,15 +308,15 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :return: ni,ne [1/cc]
         """
-        ni = self.rho_Mix(Rcm) / (6.5 * mp)
-        ne = 3.5 * ni
+        ni = self.rho_Mix(Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
+        ne = self.__shell_AvgZ__[self.shell_mat] * ni
         return ni, ne
 
     def rho_Shell(self, Rcm) -> float:
         """Calculate shell mass density.
         :param Rcm: shell radius at shock BT [cm]
         :returns: mass density in the shell [g/cc] """
-        m = self.Mass_CH_Total * self.Mrem
+        m = self.Mass_Shell_Total * self.Mrem
         V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
         return m / V
 
@@ -324,7 +324,7 @@ class rhoR_Model(object):
         """Calculate the shell's areal density.
         :param Rcm: shell radius at shock BT [cm]
         :returns: areal density [g/cm2] """
-        m = self.Mass_CH_Total * self.Mrem
+        m = self.Mass_Shell_Total * self.Mrem
         V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
         return self.Tshell * m / V
 
@@ -332,8 +332,8 @@ class rhoR_Model(object):
         """Calculate particle number density in the shell.
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc] """
-        ni = self.rho_Shell(Rcm) / (6.5 * mp)
-        ne = 3.5 * ni
+        ni = self.rho_Shell(Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
+        ne = self.__shell_AvgZ__[self.shell_mat] * ni
         return ni, ne
 
     def get_Abl_radii(self, Rcm) -> tuple:
@@ -346,7 +346,7 @@ class rhoR_Model(object):
         """
         # density has an exponential ramp from max to min rho, then flat tail
         # as far out as necessary to conserve mass.
-        m = self.Mass_CH_Total * (1 - self.Mrem - self.MixF)
+        m = self.Mass_Shell_Total * (1 - self.Mrem - self.MixF)
         r1 = Rcm + self.Tshell / 2  # start of ablated mass
         # end of exponential ramp:
         r2 = r1 + self.rho_Abl_Scale * math.log(self.rho_Abl_Max / self.rho_Abl_Min)
@@ -394,8 +394,8 @@ class rhoR_Model(object):
         """Calculate the ablated mass number density.
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc] """
-        ni = self.rho_Abl(r, Rcm) / (6.5 * mp)
-        ne = 3.5 * ni
+        ni = self.rho_Abl(r, Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
+        ne = self.__shell_AvgZ__[self.shell_mat] * ni
         return ni, ne
 
     def rhoR_Total(self, Rcm) -> float:
@@ -423,25 +423,6 @@ class rhoR_Model(object):
     # ----------------------------------------------------------------
     __mt__ = 1
     __Zt__ = 1
-    # Set up FloatVectors for gas plus mix stopping power
-    __mfGasMix__ = FloatVector(5)  # D , 3He , H , C , e-
-    __mfGasMix__[0] = 2
-    __mfGasMix__[1] = 3
-    __mfGasMix__[2] = 1
-    __mfGasMix__[3] = 12
-    __mfGasMix__[4] = me / mp
-    __ZfGasMix__ = FloatVector(5)  # D , 3He , H , C , e-
-    __ZfGasMix__[0] = 1
-    __ZfGasMix__[1] = 2
-    __ZfGasMix__[2] = 1
-    __ZfGasMix__[3] = 6
-    __ZfGasMix__[4] = -1
-    __TfGasMix__ = FloatVector(5)  # D , 3He , H , C , e-
-    __TfGasMix__[0] = Te_Gas
-    __TfGasMix__[1] = Te_Gas
-    __TfGasMix__[2] = Te_Mix
-    __TfGasMix__[3] = Te_Mix
-    __TfGasMix__[4] = Te_Gas
 
     def Eout_GasMix(self, Ep, x, Rcm) -> float:
         """Calculate gas+mix downshift for protons
@@ -456,12 +437,12 @@ class rhoR_Model(object):
 
         ni_gas, ne_gas = self.n_Gas(Rcm)
         ni_mix, ne_mix = self.n_Mix(Rcm)
-        nf = FloatVector(5)  # D , 3He , H , C , e-
-        nf[0] = ni_gas * self.fD
-        nf[1] = ni_gas * self.f3He
-        nf[2] = ni_mix / 2
-        nf[3] = ni_mix / 2
-        nf[4] = ne_gas + ne_mix
+        nf = FloatVector(3+len(self.__shell_A__[self.shell_mat]))
+        nf[0] = ne_gas + ne_mix
+        nf[1] = ni_gas * self.fD
+        nf[2] = ni_gas * self.f3He
+        for i in range(len(self.__shell_F__[self.shell_mat])):
+            nf[3+i] = ni_mix * self.__shell_F__[self.shell_mat][i]
 
         # if any densities are zero, it is problematic (no mix does this)
         # add 1 particle per cc minimum:
@@ -470,27 +451,14 @@ class rhoR_Model(object):
                 nf[i] = 1
 
         # Use Li-Petrasso:
-        if nf[4] > 0:  # with sanity check
+        if nf[0] > 0:  # with sanity check
             model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
                 model.set_dx(x/self.steps)
                 return model.Eout(Ep, x)
-        return 0
 
-    # some field particle info for the shell stopping power:
-    __mfShell__ = FloatVector(3)
-    __mfShell__[0] = 1
-    __mfShell__[1] = 12
-    __mfShell__[2] = me / mp
-    __ZfShell__ = FloatVector(3)
-    __ZfShell__[0] = 1
-    __ZfShell__[1] = 6
-    __ZfShell__[2] = -1
-    __TfShell__ = FloatVector(3)
-    __TfShell__[0] = Te_Shell
-    __TfShell__[1] = Te_Shell
-    __TfShell__[2] = Te_Shell
+        return Ep
 
     def Eout_Shell(self, Ep, x, Rcm) -> float:
         """Calculate downshift in the shell.
@@ -499,10 +467,11 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: downshifted energy [MeV] """
         ni, ne = self.n_Shell(Rcm)
-        nf = FloatVector(3)
-        nf[0] = ni / 2
-        nf[1] = ni / 2
-        nf[2] = ne
+        nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
+        nf[0] = ne
+        for i in range(len(self.__shell_F__[self.shell_mat])):
+            nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]
+
         # Use Li-Petrasso:
         if ne > 0:
             model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
@@ -510,21 +479,8 @@ class rhoR_Model(object):
             if model.get_Emin() < Ep < model.get_Emax():
                 model.set_dx(x/self.steps)
                 return model.Eout(Ep, x)
-        return 0
 
-    # some field particle info for the ablated mass:
-    __mfAbl__ = FloatVector(3)
-    __mfAbl__[0] = 1
-    __mfAbl__[1] = 12
-    __mfAbl__[2] = me / mp
-    __ZfAbl__ = FloatVector(3)
-    __ZfAbl__[0] = 1
-    __ZfAbl__[1] = 6
-    __ZfAbl__[2] = -1
-    __TfAbl__ = FloatVector(3)
-    __TfAbl__[0] = Te_Abl
-    __TfAbl__[1] = Te_Abl
-    __TfAbl__[2] = Te_Abl
+        return Ep
 
     def dEdr_Abl(self, Ep, r, Rcm):
         """Calculate stopping power for protons in the ablated mass.
@@ -533,14 +489,16 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: stopping power [MeV/cm]"""
         ni, ne = self.n_Abl(r, Rcm)
-        nf = FloatVector(3)
-        nf[0] = ni / 2
-        nf[1] = ni / 2
-        nf[2] = ne
+        nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
+        nf[0] = ne
+        for i in range(len(self.__shell_F__[self.shell_mat])):
+            nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]
+
         # Use Li-Petrasso:
         if ne > 0:
             model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
                 return 1e4 * model.dEdx(Ep)
-        return 0
+
+        return Ep

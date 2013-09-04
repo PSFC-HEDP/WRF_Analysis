@@ -11,6 +11,7 @@ from DB.WRF_Setup_DB import *
 from DB.WRF_Data_DB import *
 from DB.WRF_InitAnalysis_DB import *
 from DB.WRF_Analysis_DB import *
+from DB.WRF_rhoR_Model_DB import *
 import os
 
 
@@ -23,7 +24,9 @@ def initialize():
     WRF_Setup_DB(Database.FILE)
     WRF_Data_DB(Database.FILE)
     WRF_InitAnalysis_DB(Database.FILE)
+    WRF_Setup_DB(Database.FILE)
     WRF_Analysis_DB(Database.FILE)
+    WRF_rhoR_Model_DB(Database.FILE)
 
 
 def export_all(export_dir=os.path.join(Database.DIR,'csv')):
@@ -56,6 +59,9 @@ def export_all(export_dir=os.path.join(Database.DIR,'csv')):
     DB = WRF_Analysis_DB(Database.FILE)
     DB.csv_export(os.path.join(export_dir, 'wrf_analysis.csv'))
 
+    DB = WRF_rhoR_Model_DB(Database.FILE)
+    DB.csv_export(os.path.join(export_dir, 'wrf_rhor_model.csv'))
+
 
 def import_all(import_dir=os.path.join(Database.DIR,'csv')):
     """Import all tables from CSV files.
@@ -86,3 +92,6 @@ def import_all(import_dir=os.path.join(Database.DIR,'csv')):
 
     DB = WRF_Analysis_DB(Database.FILE)
     DB.csv_import(os.path.join(import_dir, 'wrf_analysis.csv'))
+
+    DB = WRF_rhoR_Model_DB(Database.FILE)
+    DB.csv_export(os.path.join(import_dir, 'wrf_rhor_model.csv'))
