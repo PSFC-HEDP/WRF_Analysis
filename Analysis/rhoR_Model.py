@@ -26,13 +26,62 @@ class rhoR_Model(object):
 
     # a few densities and masses for the shell
     def_shell_mat = 'CH'
-    shell_opts = ['CH', 'HDC', 'SiO2']
-    __shell_rho__ = {'CH': 1.044, 'HDC': 3.5, 'SiO2': 2.56}
-    __shell_A__ = {'CH': [1,12], 'HDC': [12], 'SiO2': [28,16]}
-    __shell_AvgA__ = {'CH': 6.5, 'HDC': 12., 'SiO2': 20.}
-    __shell_Z__ = {'CH': [1,6], 'HDC': [6], 'SiO2': [14,8]}
-    __shell_AvgZ__ = {'CH': 3.5, 'HDC': 6., 'SiO2': 10.}
-    __shell_F__ = {'CH': [0.5,0.5], 'HDC': [1], 'SiO2': [0.333,0.667]}
+    # CH = standard plastic
+    # HDC = diamond
+    # SiO2 = standard glass
+    # Be = standard beryllium
+    # CHGe = standard plastic, with 0.5% Ge dopant, same mass density
+    # CHSi = standard plastic, with 1.0% Si dopant, same mass density
+    # plastic with higher hydrogen content
+    shell_opts = ['CH', 'HDC', 'SiO2', 'Be', 'CHGe', 'CHSi', 'CH2']
+
+    __shell_rho__ = {   'CH': 1.084, 
+                        'HDC': 3.5, 
+                        'SiO2': 2.56, 
+                        'Be': 1.85, 
+                        'CHGe': 1.084, 
+                        'CHSi': 1.084,
+                        'CH2': 1.084}
+
+    __shell_A__ = {     'CH': [1,12,16], 
+                        'HDC': [12], 
+                        'SiO2': [28,16], 
+                        'Be': [9],
+                        'CHGe': [1,12,16,72.6],
+                        'CHSi': [1,12,16,28.1],
+                        'CH2': [1,12]}
+
+    __shell_AvgA__ = {  'CH': 5.728, 
+                        'HDC': 12., 
+                        'SiO2': 20., 
+                        'Be': 9.,
+                        'CHGe': 5.862,
+                        'CHSi': 5.817,
+                        'CH2': 4.66}
+
+    __shell_Z__ = {     'CH': [1,6,8], 
+                        'HDC': [6], 
+                        'SiO2': [14,8], 
+                        'Be': [4],
+                        'CHGe': [1,6,8,32],
+                        'CHSi': [1,6,8,14],
+                        'CH2': [1,6]}
+
+    __shell_AvgZ__ = {  'CH': 3.19, 
+                        'HDC': 6., 
+                        'SiO2': 10., 
+                        'Be': 4.,
+                        'CHGe': 3.248,
+                        'CHSi': 3.233,
+                        'CH2': 2.665}
+
+    __shell_F__ = {     'CH': [0.572,0.423,0.005], 
+                        'HDC': [1], 
+                        'SiO2': [0.333,0.667], 
+                        'Be': [1],
+                        'CHGe': [0.571,0.422,0.005,0.002],
+                        'CHSi': [0.570,0.421,0.005,0.004],
+                        'CH2': [0.667,0.333]}
 
     # some info for the gas:
     rho_D2_STP = 2 * 0.08988e-3  # density of D2 gas at STP [g/cc]
@@ -54,7 +103,7 @@ class rhoR_Model(object):
     def_rho_Abl_Min = 0.1  # g/cc
     def_rho_Abl_Scale = 70e-4  # [cm]
     # Fraction of CH mixed into the hot spot
-    def_MixF = 0.025
+    def_MixF = 0.005
     # thickness of the shell in-flight
     def_Tshell = 40e-4  # [cm]
     # mass remaining of the shell:
@@ -68,7 +117,7 @@ class rhoR_Model(object):
 
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
-                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.025,
+                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
                  Tshell=40e-4, Mrem=0.15, E0=14.7):
         """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
         :param shell_mat: (optional) the shell material to use {default='CH'}
@@ -179,10 +228,10 @@ class rhoR_Model(object):
         r = self.Ri
         dr = r/50.
         Eout = self.__precompute_Eout__(r)
-        while Eout > 0.1:
+        while Eout > 0.:
             Eout = self.__precompute_Eout__(r)
             rhoR = self.rhoR_Total(r)
-            if Eout > 0.1:
+            if Eout >= 0.:
                 self.__RcmList__.append(r)
                 self.__EoutList__.append(Eout)
                 self.__rhoRList__.append(rhoR)

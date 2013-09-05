@@ -32,19 +32,19 @@ class rhoR_Analysis(object):
     def_rho_Abl_Min_Err = 0.05  # g/cc
     def_rho_Abl_Scale_Err = 30e-4  # [cm]
     # Fraction of CH mixed into the hot spot
-    def_MixF_Err = 0.025
+    def_MixF_Err = 0.005
     # thickness and mass remaining:
     def_Tshell_Err = 10e-4
     def_Mrem_Err = 0.05
 
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
-                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.025,
+                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
                  Tshell=40e-4, Mrem=0.175, E0=14.7,
                  Ri_Err=5e-4, Ro_Err=5e-4, P0_Err=1, fD_Err=0, f3He_Err=0,
                  Te_Gas_Err=2,Te_Shell_Err=0.1, Te_Abl_Err=0.1, Te_Mix_Err=0.2,
                  rho_Abl_Max_Err=0.5, rho_Abl_Min_Err=0.05, rho_Abl_Scale_Err=30e-4,
-                 MixF_Err=0.025, Tshell_Err=10e-4, Mrem_Err=0.05):
+                 MixF_Err=0.005, Tshell_Err=10e-4, Mrem_Err=0.05):
         """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
         :param shell_mat: (optional) the shell material to use {default='CH'}
         :param Ri: (optional) initial shell inner radius [cm] {default=0.09}

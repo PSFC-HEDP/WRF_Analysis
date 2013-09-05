@@ -4,13 +4,22 @@ from Analysis.rhoR_Analysis import *
 from numpy import arange, zeros
 import os
 import matplotlib
+import math
 
 __author__ = 'Alex Zylstra'
 
-def plot_rhoR_v_Energy(analysis, filename):
+def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None):
     """Plot rhoR model's curve versus energy.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot
+    :param E0: (optional) The initial proton energy in MeV [default=14.7]
+    :param dE: (optional) The energy step size in MeV [default=14.7]
+    :param Emin: (optional) minimum energy to plot in MeV [default=5]
+    :param Emax: (optional) maximum energy to plot in MeV [default=14]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param color: (optional) matplotlib color character [default='k']
+    :param title: (optional) Title to display over the plot [default=None]
+    :param old_models: (optional) functional forms of previous models to overplot [default=None]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -29,10 +38,6 @@ def plot_rhoR_v_Energy(analysis, filename):
     RhoRListMinusErr = []
 
     # energies:
-    dE = 0.5 #step for plot points
-    E0 = 14.7 #initial protons
-    Emax = 14.0 # Max plot energy
-    Emin = 5.0 # min plot energy
     for i in arange(Emin, Emax, dE):
         EnergyList.append(i)
         # get result, then add it to the appropriate lists:
@@ -41,31 +46,64 @@ def plot_rhoR_v_Energy(analysis, filename):
         RhoRListPlusErr.append(temp[0] + temp[2])
         RhoRListMinusErr.append(temp[0] - temp[2])
 
-
     # make a plot, and add curves for the rhoR model
     # and its error bars:
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(RhoRList, EnergyList, 'b-')
-    ax.plot(RhoRListPlusErr, EnergyList, 'b--')
-    ax.plot(RhoRListMinusErr, EnergyList, 'b--')
+    p0, = ax.plot(RhoRList, EnergyList, color+'-')
+    ax.plot(RhoRListPlusErr, EnergyList, color+'--')
+    ax.plot(RhoRListMinusErr, EnergyList, color+'--')
+
+    if old_models is not None:
+        plots = [p0]
+        names = ['This Model']
+
+        for i in range(len(old_models)):
+            name = old_models[i][1]
+            model = old_models[i][0]
+
+            # calculate list to plot
+            x = []
+            y = []
+            for j in arange(Emin, Emax, dE):
+                y.append(j)
+                x.append(model(j))
+
+            p1, = ax.plot(x,y)
+            plots.append( p1 )
+            names.append( name )
+
+        # make the legend:
+        ax.legend(plots, names)
+
+
+
 
     # set some options:
-    ax.set_ylim([0, 15])
-    ax.grid(True)
+    ax.set_ylim([0, math.ceil(E0)])
+    ax.grid(grid)
     # add labels:
     ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
     ax.set_ylabel(r'Energy (MeV)')
-    #ax.set_title(r'$\rho$R Model')
+    if title is not None:
+        ax.set_title(r'$\rho$R Model')
 
     #plt.show()
     fig.savefig(filename)
 
 
-def plot_Rcm_v_Energy(analysis, filename):
+def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None):
     """Plot rhoR model's curve of Rcm versus energy.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
+    :param E0: (optional) The initial proton energy in MeV [default=14.7]
+    :param dE: (optional) The energy step size in MeV [default=14.7]
+    :param Emin: (optional) minimum energy to plot in MeV [default=5]
+    :param Emax: (optional) maximum energy to plot in MeV [default=14]
+    :param Eerr: (optional) the energy error bar in MeV [default=0.13]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param color: (optional) matplotlib color character [default='k']
+    :param title: (optional) Title to display over the plot [default=None]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -86,11 +124,6 @@ def plot_Rcm_v_Energy(analysis, filename):
     RcmListMinusErrEnergy = []
 
     # energies:
-    dE = 0.5 #step for plot points
-    E0 = 14.7 #initial protons
-    Emax = 14.0 # Max plot energy
-    Emin = 5.0 # min plot energy
-    Eerr = 0.13
     for i in arange(Emin, Emax, dE):
         EnergyList.append(i)
         # get result, then add it to the appropriate lists:
@@ -109,30 +142,35 @@ def plot_Rcm_v_Energy(analysis, filename):
     # and its error bars:
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(RcmList, EnergyList, 'b-')
-    ax.plot(RcmListPlusErr, EnergyList, 'b--')
-    ax.plot(RcmListMinusErr, EnergyList, 'b--')
-    ax.plot(RcmListPlusErrEnergy, EnergyList, 'b:')
-    ax.plot(RcmListMinusErrEnergy, EnergyList, 'b:')
+    ax.plot(RcmList, EnergyList, color+'-')
+    ax.plot(RcmListPlusErr, EnergyList, color+'--')
+    ax.plot(RcmListMinusErr, EnergyList, color+'--')
+    ax.plot(RcmListPlusErrEnergy, EnergyList, color+':')
+    ax.plot(RcmListMinusErrEnergy, EnergyList, color+':')
 
     # set some options:
-    ax.set_ylim([0, 15])
-    ax.grid(True)
+    ax.set_ylim([0, math.ceil(E0)])
+    ax.grid(grid)
     # add labels:
     ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
     ax.set_ylabel(r'Energy (MeV)')
-    #ax.set_title(r'$\rho$R Model')
+    if title is not None:
+        ax.set_title(title)
 
     #plt.show()
     fig.savefig(filename)
 
 
-def plot_rhoR_v_Rcm(analysis, filename):
+def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None):
     """Plot rhoR model's curve versus center-of-mass radius.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
+    :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
+    :param dr: (optional) step size to use for Rcm in cm [default=0.001]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param color: (optional) matplotlib color character [default='k']
+    :param title: (optional) Title to display over the plot [default=None]
     """
-
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
         return
@@ -152,8 +190,6 @@ def plot_rhoR_v_Rcm(analysis, filename):
     Rcm = analysis.Ri[1]
 
     # energies:
-    dr = 10e-4 #step for plot points
-    Rmin = 150e-4 # Minimum radius to plot
     for i in arange(Rmin, Rcm, dr):
         RcmList.append(i * 1e4)
         # get result, then add it to the appropriate lists, for total error bar:
@@ -167,27 +203,30 @@ def plot_rhoR_v_Rcm(analysis, filename):
     # and its error bars:
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(RcmList, RhoRList, 'b-')
-    ax.plot(RcmList, RhoRListPlusErr, 'b--')
-    ax.plot(RcmList, RhoRListMinusErr, 'b--')
+    ax.plot(RcmList, RhoRList, color+'-')
+    ax.plot(RcmList, RhoRListPlusErr, color+'--')
+    ax.plot(RcmList, RhoRListMinusErr, color+'--')
 
     # set some options:
-    #ax.set_ylim([0,Rcm])
-    ax.grid(True)
+    ax.grid(grid)
     # add labels:
     ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
     ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
-    #ax.set_title(r'$\rho$R Model')
+    if title is not None:
+        ax.set_title(title)
 
     #plt.show()
     fig.savefig(filename)
 
 
-def plot_profile(analysis, Rcm, filename):
+def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None):
     """Plot the mass profile for a given center-of-mass radius
     :param analysis: the rhoR analysis model to plot
     :param Rcm: the center of mass radius to use for the plot [cm]
+    :param dr: (optional) step size for Rcm in cm [default=0.001]
     :param filename: where to save the plot to
+    :param xlim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
+    :param ylim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     """
 
     #sanity check:
@@ -233,9 +272,10 @@ def plot_profile(analysis, Rcm, filename):
     ax.plot(Abl_x, Abl_y, 'g-')
     ax.fill_between(Abl_x, Abl_y, zeros(len(Abl_x)), color='g')
 
-    ax.set_ylim([0, int(1.1 * rho_Shell)])
-    ax.set_ylim([0, 25])
-    #plt.yscale('log')
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
     ax.set_xlabel(r'Radius ($\mu$m)')
     ax.set_ylabel(r'$\rho$ (g/cm$^3$)')
 
@@ -243,12 +283,97 @@ def plot_profile(analysis, Rcm, filename):
     #plt.show()
     fig.savefig(filename)
 
+def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False):
+    """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
+    :param analysis: the rhoR analysis model to plot
+    :param filename: where to save the plot to
+    :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
+    :param dr: (optional) step size for Rcm in cm [default=0.001]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param color: (optional) matplotlib color character [default='k']
+    :param title: (optional) Title to display over the plot [default=None]
+    """
+    #sanity check:
+    if not isinstance(analysis, rhoR_Analysis):
+        return
 
-def compare_rhoR_v_Energy(analyses, filename, names=None):
+    # import matplotlib
+    import matplotlib
+    import matplotlib.pyplot as plt
+    if matplotlib.get_backend() != 'agg':
+        plt.switch_backend('Agg')
+
+    # lists of things to plot:
+    RcmList = []
+    FuelList = []
+    MixList = []
+    ShellList = []
+    AblList = []
+    # start at the inner radius of the shell:
+    Rcm = analysis.Ri[1]
+
+    # energies:
+    for i in arange(Rmin, Rcm, dr):
+        RcmList.append(i * 1e4)
+        # get the components at this CM radius:
+        FuelList.append(analysis.model.rhoR_Gas(i))
+        MixList.append(analysis.model.rhoR_Mix(i))
+        ShellList.append(analysis.model.rhoR_Shell(i))
+        AblList.append(analysis.model.rhoR_Abl(i))
+
+    # optionally normalize the plot to the total rhoR
+    if normalize:
+        for i in range(len(RcmList)):
+            total = FuelList[i] + MixList[i] + ShellList[i] + AblList[i]
+            FuelList[i] = FuelList[i] / total
+            MixList[i] = MixList[i] / total
+            ShellList[i] = ShellList[i] / total
+            AblList[i] = AblList[i] / total
+
+    # make a plot, and add curves for the rhoR model
+    # and its error bars:
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(RcmList, FuelList, 'r-')
+    ax.plot(RcmList, MixList, 'r--')
+    ax.plot(RcmList, ShellList, 'b-')
+    ax.plot(RcmList, AblList, 'g-')
+
+    # for normalized plots, set y limits, and move the legend:
+    if normalize:
+        ax.set_ylim([0,1])
+        loc=9
+    else:
+        loc=1
+    ax.legend(['Fuel','Mix','Shell','Ablated Mass'], loc=loc)
+
+    # set some options:
+    ax.grid(grid)
+    # add labels:
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
+    if normalize:
+        ax.set_ylabel(r'Fractional $\rho$R')
+    if title is not None:
+        ax.set_title(title)
+
+    #plt.show()
+    fig.savefig(filename)
+
+
+
+def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None):
     """Compare several rhoR models by plotting rhoR vs energy for them.
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None
+    :param styles: Particlar styles to use for each analysis, optional
+    :param E0: (optional) The initial proton energy in MeV [default=14.7]
+    :param dE: (optional) The energy step size in MeV [default=14.7]
+    :param Emin: (optional) minimum energy to plot in MeV [default=5]
+    :param Emax: (optional) maximum energy to plot in MeV [default=14]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param title: (optional) Title to display over the plot [default=None]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -271,10 +396,6 @@ def compare_rhoR_v_Energy(analyses, filename, names=None):
         RhoRList = []
 
         # energies:
-        dE = 0.2 #step for plot points
-        E0 = 14.7 #initial protons
-        Emax = 14.0 # Max plot energy
-        Emin = 5.0 # min plot energy
         for i in arange(Emin, Emax, dE):
             EnergyList.append(i)
             # get result, then add it to the appropriate lists:
@@ -284,23 +405,148 @@ def compare_rhoR_v_Energy(analyses, filename, names=None):
         plot_x.append(RhoRList)
         plot_y.append(EnergyList)
 
+    # make a plot, and add curves for the rhoR model
+    # and its error bars:
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i in range(len(plot_x)):
+        opts = []
+        if styles is not None:
+            opts.append(styles[i])
+        ax.plot(plot_x[i], plot_y[i], *opts)
+    if names is not None:
+        ax.legend(names)
+
+    # set some options:
+    ax.set_ylim([0, math.ceil(E0)])
+    ax.grid(grid)
+    # add labels:
+    ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
+    ax.set_ylabel(r'Energy (MeV)')
+    if title is not None:
+        ax.set_title(title)
+
+    fig.savefig(filename)
+
+
+def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None):
+    """Compare several rhoR models by plotting Rcm vs rhoR for them.
+    :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
+    :param filename: where to save the plot
+    :param names: Labels for the models, legend is only generated if names is not None
+    :param styles: Particlar styles to use for each analysis, optional
+    :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
+    :param dr: (optional) step size to use for Rcm in cm [default=0.001]
+    :param grid: (optional) whether to show a grid on the plot [default=False]
+    :param title: (optional) Title to display over the plot [default=None]
+    """
+    #sanity check:
+    assert isinstance(analyses, list)
+    for x in analyses:
+        assert isinstance(x, rhoR_Model)
+
+    # import matplotlib
+    import matplotlib
+    import matplotlib.pyplot as plt
+    if matplotlib.get_backend() != 'agg':
+        plt.switch_backend('Agg')
+
+    plot_x = []
+    plot_y = []
+
+    # iterate over models:
+    for analysis in analyses:
+        # lists of things to plot:
+        RcmList = []
+        RhoRList = []
+
+        # iterate over Rcm
+        for i in arange(Rmin, analysis.Ri, dr):
+            RcmList.append(i * 1e4)
+            # get result, then add it to the appropriate lists, for total error bar:
+            temp = analysis.rhoR_Total(i)
+            RhoRList.append(temp)
+
+        plot_x.append(RcmList)
+        plot_y.append(RhoRList)
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
-        ax.plot(plot_x[i], plot_y[i])
+        opts = []
+        if styles is not None:
+            opts.append(styles[i])
+        ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
         ax.legend(names)
 
     # set some options:
-    ax.set_ylim([0, 15])
-    ax.grid(True)
+    ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
-    ax.set_ylabel(r'Energy (MeV)')
-    #ax.set_title(r'$\rho$R Model')
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)')
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
+    if title is not None:
+        ax.set_title(title)
 
-    #plt.show()
+    fig.savefig(filename)
+
+
+def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None):
+    """Compare several rhoR models by plotting Rcm vs energy for them.
+    :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
+    :param filename: where to save the plot
+    :param names: Labels for the models, legend is only generated if names is not None
+    """
+    #sanity check:
+    assert isinstance(analyses, list)
+    for x in analyses:
+        assert isinstance(x, rhoR_Model)
+
+    # import matplotlib
+    import matplotlib
+    import matplotlib.pyplot as plt
+    if matplotlib.get_backend() != 'agg':
+        plt.switch_backend('Agg')
+
+    plot_x = []
+    plot_y = []
+
+    # iterate over models:
+    for analysis in analyses:
+        # lists of things to plot:
+        EnergyList = []
+        RcmList = []
+
+        # energies:
+        for i in arange(Emin, Emax, dE):
+            # get result, then add it to the appropriate lists:
+            temp = analysis.Calc_rhoR(i)
+            RcmList.append(temp[1]*1.e4)
+            EnergyList.append(i)
+
+        plot_x.append(RcmList)
+        plot_y.append(EnergyList)
+
+    # make a plot, and add curves for the rhoR model
+    # and its error bars:
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for i in range(len(plot_x)):
+        opts = []
+        if styles is not None:
+            opts.append(styles[i])
+        ax.plot(plot_x[i], plot_y[i], *opts)
+    if names is not None:
+        ax.legend(names)
+
+    # set some options:
+    ax.grid(grid)
+    # add labels:
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)')
+    ax.set_ylabel(r'E (MeV)')
+    if title is not None:
+        ax.set_title(title)
+
     fig.savefig(filename)

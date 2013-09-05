@@ -8,3 +8,5 @@ test/runAnalysis/AnalysisOutputs
 *.pyc
 
 *.pyc
+
+*.pyc
