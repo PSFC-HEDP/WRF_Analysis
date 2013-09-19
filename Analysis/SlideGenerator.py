@@ -5,6 +5,7 @@ import numpy
 
 __author__ = 'Alex Zylstra'
 
+
 def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', interactive=False):
     """Make a summary slide and show it on the screen.
     :param Fit: the GaussFit object which describes the fit to the data
@@ -75,19 +76,20 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     # top right box for text info:
     ax2.set_ylim([-1, 1])
     ax2.set_xlim([-1, 1])
-    text = summary
-    text += '\n'
+    dy = 2. / (2+len(results))
+    # display summary results:
+    y = 1-dy
+    ax2.text(0, y, summary, ha='center', va='center')
     for substr in results:
-        text += substr
-        text += '\n'
-    ax2.text(0, 0, text, ha='center', va='center')
+        y -= dy
+        ax2.text(0, y, substr, ha='center', va='center')
     ax2.get_xaxis().set_visible(False)
     ax2.get_yaxis().set_visible(False)
 
     # top left box for N(x,y):
     if Nxy is not None:
         ax1.imshow(Nxy, interpolation='nearest')
-        ax1.set_title('N(x,y)')
+        ax1.set_title(r'N(x,y)')
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
 
@@ -104,8 +106,11 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
 
     # plot final spectrum:
     if Fit is not None:
-        Fit.plot(ax4)
+       Fit.plot(ax4)
 
     matplotlib.rcParams.update({'font.size': 12})
+    # if we are using TeX for rendering, then fix underscores:
+    if matplotlib.rcParams['text.usetex'] == True:
+        name = name.replace('_', r'$\textunderscore$')
     fig.suptitle(name, fontsize=24)
     return fig

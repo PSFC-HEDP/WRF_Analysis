@@ -38,11 +38,17 @@ class AddShot(tk.Toplevel):
         self.shot_name = tk.Entry(self, textvariable=self.shot_name_var)
         self.shot_name.grid(row=1, column=1, columnspan=2)
 
+        self.label0 = tk.Label(self, text='Hohlraum Drawing')
+        self.label0.grid(row=2, column=0)
+        self.hohl_draw_var = tk.StringVar()
+        self.hohl_draw = tk.Entry(self, textvariable=self.hohl_draw_var)
+        self.hohl_draw.grid(row=2, column=1, columnspan=2)
+
         ttk_sep_1 = ttk.Separator(self, orient="vertical")
-        ttk_sep_1.grid(row=2, column=0, columnspan=3, sticky='ew')
+        ttk_sep_1.grid(row=3, column=0, columnspan=3, sticky='ew')
 
         self.label2 = tk.Label(self, text='WRF Used:')
-        self.label2.grid(row=3, column=0)
+        self.label2.grid(row=4, column=0)
 
         # add drop downs for WRF options:
         opts = ['', 'AAA10-108020-02', 'AAA10-108020-07', 'AAA10-108020-08', 'AAA10-108020-10', 'other']
@@ -53,21 +59,21 @@ class AddShot(tk.Toplevel):
         for dim in range(len(DIMs)):
             # add a label for the DIM 'column'
             label = tk.Label(self, text=DIMs[dim])
-            label.grid(row=3, column=dim+1)
+            label.grid(row=4, column=dim+1)
 
             # add the info for each position:
             for pos in range(1,positions+1):
                 # add a label on the first iteration only:
                 if dim == 0:
                     label2 = tk.Label(self, text='Pos '+str(pos))
-                    label2.grid(row=3+pos, column=0)
+                    label2.grid(row=4+pos, column=0)
 
                 # add a dropdown to select wedge type
                 var = tk.StringVar()
                 menu = tk.OptionMenu(self, var, *opts)
                 menu.configure(width=20)
                 var.set(opts[0])
-                menu.grid(row=3+pos, column=1+dim)
+                menu.grid(row=4+pos, column=1+dim)
                 menu.configure(takefocus='1')  # allow keyboard focus
                 self.WRF_Info.append([DIMs[dim], pos, var, menu])
 
@@ -75,26 +81,27 @@ class AddShot(tk.Toplevel):
             snout_opts = self.snout_db.get_names()
             snout_var = tk.StringVar()
             snout = tk.OptionMenu(self, snout_var, *snout_opts)
-            snout.grid(row=8, column=1+dim)
+            snout.grid(row=9, column=1+dim)
             self.Snout_Info.append([DIMs[dim], snout_var, snout])
 
         self.label3 = tk.Label(self, text='Snout')
-        self.label3.grid(row=8, column=0)
+        self.label3.grid(row=9, column=0)
 
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
-        ttk_sep_2.grid(row=9, column=0, columnspan=3, sticky='ew')
+        ttk_sep_2.grid(row=10, column=0, columnspan=3, sticky='ew')
 
         # add buttons to both cancel and go
         self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
-        self.cancel_button.grid(row=10, column=0)
+        self.cancel_button.grid(row=11, column=0)
         self.go_button = tk.Button(self, text='Submit', command=self.add_shot)
-        self.go_button.grid(row=10, column=1, columnspan=2, sticky='s')
+        self.go_button.grid(row=11, column=1, columnspan=2, sticky='s')
 
     def add_shot(self):
         """Script to generate calls to add shots."""
         # get the top-level info
         shot_num = self.shot_num_var.get()
         shot_name = self.shot_name_var.get()
+        hohl_draw = self.hohl_draw_var.get()
 
         # remove unused rows:
         WRFs = []
@@ -117,6 +124,7 @@ class AddShot(tk.Toplevel):
             # iterate over the rows of info in the editor:
             for i in range(len(dialog.labels)):
                 label = dialog.labels[i].cget('text')
+
                 # set all of the appropriate text boxes
                 if label == 'shot':
                     dialog.vars[i].set(shot_num)
@@ -128,6 +136,10 @@ class AddShot(tk.Toplevel):
 
                 if label == 'shot_name':
                     dialog.vars[i].set(shot_name)
+                    dialog.entries[i].configure(state='disabled')
+
+                if label == 'hohl_drawing':
+                    dialog.vars[i].set(hohl_draw)
                     dialog.entries[i].configure(state='disabled')
 
                 if label == 'dim':
@@ -154,11 +166,11 @@ class AddShot(tk.Toplevel):
                 # there are also text boxes that should be grayed out
                 # for given wedge types:
                 if row[2].get() == 'AAA10-108020-08':  # config w/o neutronics
-                    if label == 'cr_39_2_id' or label == 'cr_39_3_id' or label == 'poly_1' or label == 'poly_2':
+                    if label == 'cr39_2_id' or label == 'cr39_3_id' or label == 'poly_1' or label == 'poly_2':
                         dialog.entries[i].configure(state='disabled')
 
                 if row[2].get() == 'AAA10-108020-10':  # config w/ indium
-                    if label == 'cr_39_3_id' or label == 'poly_2':
+                    if label == 'cr39_3_id' or label == 'poly_2':
                         dialog.entries[i].configure(state='disabled')
                     if label == 'poly_1':  # 100um poly for this drawing
                         dialog.vars[i].set('100')

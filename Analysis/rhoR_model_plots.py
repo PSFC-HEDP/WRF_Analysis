@@ -8,7 +8,7 @@ import math
 
 __author__ = 'Alex Zylstra'
 
-def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None):
+def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(4,3)):
     """Plot rhoR model's curve versus energy.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot
@@ -20,6 +20,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
     :param old_models: (optional) functional forms of previous models to overplot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -48,7 +49,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     p0, = ax.plot(RhoRList, EnergyList, color+'-')
     ax.plot(RhoRListPlusErr, EnergyList, color+'--')
@@ -74,7 +75,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
             names.append( name )
 
         # make the legend:
-        ax.legend(plots, names)
+        ax.legend(plots, names, fontsize=10, loc=3, ncol=2)
 
 
 
@@ -83,16 +84,16 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
-    ax.set_ylabel(r'Energy (MeV)')
+    ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=12)
     if title is not None:
-        ax.set_title(r'$\rho$R Model')
+        ax.set_title(r'$\rho$R Model', fontsize=12)
 
     #plt.show()
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
-def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None):
+def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(4,3)):
     """Plot rhoR model's curve of Rcm versus energy.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
@@ -104,6 +105,7 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -140,7 +142,7 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, EnergyList, color+'-')
     ax.plot(RcmListPlusErr, EnergyList, color+'--')
@@ -152,16 +154,16 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
-    ax.set_ylabel(r'Energy (MeV)')
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=12)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
 
     #plt.show()
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
-def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None):
+def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(4,3)):
     """Plot rhoR model's curve versus center-of-mass radius.
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
@@ -170,6 +172,7 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -201,7 +204,7 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, RhoRList, color+'-')
     ax.plot(RcmList, RhoRListPlusErr, color+'--')
@@ -210,16 +213,16 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
-    ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
 
     #plt.show()
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
-def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None):
+def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(4,3)):
     """Plot the mass profile for a given center-of-mass radius
     :param analysis: the rhoR analysis model to plot
     :param Rcm: the center of mass radius to use for the plot [cm]
@@ -227,6 +230,7 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None):
     :param filename: where to save the plot to
     :param xlim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     :param ylim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
 
     #sanity check:
@@ -262,7 +266,7 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None):
         Abl_x.append(x * 1e4)
 
     # make a plot window:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     # add plots for three regions:
     ax.plot(Gas_x, Gas_y, 'r-')
@@ -276,14 +280,14 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None):
         ax.set_xlim(xlim)
     if ylim is not None:
         ax.set_ylim(ylim)
-    ax.set_xlabel(r'Radius ($\mu$m)')
-    ax.set_ylabel(r'$\rho$ (g/cm$^3$)')
+    ax.set_xlabel(r'Radius ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'$\rho$ (g/cm$^3$)', fontsize=12)
 
     #show the plot:
     #plt.show()
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
-def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False):
+def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False, figsize=(4,3)):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
@@ -292,6 +296,7 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -332,7 +337,7 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, FuelList, 'r-')
     ax.plot(RcmList, MixList, 'r--')
@@ -345,24 +350,24 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
         loc=9
     else:
         loc=1
-    ax.legend(['Fuel','Mix','Shell','Ablated Mass'], loc=loc)
+    ax.legend(['Fuel','Mix','Shell','Ablated'], loc=loc, fontsize=10, ncol=2)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)')
-    ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
     if normalize:
-        ax.set_ylabel(r'Fractional $\rho$R')
+        ax.set_ylabel(r'Fractional $\rho$R', fontsize=12)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
 
     #plt.show()
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
 
-def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None):
+def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting rhoR vs energy for them.
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
@@ -374,6 +379,7 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
     :param Emax: (optional) maximum energy to plot in MeV [default=14]
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param title: (optional) Title to display over the plot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -407,7 +413,7 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []
@@ -415,21 +421,21 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names)
+        ax.legend(names, fontsize=10)
 
     # set some options:
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$\rho$R (g/cm$^2$)')
-    ax.set_ylabel(r'Energy (MeV)')
+    ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=12)
     if title is not None:
         ax.set_title(title)
 
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
-def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None):
+def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting Rcm vs rhoR for them.
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
@@ -439,6 +445,7 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
     :param dr: (optional) step size to use for Rcm in cm [default=0.001]
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param title: (optional) Title to display over the plot [default=None]
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -472,7 +479,7 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []
@@ -480,24 +487,25 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names)
+        ax.legend(names, fontsize=10)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)')
-    ax.set_ylabel(r'$\rho$R (g/cm$^2$)')
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
 
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')
 
 
-def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None):
+def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting Rcm vs energy for them.
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None
+    :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -531,7 +539,7 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []
@@ -539,14 +547,14 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names)
+        ax.legend(names, loc=4, fontsize=10)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)')
-    ax.set_ylabel(r'E (MeV)')
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=12)
+    ax.set_ylabel(r'E (MeV)', fontsize=12)
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
 
-    fig.savefig(filename)
+    fig.savefig(filename, bbox_inches='tight')

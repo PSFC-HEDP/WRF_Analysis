@@ -191,7 +191,7 @@ class WRF_Data_DB(Generic_DB):
 
         # get the latest date if one is not supplied:
         if date is None:
-            date = self.__latest_date__(shot, dim, position)
+            date = self.__latest_date__(shot, dim, position, corr)
 
         # get the data:
         query = self.c.execute('SELECT spectrum from %s where shot=? AND dim=? AND position=? AND hohl_corr=? AND date=?'
@@ -278,8 +278,8 @@ class WRF_Data_DB(Generic_DB):
             return
 
         # check for duplicates, shot/dim/position/date should be unique:
-        query = self.c.execute('SELECT * from %s where shot=? AND dim=? AND position=? AND date=?'
-                                % self.TABLE, (shot, dim, position, date,))
+        query = self.c.execute('SELECT * from %s where shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?'
+                                % self.TABLE, (shot, dim, position, date,hohl_corr,))
 
         # not found:
         if len(query.fetchall()) <= 0:
@@ -294,29 +294,38 @@ class WRF_Data_DB(Generic_DB):
         # otherwise, update existing row:
         else:
             # update the spectrum:
-            command = 'UPDATE %s set [spectrum]=? WHERE shot=? AND dim=? AND position=? AND date=?' % self.TABLE
-            self.c.execute(command, (shot, dim, position, date, bin_spectrum,))
+            command = 'UPDATE %s set [spectrum]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
+            self.c.execute(command, (shot, dim, position, date, hohl_corr, bin_spectrum,))
             # update the image if appropriate:
             if image is not None:
-                command = 'UPDATE %s set [nxy]=? WHERE shot=? AND dim=? AND position=? AND date=?' % self.TABLE
-                self.c.execute(command, (shot, dim, position, date, bin_image,))
+                command = 'UPDATE %s set [nxy]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
+                self.c.execute(command, (shot, dim, position, date, hohl_corr, bin_image,))
 
         self.db.commit()
 
-    def __latest_date__(self, shot, dim, position):
+    def __latest_date__(self, shot, dim, position, corr=None):
         """Get the latest (i.e. most recent) date available for the given shot, DIM, and position.
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1
+        :param corr: If we want corrected or uncorrected spectrum (optional)
         """
         # sanity checks:
         assert isinstance(shot, str)
         assert isinstance(dim, str)
         assert isinstance(position, int) or isinstance(position, str)
 
-        query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=?'
-                               % self.TABLE,
-                              (shot, dim, position,))
+        # result without specified corr:
+        if corr is None:
+            query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=?'
+                                   % self.TABLE,
+                                  (shot, dim, position,))
+        else:
+            # sanity check:
+            assert isinstance(corr, bool)
+            query = self.c.execute('SELECT Distinct date from %s where shot=? AND dim=? AND position=? AND hohl_corr=?'
+                                   % self.TABLE,
+                                  (shot, dim, position,corr,))
 
         # array conversion:
         avail_date = flatten(array_convert(query))

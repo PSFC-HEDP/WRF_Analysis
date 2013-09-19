@@ -510,24 +510,30 @@ class Hohlraum(object):
 
         # add text with fit parameters
         # location for the text: (based on line position)
-        x = self.get_fit_corr()[1] + 4 * self.get_fit_corr()[2]
-        y = self.get_fit_corr()[0] * 1 / 2
+        x = self.get_fit_corr()[1] + 3 * self.get_fit_corr()[2]
+        y = self.get_fit_corr()[0] * 3 / 4
         # construct a text string to display:
-        text = '\n'
-        text += r'$E_{raw}$ = ' + '{:.2f}'.format(self.get_fit_raw()[1]) + ' MeV'
-        text += '\n'
-        text += r'$E_{corr}$ = ' + '{:.2f}'.format(self.get_fit_corr()[1]) + ' MeV'
+        text = r'$E_{raw}$ = ' + '{:.2f}'.format(self.get_fit_raw()[1]) + ' MeV'
         # write text to the plot:
         ax.text(x, y,  # data
                 text,  # text to display
-                color='black',
-                backgroundcolor='white',  # fill background
-                bbox=dict(ec='black', fc='white', alpha=1.0))  # add black boundary
+                color='red',
+                backgroundcolor='white')  # fill background
+                #bbox=dict(ec='red', fc='white', alpha=1.0, pad=1.1))  # add boundary
+        x = self.get_fit_corr()[1] + 3 * self.get_fit_corr()[2]
+        y = self.get_fit_corr()[0] * 1 / 2
+        text = r'$E_{corr}$ = ' + '{:.2f}'.format(self.get_fit_corr()[1]) + ' MeV'
+        # write text to the plot:
+        ax.text(x, y,  # data
+                text,  # text to display
+                color='blue',
+                backgroundcolor='white')  # fill background
+                #bbox=dict(ec='blue', fc='white', alpha=1.0, pad=1.1))  # add boundary
 
         ax.grid(True)
-        ax.set_xlabel('Energy (MeV)')
-        ax.set_ylabel('Yield/MeV')
-        ax.set_title('Hohlraum Correction')
+        ax.set_xlabel(r'Energy (MeV)')
+        ax.set_ylabel(r'Yield/MeV')
+        ax.set_title(r'Hohlraum Correction')
 
     def plot_hohlraum_file(self, fname):
         """Save a hohlraum profile plot to file.

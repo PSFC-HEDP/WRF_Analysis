@@ -13,9 +13,11 @@ from GUI.widgets.Option_Prompt import Option_Prompt
 from GUI.widgets.Model_Frame import Model_Frame
 from GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
 import math
+import matplotlib
 from Analysis.Analyze_Spectrum import Analyze_Spectrum
 from Analysis.rhoR_Analysis import rhoR_Analysis
 from Analysis.rhoR_Model import rhoR_Model
+
 
 class WRF_Analyzer(tk.Toplevel):
     """Implement a GUI dialog for providing input to the WRF analysis."""
@@ -133,6 +135,11 @@ class WRF_Analyzer(tk.Toplevel):
         """Run the analysis routine for the selected parameters"""
         # get the spectrum and image:
         spectrum = self.data_db.get_spectrum(self.shot, self.dim, self.pos, False)
+        # sanity check:
+        if spectrum is None:  # TODO: troubleshoot, seems to have issues with multiple available spectra
+            from tkinter.messagebox import showerror
+            showerror('Error', 'Could not load spectrum from database')
+            return
         try:
             Nxy = self.data_db.get_Nxy(self.shot, self.dim, self.pos, False)
         except TypeError:  # data not found
@@ -150,12 +157,27 @@ class WRF_Analyzer(tk.Toplevel):
 
         # get a name and summary
         name = self.shot + '_' + self.dim + '_Pos' + self.pos
-        summary = self.shot + ' / ' + self.setup_db.query_col(self.shot, self.dim, self.pos, 'shot_name')[0]
+        # Get the shot title/name description thing
+        shot_name_query = self.setup_db.query_col(self.shot, self.dim, self.pos, 'shot_name')
+        # check for errors
+        if shot_name_query is None or len(shot_name_query) is 0:
+            from tkinter.messagebox import showerror
+            showerror('Error', 'Could not load shot meta info (name), aborting analysis. Add it to the setup DB.')
+            return
+        summary = self.shot + ' , ' + shot_name_query[0]
+        # if we are using TeX for rendering, then fix underscores:
+        if matplotlib.rcParams['text.usetex'] == True:
+            summary = summary.replace('_',r'$\textunderscore$')
+        #summary = summary.encode('unicode-escape')
 
         # get the hohlraum wall:
         snout = self.setup_db.query_col(self.shot, self.dim, self.pos, 'snout')[0]
         hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
         wall = self.hohl_db.get_wall(drawing=hohl_drawing)
+        if wall is None or len(wall) == 0:
+            from tkinter.messagebox import showerror
+            showerror('Error', 'Could not load hohlraum definition for '+hohl_drawing)
+            return
 
         # calculate angles:
         theta = self.snout_db.get_theta(snout, self.dim, self.pos)[0]
@@ -166,7 +188,8 @@ class WRF_Analyzer(tk.Toplevel):
         # ask if we should generate rhoR plots
         from tkinter.filedialog import askdirectory
         opts = dict(mustexist='False',
-                       initialdir=Database.DIR)
+                       initialdir=Database.DIR,
+                       title='Save files to')
         OutputDir = askdirectory(**opts)
         # sanity check:
         if OutputDir == '':  # user cancelled

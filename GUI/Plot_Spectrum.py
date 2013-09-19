@@ -130,11 +130,12 @@ class Plot_Spectrum(tk.Toplevel):
         shot = self.shot_var.get()  # selected shot
         dim = self.dim_var.get()  # selected DIM
         pos = self.pos_var.get()  # selected position
-        corr = self.corr_var.get()  # if the hohlraum is corrected
+        corr = bool(self.corr_var.get())  # if the hohlraum is corrected
 
         # generate axes if necessary:
         if self.ax is None:
-            self.fig = plt.Figure(figsize=(4,3))
+            #self.fig = plt.Figure(figsize=(4,3))
+            self.fig = plt.Figure()
             self.ax = self.fig.add_subplot(111)
         else:  # if ax exists, clear it:
             self.ax.clear()

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-# TODO: add hohlraum-corrected spectrum to database
-
 __author__ = 'Alex Zylstra'
-__date__ = '2013-07-30'
+__date__ = '2013-09-19'
+__version__ = '0.1.0'
 
 import tkinter as tk
 import ttk

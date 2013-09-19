@@ -343,21 +343,36 @@ class GaussFit(object):
         # add text with fit parameters
         # location for the text: (based on line position)
         x = self.fit[1] + 4 * self.fit[2]
-        y = self.fit[0] * 1 / 2
+        y = self.fit[0] * 6 / 8
         # construct a text string to display:
-        text = '\n'
-        text += r'$Y_p$ = ' + '{:.2e}'.format(self.fit[0])
-        text += '\n'
-        text += r'$E_p$ = ' + '{:.2f}'.format(self.fit[1]) + ' MeV'
-        text += '\n'
-        text += r'$\sigma_p$ = ' + '{:.2f}'.format(self.fit[2]) + ' MeV'
-        text += '\n'
-        text += r'$\chi^2$ red. = ' + '{:.2f}'.format(self.red_chi2())
-        # write text to the plot:
+        text = r'$Y_p$ = ' + '{:.2e}'.format(self.fit[0])
         ax.text(x, y, # data
                 text, # text to display
-                backgroundcolor='white', # fill background
-                bbox=dict(fc='white', ec='black', alpha=1.0)) # add black boundary
+                backgroundcolor='white') # fill background
+        # new line of text
+        y = self.fit[0] * 5 / 8
+        text = r'$E_p$ = ' + '{:.2f}'.format(self.fit[1]) + ' MeV'
+        ax.text(x, y, # data
+                text, # text to display
+                backgroundcolor='white') # fill background
+        # new line of text
+        y = self.fit[0] * 4 / 8
+        text = r'$\sigma_p$ = ' + '{:.2f}'.format(self.fit[2]) + ' MeV'
+        ax.text(x, y, # data
+                text, # text to display
+                backgroundcolor='white') # fill background
+        # new line of text
+        y = self.fit[0] * 3 / 8
+        text = r'$\chi^2$ red. = ' + '{:.2f}'.format(self.red_chi2())
+        ax.text(x, y, # data
+                text, # text to display
+                backgroundcolor='white') # fill background
+
+        # write text to the plot:
+        # ax.text(x, y, # data
+        #         text, # text to display
+        #         backgroundcolor='white', # fill background
+                #bbox=dict(fc='white', ec='black', alpha=1.0)) # add black boundary
 
         ax.grid(True)
         ax.set_xlabel('Energy (MeV)')

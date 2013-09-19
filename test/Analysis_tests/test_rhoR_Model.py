@@ -174,7 +174,7 @@ class TestRhoR_Model(TestCase):
 
         # test one specific case
         Eout = self.model.Eout_GasMix(14.7, 50, self.Ri/4.)
-        self.assertAlmostEqual(Eout, 14.331, places=2)
+        self.assertAlmostEqual(Eout, 14.532, places=2)
 
     def test_Eout_Shell(self):
         """Test getting the downshift through the shell."""
@@ -190,7 +190,7 @@ class TestRhoR_Model(TestCase):
 
         # test one specific case
         Eout = self.model.Eout_Shell(14.7, 50, self.Ri/4.)
-        self.assertAlmostEqual(Eout, 12.485, places=2)
+        self.assertAlmostEqual(Eout, 12.318, places=2)
 
     def test_dEdr_Abl(self):
         """Test getting the stopping power in the ablated material."""
@@ -205,14 +205,14 @@ class TestRhoR_Model(TestCase):
 
         # test one specific case
         Eout = self.model.dEdr_Abl(14.7, self.Ri, self.Ri/4.)
-        self.assertAlmostEqual(Eout, -4.005, places=2)
+        self.assertAlmostEqual(Eout, -4.143, places=2)
 
     def test_model_materials(self):
         """Test the functionality for using different shell materials."""
         # try them all, with a simple Eout test at a CR of 3:
         model1 = rhoR_Model()  # all defaults
-        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 11.747, places=2)
+        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 12.18, places=2)
         model2 = rhoR_Model(shell_mat='HDC')
-        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 7.26, places=2)
+        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 9.44, places=2)
         model3 = rhoR_Model(shell_mat='SiO2')
-        self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 9.501, places=2)
+        self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 10.83, places=2)

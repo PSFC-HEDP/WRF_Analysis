@@ -143,7 +143,7 @@ class TestWRF_Data_DB(TestCase):
     def test_get_spectrum(self):
         """Test functionality to retrieve a spectrum from the database."""
         # first try without specifying the date:
-        data = self.db.get_spectrum('N130520-002-999', '0-0', 1, 0)
+        data = self.db.get_spectrum('N130520-002-999', '0-0', 1, False)
         data = data.tolist()
         orig_data =     [[4.375, 8.274e+05, 2.294e+06],
                     [4.625, 6.173e+06, 2.990e+06],
