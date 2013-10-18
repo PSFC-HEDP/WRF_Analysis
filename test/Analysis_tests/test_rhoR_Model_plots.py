@@ -1,5 +1,5 @@
 from unittest import TestCase
-import Analysis.rhoR_Model_plots as rhoR_Model_plots
+import Analysis.rhoR_model_plots as rhoR_Model_plots
 import Analysis.rhoR_Model as rhoR_Model
 import os
 

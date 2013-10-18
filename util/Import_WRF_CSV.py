@@ -65,6 +65,11 @@ class WRF_CSV(object):
         self.Contrast_Limit = 0
         # eccentricity limit
         self.Ecc_Limit = 0
+        # Dmax chosen in the analysis
+        self.Dmax = 0
+        self.Dmax_Unc = 0
+        self.Dscale = 'new'
+        # TODO: incorporate Dmax in database
         # Diameter limits:
         self.Dia_Limits = (-1,-1)
         # Whether diameter limits were chosen automatically
@@ -89,6 +94,8 @@ class WRF_CSV(object):
         self.Unc_CountingStats = (-1,-1,-1)
         # DvE uncertainties in the fit values (dE,ds,dY)
         self.Unc_DvE = (-1,-1,-1)
+        # "Fit error scaling" (dE,ds,dY)
+        self.Unc_FitError = (-1,-1,-1)
         # Dmax uncertainties in the fit values (dE,ds,dY)
         self.Unc_Dmax = (-1,-1,-1)
         # EtchScan uncertainties in the fit values (dE,ds,dY)
@@ -149,38 +156,52 @@ class WRF_CSV(object):
                     self.WRF_ID = row[1].strip()
                     self.Al_Blast_Filter = float(row[2])
                     self.WRF_Cal = row[3].strip()
+                # Data region. Handle both 'old' and 'new' style WRF CSV files:
                 if 'Data x0; x1; y0; y1' in row[0] and len(row) >=5:
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
                     self.Data_Limits = (xmin,xmax,ymin,ymax)
+                elif 'Data ixlims; iylims' in row[0] and len(row) >=5:
+                    # Remove parens and then split into indices:
+                    xlim = row[1].replace('(','').replace(')','').split('-')
+                    ylim = row[2].replace('(','').replace(')','').split('-')
+                    # Set the limits:
+                    self.Data_Limits = (float(xlim[0]), float(xlim[1]), float(ylim[0]), float(ylim[1]))
                 if 'Back x0; x1; y0; y1' in row[0] and len(row) >=5 and self.BG1_Limits==(-1,-1,-1,-1):
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
                     self.BG1_Limits = (xmin,xmax,ymin,ymax)
-                if 'Back x0; x1; y0; y1' in row[0] and len(row) >=5:
+                elif 'Back x0; x1; y0; y1' in row[0] and len(row) >=5:
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
                     self.BG2_Limits = (xmin,xmax,ymin,ymax)
-                if 'Dlow; Dhigh; Dauto; Elims' in row[0] and len(row) >=6:
+                if 'C; e; Dmax' in row[0] and len(row) >= 6:
+                    self.Contrast_Limit = float(row[1])
+                    self.Ecc_Limit = float(row[2])
+                    self.Dmax = float(row[3])
+                    self.Dmax_Unc = float(row[4])
+                    self.Dscale = row[5]
+                if 'Dlow; Dhigh; Dauto; Elims' in row[0] and len(row) >=4:
                     self.Dia_Limits = (float(row[1]),float(row[2]))
                     if 'yes' in row[3] or 'Yes' in row[3] or 'true' in row[3] or 'True' in row[3]:
                         self.Dia_Auto = True
                     else:
                         self.Dia_Auto = False
-                    self.E_Limits = (float(row[4]),float(row[5]))
+                    if len(row) >= 6:
+                        self.E_Limits = (float(row[4]),float(row[5]))
                 if 'DvE fit: c; dc; red. Chi^2' in row[0] and len(row) >= 4:
                     self.c = float(row[1])
                     self.dc = float(row[2])
                     self.chi2 = float(row[3])
                 if 'Fit limits' in row[0] and len(row) >= 3:
                     self.Fit_Limits = (float(row[1]),float(row[2]))
-                if 'Value:' in row[0] and len(row) >= 4:
+                if ('Value:' in row[0] or 'Value (gaussian fit):' in row[0]) and len(row) >= 4:
                     self.Fit = (float(row[1]),float(row[2]),float(row[3]))
                 if '    Random:' in row[0] and len(row) >= 4:
                     dE = float(row[1])
@@ -194,19 +215,25 @@ class WRF_CSV(object):
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
                     self.Unc_Systematic = (dE,ds,dY)
-                if '     Counting statistics' in row[0] and len(row) >= 4:
+                if ('     Counting statistics' in row[0] or '     Counting & fit:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
                     self.Unc_CountingStats = (dE,ds,dY)
-                if '     DvE fit:' in row[0] and len(row) >= 4:
+                if ('     DvE fit:' in row[0] or '     DvE:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
                     self.Unc_DvE = (dE,ds,dY)
-                if '     Dmax scaling' in row[0] and len(row) >= 4:
+                if '     Fit error scaling:' in row[0] and len(row) >= 4:
+                    dE = float(row[1])
+                    ds = float(row[2])
+                    # deal with converting %:
+                    dY = float_perc(row[3].strip()) * self.Fit[2]
+                    self.Unc_FitError = (dE,ds,dY)
+                if ('     Dmax scaling' in row[0] or '     Dmax:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
@@ -224,7 +251,7 @@ class WRF_CSV(object):
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
                     self.Unc_Nonlinearity = (dE,ds,dY)
-                if '     Cal. processing' in row[0] and len(row) >= 4:
+                if ('     Cal. processing' in row[0] or '     Cal. & processing:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:

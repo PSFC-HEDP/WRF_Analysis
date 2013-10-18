@@ -27,7 +27,7 @@ from util.Import_WRF_CSV import WRF_CSV
 class WRF_InitAnalysis_DB(Generic_Analysis_DB):
     """Provide a wrapper for WRF 'initial analysis', e.g. the stuff that comes from the Analysis Program.
     :author: Alex Zylstra
-    :date: 2013/07/23
+    :date: 2013/10/18
     """
 
     def __init__(self, fname=Database.FILE):
@@ -52,7 +52,7 @@ class WRF_InitAnalysis_DB(Generic_Analysis_DB):
                 data_region_x0 int, data_region_x1 int, data_region_y0 int, data_region_y1 int,
                 back1_region_x0 int, back1_region_x1 int, back1_region_y0 int, back1_region_y1 int,
                 back2_region_x0 int, back2_region_x1 int, back2_region_y0 int, back2_region_y1 int,
-                c_limit real, e_limit real,
+                c_limit real, e_limit real, Dmax real, dDmax real,
                 d_low real, d_high real, d_auto bit, e_low real, e_high real,
                 dve_c real, dve_dc real, fit_chi2 real, fit_e_min real, fit_e_max real,
                 fit_mean real, fit_sigma real, fit_yield real,
@@ -103,6 +103,9 @@ class WRF_InitAnalysis_DB(Generic_Analysis_DB):
 
         self.set_column(raw.shot, raw.dim, raw.pos, 'c_limit', raw.Contrast_Limit, analysis_date=ad)
         self.set_column(raw.shot, raw.dim, raw.pos, 'e_limit', raw.Ecc_Limit, analysis_date=ad)
+        self.set_column(raw.shot, raw.dim, raw.pos, 'Dmax', raw.Dmax, analysis_date=ad)
+        self.set_column(raw.shot, raw.dim, raw.pos, 'dDmax', raw.Dmax_Unc, analysis_date=ad)
+
 
         self.set_column(raw.shot, raw.dim, raw.pos, 'd_low', raw.Dia_Limits[0], analysis_date=ad)
         self.set_column(raw.shot, raw.dim, raw.pos, 'd_high', raw.Dia_Limits[1], analysis_date=ad)

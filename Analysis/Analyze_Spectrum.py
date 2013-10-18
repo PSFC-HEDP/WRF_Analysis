@@ -6,7 +6,7 @@ from datetime import *
 import csv
 import math
 from Analysis.rhoR_Analysis import *
-from Analysis.rhoR_Model_plots import *
+from Analysis.rhoR_model_plots import *
 from util.GaussFit import *
 from Analysis.Hohlraum import *
 from Analysis.SlideGenerator import *

@@ -10,3 +10,7 @@ test/runAnalysis/AnalysisOutputs
 *.pyc
 
 *.pyc
+
+Analysis/__pycache__/rhoR_Analysis.cpython-33.pyc
+
+Analysis/__pycache__/rhoR_Analysis.cpython-33.pyc
