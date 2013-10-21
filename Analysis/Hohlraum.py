@@ -51,8 +51,11 @@ def flatten(l) -> list:
 class Hohlraum(object):
     """Wrapper class for hohlraum corrections, and associated metrics
     :author: Alex Zylstra
-    :date: 2013/09/04"""
+    :date: 2013/10/21"""
     OutputDir = 'AnalysisOutputs'
+
+    mode_wall = 'Wall'
+    mode_thick = 'Thick'
 
     # set up SRIM calculators:
     Al_SRIM = StopPow.StopPow_SRIM(
@@ -94,18 +97,21 @@ class Hohlraum(object):
         self.angles = []
 
         # if the wall is specified:
-        if wall is not None and angles is not None:
+        if wall is not None and len(wall) != 0 and angles is not None:
             self.__calc_from_wall__(wall, angles)
+            self.mode = Hohlraum.mode_wall
         # thickness is specified:
         elif Thickness is not None and len(Thickness) is 3:
             self.Au = Thickness[0]
             self.DU = Thickness[1]
             self.Al = Thickness[2]
+            self.mode = Hohlraum.mode_thick
         # if neither is supplied, default to 0 thickness to be safe:
         else:
             self.Au = 0
             self.DU = 0
             self.Al = 0
+            self.mode = Hohlraum.mode_thick
 
         # set the uncertainties:
         self.d_Au = d_Thickness[0]
@@ -539,6 +545,10 @@ class Hohlraum(object):
         """Save a hohlraum profile plot to file.
         :param fname: the file to save to
         """
+        # sanity check, in thickness mode we cannot plot anything:
+        if self.mode == Hohlraum.mode_thick:
+            return
+
         import matplotlib
         import matplotlib.pyplot as plt
         if matplotlib.get_backend() != 'agg':
@@ -554,6 +564,10 @@ class Hohlraum(object):
     def plot_hohlraum_window(self, interactive=False):
         """Make a new hohlraum profile plot in a UI window.
         :param interactive: (optional) whether to use the interactive mode {default=False} """
+        # sanity check, in thickness mode we cannot plot anything:
+        if self.mode == Hohlraum.mode_thick:
+            return
+
         import matplotlib
         import matplotlib.pyplot as plt
 

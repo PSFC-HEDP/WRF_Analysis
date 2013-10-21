@@ -64,17 +64,29 @@ class WRF_Analyzer(tk.Toplevel):
             dialog = Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots)
             self.shot = dialog.result
 
+            # if the user canceled:
+            if self.shot is None:
+                self.__cancel__()
+
         # if no DIM was supplied, prompt for one:
         if self.dim is None:
             dims = self.init_db.get_dims(self.shot)
             dialog = Option_Prompt(self, title='Select DIM', text='DIMs available for '+self.shot, options=dims)
             self.dim = dialog.result
 
+            # if the user canceled:
+            if self.shot is None:
+                self.__cancel__()
+
         # if no pos was supplied, prompt for one:
         if self.pos is None:
             positions = self.init_db.get_pos(self.shot, self.dim)
             dialog = Option_Prompt(self, title='Select Position', text='Available positions', options=positions)
             self.pos = dialog.result
+
+            # if the user canceled:
+            if self.shot is None:
+                self.__cancel__()
 
         # now make some UI:
         # display shot/dim/pos as labels:
@@ -174,10 +186,26 @@ class WRF_Analyzer(tk.Toplevel):
         snout = self.setup_db.query_col(self.shot, self.dim, self.pos, 'snout')[0]
         hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
         wall = self.hohl_db.get_wall(drawing=hohl_drawing)
+        hohl_thick = None
         if wall is None or len(wall) == 0:
-            from tkinter.messagebox import showerror
-            showerror('Error', 'Could not load hohlraum definition for '+hohl_drawing)
-            return
+            from tkinter.messagebox import askyesnocancel
+            response = askyesnocancel('Warning', 'Could not load hohlraum definition for ' + hohl_drawing
+                                                 + '. Specify manually?')
+            if response:
+                from GUI.widgets.Value_Prompt import Value_Prompt
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
+                Au = dialog.result
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
+                DU = dialog.result
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
+                Al = dialog.result
+
+                hohl_thick = [Au, DU, Al]
+
+            wall = None
+
+            if response is None:
+                return
 
         # calculate angles:
         theta = self.snout_db.get_theta(snout, self.dim, self.pos)[0]
@@ -203,6 +231,7 @@ class WRF_Analyzer(tk.Toplevel):
                                   systematic,
                                   angles,
                                   hohl_wall=wall,
+                                  hohl_thick=hohl_thick,
                                   name=name,
                                   summary=summary,
                                   plots=self.plot_var.get(),

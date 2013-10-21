@@ -2,20 +2,20 @@ __author__ = 'Alex Zylstra'
 
 import tkinter as tk
 
-class Option_Prompt(tk.Toplevel):
+class Value_Prompt(tk.Toplevel):
     """Implement a dialog window to prompt a user to select one of several options."""
 
-    def __init__(self, parent, title=None, text=None, options=[]):
+    def __init__(self, parent, title=None, text=None, default=None):
         """Initialize the dialog window"""
-        super(Option_Prompt, self).__init__(parent)
+        super(Value_Prompt, self).__init__(parent)
         self.transient(parent)
         self.parent = parent
         self.lift()
 
         self.grab_set()
 
-        self.result = None
-        self.__create_widgets__(title, text, options)
+        self.result = default
+        self.__create_widgets__(title, text, default)
 
         self.protocol("WM_DELETE_WINDOW", self.cancel)
 
@@ -25,7 +25,7 @@ class Option_Prompt(tk.Toplevel):
 
         self.wait_window(self)
 
-    def __create_widgets__(self, title, text, options):
+    def __create_widgets__(self, title, text, default):
         """Create the UI"""
         if title is not None:
             self.title(title)
@@ -34,11 +34,11 @@ class Option_Prompt(tk.Toplevel):
             label1 = tk.Label(self, text=text)
             label1.pack()
 
-        if options is not None:
-            self.var = tk.StringVar()
-            menu = tk.OptionMenu(self, self.var, *options)
-            menu.pack()
-            menu.focus_force()
+        if default is not None:
+            self.var = tk.StringVar(value=str(default))
+            entry = tk.Entry(self, textvariable=self.var)
+            entry.pack()
+            entry.focus_force()
 
         self.__make_buttons__()
 
@@ -80,4 +80,4 @@ class Option_Prompt(tk.Toplevel):
 
     def apply(self):
         """Set the result"""
-        self.result = self.var.get()
+        self.result = float(self.var.get())

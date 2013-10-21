@@ -47,15 +47,16 @@ def mytime(time, inc, ProgressBar=None):
         ProgressBar.counter.set(current+inc)
 
 # noinspection PyListCreation,PyListCreation,PyUnusedLocal
-def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, name="", summary="", plots=True,
+def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
-                     model=None):
+                     model=None, add_fit_unc=False):
     """Analyze a NIF WRF spectrum.
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
     :param spectrum_systematic: Systematic total error bars in spectrum as [dY,dE,dsigma]
     :param LOS: The line of sight of this wedge, and [theta,phi]
     :param hohl_wall: Hohlraum wall info, requires a 2-D list with columns [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
+    :param hohl_thick: Optionally specify hohlraum thickness directly as [Au, DU, Al] in units of um
     :param name: (optional) Name of this wedge [default=""]
     :param summary: (optional) Any summary info to display [default=""]
     :param plots: (optional) Whether to make plots [default=True]
@@ -66,8 +67,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param ProgressBar: (optional) a progress bar of type WRF_Progress_Dialog to use for updates [default=None, uses CLI]
     :param ShowSlide: (optional) set to True to display the summary slide after this method completes [default=False]
     :param model: (optional) the rhoR model to use; default values are used if none is given.
+    :param add_fit_unc: (optional) Whether to add a chi^2 fit uncertainty to the error bars, in case it isn't already included [default=False]
     :author: Alex Zylstra
-    :date: 2013/08/06
+    :date: 2013/10/21
     """
     # sanity checking on the inputs:
     assert isinstance(data, list) or isinstance(data, numpy.ndarray)
@@ -100,13 +102,17 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # ----------------------------
     # if no wall info is passed, assume the correction
     # is not needed:
-    if hohl_wall is not None:
+    if hohl_wall is not None or hohl_thick is not None:
         t1 = datetime.now()
         myprint(name + ' hohlraum correction...', ProgressBar=ProgressBar)
 
-        hohl = Hohlraum(data,
-                        wall=hohl_wall,
-                        angles=LOS)
+        # Create the hohlraum based on either geometry or specified thickness:
+        if hohl_wall is not None:
+            hohl = Hohlraum(data,
+                            wall=hohl_wall,
+                            angles=LOS)
+        else:
+            hohl = Hohlraum(data, Thickness=hohl_thick)
 
         # get corrected spectrum:
         corr_data = hohl.get_data_corr()
@@ -136,23 +142,42 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
 
         t2 = datetime.now()
         mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
+
+        # add info to the return dict
+        results['Au'] = hohl.Au
+        results['Au_unc'] = hohl.d_Au
+        results['DU'] = hohl.DU
+        results['DU_unc'] = hohl.d_DU
+        results['Al'] = hohl.Al
+        results['Al_unc'] = hohl.d_Al
+
+        results['Hohl_Y_posunc'] = unc_hohl[0][0]
+        results['Hohl_Y_negunc'] = unc_hohl[0][1]
+        results['Hohl_E_posunc'] = unc_hohl[1][0]
+        results['Hohl_E_negunc'] = unc_hohl[1][1]
+        results['Hohl_sigma_posunc'] = unc_hohl[2][0]
+        results['Hohl_sigma_negunc'] = unc_hohl[2][1]
+
+    # no hohlraum correction:
     else:
         corr_data = data
+        hohl = None
+        unc_hohl = None
 
-    # add info to the return dict
-    results['Au'] = hohl.Au
-    results['Au_unc'] = hohl.d_Au
-    results['DU'] = hohl.DU
-    results['DU_unc'] = hohl.d_DU
-    results['Al'] = hohl.Al
-    results['Al_unc'] = hohl.d_Al
+        # add info to the return dict
+        results['Au'] = 0
+        results['Au_unc'] = 0
+        results['DU'] = 0
+        results['DU_unc'] = 0
+        results['Al'] = 0
+        results['Al_unc'] = 0
 
-    results['Hohl_Y_posunc'] = unc_hohl[0][0]
-    results['Hohl_Y_negunc'] = unc_hohl[0][1]
-    results['Hohl_E_posunc'] = unc_hohl[1][0]
-    results['Hohl_E_negunc'] = unc_hohl[1][1]
-    results['Hohl_sigma_posunc'] = unc_hohl[2][0]
-    results['Hohl_sigma_negunc'] = unc_hohl[2][1]
+        results['Hohl_Y_posunc'] = 0
+        results['Hohl_Y_negunc'] = 0
+        results['Hohl_E_posunc'] = 0
+        results['Hohl_E_negunc'] = 0
+        results['Hohl_sigma_posunc'] = 0
+        results['Hohl_sigma_negunc'] = 0
 
 
     # -----------------------------
@@ -180,11 +205,23 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         FitObj.plot_file(fit_plot_fname)
 
     # calculate total error bars for yield, energy, sigma:
-    yield_random = math.sqrt(spectrum_random[0] ** 2 + 0.25 * diff(unc_fit[0][0], unc_fit[0][1]) ** 2)
+    # depends on option for whether we need to add fit uncertainties:
+    if add_fit_unc:
+        yield_random = math.sqrt(spectrum_random[0] ** 2 + 0.25 * diff(unc_fit[0][0], unc_fit[0][1]) ** 2)
+        energy_random = math.sqrt(spectrum_random[1] ** 2 + 0.25 * diff(unc_fit[1][0], unc_fit[1][1]) ** 2)
+        sigma_random = math.sqrt(spectrum_random[2] ** 2 + 0.25 * diff(unc_fit[2][0], unc_fit[2][1]) ** 2)
+    else:
+        yield_random = spectrum_random[0]
+        energy_random = spectrum_random[1]
+        sigma_random = spectrum_random[2]
+    # if necessary, add the hohlraum uncertainty:
+    if unc_hohl is not None:
+        yield_random = math.sqrt(yield_random**2 + 0.25*(unc_hohl[0][0]+unc_hohl[0][1])**2)
+        energy_random = math.sqrt(energy_random**2 + 0.25*(unc_hohl[1][0]+unc_hohl[1][1])**2)
+        sigma_random = math.sqrt(sigma_random**2 + 0.25*(unc_hohl[2][0]+unc_hohl[2][1])**2)
+
     yield_systematic = spectrum_systematic[0]
-    energy_random = math.sqrt(spectrum_random[1] ** 2 + 0.25 * diff(unc_fit[1][0], unc_fit[1][1]) ** 2)
     energy_systematic = spectrum_systematic[1]
-    sigma_random = math.sqrt(spectrum_random[2] ** 2 + 0.25 * diff(unc_fit[2][0], unc_fit[2][1]) ** 2)
     sigma_systematic = spectrum_systematic[2]
 
     if verbose:
@@ -339,7 +376,6 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
                 + '{:.0f}'.format(float(Rcm_systematic)) + r'$_{(sys)}$']
 
     fname = os.path.join(OutputDir, name + '_Summary.eps')
-    # noinspection PyUnboundLocalVariable
     save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy)
     if ShowSlide:
         show_slide(Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy, interactive=True)
