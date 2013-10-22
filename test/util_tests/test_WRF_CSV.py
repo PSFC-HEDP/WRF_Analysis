@@ -1,5 +1,5 @@
 from unittest import TestCase
-from util.Import_WRF_CSV import *
+from NIF_WRF.util.Import_WRF_CSV import *
 
 __author__ = 'Alex Zylstra'
 

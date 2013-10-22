@@ -1,6 +1,9 @@
 from unittest import TestCase
-from Analysis.rhoR_Model import rhoR_Model
+
 from numpy import arange
+
+from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
+
 
 __author__ = 'alex'
 

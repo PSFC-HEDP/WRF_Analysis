@@ -1,6 +1,6 @@
 from unittest import TestCase
-from DB.WRF_Analysis_DB import *
-import DB.Database as Database
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.WRF_Analysis_DB import *
 
 __author__ = 'Alex Zylstra'
 

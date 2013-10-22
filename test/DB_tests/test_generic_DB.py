@@ -1,9 +1,11 @@
 from unittest import TestCase
-from DB.Generic_DB import *
-import DB.Database as Database
 import string
 import random
 import os
+
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.Generic_DB import *
+
 
 __author__ = 'Alex Zylstra'
 

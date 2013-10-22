@@ -1,8 +1,11 @@
 from unittest import TestCase
-from DB.WRF_Data_DB import *
-import DB.Database as Database
-import numpy
 import os
+
+import numpy
+
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.WRF_Data_DB import *
+
 
 __author__ = 'Alex Zylstra'
 

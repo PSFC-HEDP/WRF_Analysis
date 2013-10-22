@@ -1,7 +1,9 @@
 from unittest import TestCase
-import Analysis.rhoR_model_plots as rhoR_Model_plots
-import Analysis.rhoR_Model as rhoR_Model
 import os
+
+import NIF_WRF.Analysis.rhoR_model_plots as rhoR_Model_plots
+import NIF_WRF.Analysis.rhoR_Model as rhoR_Model
+
 
 __author__ = 'Alex Zylstra'
 

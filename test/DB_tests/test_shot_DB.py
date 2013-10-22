@@ -1,8 +1,7 @@
 import sqlite3
 from unittest import TestCase
-from DB.Shot_DB import *
-import DB.Database as Database
-from DB.util import *
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.Shot_DB import *
 
 __author__ = 'Alex Zylstra'
 

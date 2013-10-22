@@ -1,9 +1,9 @@
 from unittest import TestCase
-from DB.Hohlraum_DB import *
-import DB.Database as Database
-import string
-import random
 import os
+
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.Hohlraum_DB import *
+
 
 __author__ = 'Alex Zylstra'
 
