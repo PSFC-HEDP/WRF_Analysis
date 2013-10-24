@@ -2,12 +2,12 @@ __author__ = 'Alex Zylstra'
 
 import tkinter as tk
 
-class Value_Prompt(tk.Toplevel):
-    """Implement a dialog window to prompt a user to input a value."""
+class String_Prompt(tk.Toplevel):
+    """Implement a dialog window to prompt a user to input a string."""
 
-    def __init__(self, parent, title=None, text=None, default=None):
+    def __init__(self, parent, title=None, text=None, default=None, invalid=None):
         """Initialize the dialog window"""
-        super(Value_Prompt, self).__init__(parent)
+        super(String_Prompt, self).__init__(parent)
         self.transient(parent)
         self.parent = parent
         self.lift()
@@ -15,6 +15,7 @@ class Value_Prompt(tk.Toplevel):
         self.grab_set()
 
         self.result = default
+        self.invalid = invalid
         self.__create_widgets__(title, text, default)
 
         self.protocol("WM_DELETE_WINDOW", self.cancel)
@@ -76,8 +77,13 @@ class Value_Prompt(tk.Toplevel):
 
     def validate(self):
         """Validate the selection, returns true if it is OK"""
-        return self.var.get() != ''
+        ret = (self.var.get() != '')
+        # also check against list of invalid options if requested:
+        if self.invalid is not None:
+            for i in self.invalid:
+                ret = ret and (self.var.get() != i)
+        return ret
 
     def apply(self):
         """Set the result"""
-        self.result = float(self.var.get())
+        self.result = self.var.get()

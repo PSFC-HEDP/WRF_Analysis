@@ -100,9 +100,16 @@ class WRF_Inventory_DB(Generic_DB):
         assert isinstance(shots, int) or isinstance(shots, str)
         assert isinstance(status, str) or status is None
 
-        # update columns one at a time:
-        s = 'UPDATE %s SET shots=? WHERE id=?' % self.TABLE
-        self.c.execute( s , (shots,wrf_id,) )
+        # check to see if it is already in the table:
+        query = self.c.execute('SELECT * from %s where id=?' % self.TABLE, (wrf_id,))
+        if len(query.fetchall()) > 0:
+            # update columns one at a time:
+            s = 'UPDATE %s SET shots=? WHERE id=?' % self.TABLE
+            self.c.execute( s , (shots,wrf_id,) )
+        else:  # need to add it as a new row
+            self.c.execute('INSERT INTO %s (id, shots, status) values (?,?,?)' % self.TABLE, (wrf_id,shots,''))
+
+        # set the status if applicable:
         if status is not None:
             s = 'UPDATE %s SET status=? WHERE id=?' % self.TABLE
             self.c.execute( s , (status,wrf_id,) )
@@ -126,12 +133,14 @@ class WRF_Inventory_DB(Generic_DB):
     def refresh_from_setup(self):
         """Clear the shot usage in the table and update it based on the WRF setup table."""
         # get a list of all wedges in the table:
-        wrfs = self.get_ids()
+        #wrfs = self.get_ids()
+        wrfs = self.setup_db.get_wrf_ids()
 
         for wrf_id in wrfs:
-            result = self.setup_db.find_wrf(wrf_id)
+            if wrf_id != '' and wrf_id is not None:
+                result = self.setup_db.find_wrf(wrf_id)
 
-            # now update usage in the inventory table:
-            self.update(wrf_id, len(result))
+                # now update usage in the inventory table:
+                self.update(wrf_id, len(result))
 
         self.db.commit()

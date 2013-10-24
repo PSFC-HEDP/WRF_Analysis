@@ -142,7 +142,9 @@ class Generic_DB:
                 command = command[:-1]
                 command += ')'
                 # execute the operation:
-                self.c.execute(command, values)
+                #print(command, values)
+                if len(values) > 0:
+                    self.c.execute(command, values)
 
         # finalize changes to database:
         self.db.commit()

@@ -121,16 +121,6 @@ class WRF_CSV(object):
             if part.startswith('N'):
                 self.shot = part
 
-            # check for positions:
-            if part.startswith('PolPos'): # polar DIM
-                print('polar DIM')
-                self.dim = '0-0'
-                self.pos = part[-1]
-            elif part.startswith('Pos'): # equatorial DIM
-                self.dim = '90-78'
-                self.pos = part[-1]
-
-
         # open file:
         fileReader = csv.reader(open(fname,'r'),delimiter=',')
 
@@ -194,7 +184,8 @@ class WRF_CSV(object):
                     else:
                         self.Dia_Auto = False
                     if len(row) >= 6:
-                        self.E_Limits = (float(row[4]),float(row[5]))
+                        if len(row[4]) > 0 and len(row[5]) > 0:
+                            self.E_Limits = (float(row[4]),float(row[5]))
                 if 'DvE fit: c; dc; red. Chi^2' in row[0] and len(row) >= 4:
                     self.c = float(row[1])
                     self.dc = float(row[2])
@@ -263,6 +254,18 @@ class WRF_CSV(object):
             if part.startswith('134') or part.startswith('135'):  # look for CR39 IDs
                 if not(part in self.WRF_ID):  # rule out the wedge ID, which is also in file name
                     self.CR39_ID = part
+
+        # Extract the DIM and position from the trailer port #:
+        if self.port == 'pole' or self.port == 'Pole':  # polar DIM pos 1, legacy
+            self.dim = '0-0'
+            self.pos = 1
+        elif self.port.startswith('Pol') or self.port.startswith('pol') \
+            or self.port.startswith('pp') or self.port.startswith('PP'): # polar DIM
+            self.dim = '0-0'
+            self.pos = (self.port.split('_')[0])[-1]
+        elif self.port.startswith('Pos') or self.port.startswith('pos'): # equatorial DIM
+            self.dim = '90-78'
+            self.pos = (self.port.split('_')[0])[-1]
 
         # Parse the spectrum:
         self.spectrum = []

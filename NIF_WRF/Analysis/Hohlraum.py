@@ -67,19 +67,21 @@ class Hohlraum(object):
     DU_SRIM = StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
-    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3)):
+    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None):
         """Constructor for the hohlraum. You must supply either the thickness array or an array containing wall data plus view angles.
         :param raw: the raw spectrum
         :param wall: python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
         :param angles: python array of [theta_min, theta_max] range in polar angle
         :param Thickness: the [Au,DU,Al] thickness in um
         :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
+        :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
         """
         super(Hohlraum, self).__init__() # super constructor
 
         # initializations:
         self.raw = []  # raw spectrum
         self.raw_fit = []  # Gaussian fit to the raw spectrum
+        self.fit_guess = fit_guess
         self.corr = []  # corrected spectrum
         self.corr_fit = []  # Gaussian fit to the corrected spectrum
 
@@ -310,7 +312,10 @@ class Hohlraum(object):
     def __fit_data__(self):
         """Calculate fits to the raw and shifted spectra."""
         # fit to the raw data:
-        self.raw_fit = GaussFit(self.raw)
+        if self.fit_guess is not None:
+            self.raw_fit = GaussFit(self.raw, guess=self.fit_guess)
+        else:
+            self.raw_fit = GaussFit(self.raw)
 
         # fit corrected data:
         g = [self.get_fit_raw()[0],
@@ -636,18 +641,27 @@ class Hohlraum(object):
         #backgroundcolor='blue') # fill background
         #bbox=dict(ec='black', fc='blue', alpha=1.0)) # add black boundary
 
+        # Some coordinates for displaying text
+        z_min = min(flatten(self.all_z))
+        z_max = max(flatten(self.all_z))
+        if math.fabs(z_min) < 1e-3:
+            z_text = (z_max-z_min)/3.
+        else:
+            z_text = 0.
+        dr = (r_max-r_min)/15.
+
         # add some text annotation with thicknesses:
-        text = '\n'
-        text += '{:.1f}'.format(self.Au) + r' $\mu$m Au'
-        text += '\n'
-        text += '{:.1f}'.format(self.DU) + r' $\mu$m DU'
-        text += '\n'
-        text += '{:.1f}'.format(self.Al) + r' $\mu$m Al'
-        text += '\n'
-        ax.text(0, r_min, text, horizontalalignment='center')
+        text = '{:.1f}'.format(self.Au) + r' $\mu$m Au'
+        ax.text(z_text, r_min+2*dr, text, horizontalalignment='center')
+
+        text = '{:.1f}'.format(self.DU) + r' $\mu$m DU'
+        ax.text(z_text, r_min+dr, text, horizontalalignment='center')
+
+        text = '{:.1f}'.format(self.Al) + r' $\mu$m Al'
+        ax.text(z_text, r_min, text, horizontalalignment='center')
+
 
         # add an indicator showing where N pole is in this plot
-        z_max = max(flatten(self.all_z))
         ax.arrow(z_max, r_min, z_max / 8, 0, fc='k', ec='k', head_width=z_max / 30, head_length=z_max / 30)
         ax.text(z_max, r_min * 1.02, 'N pole', ha='left', va='bottom')
 

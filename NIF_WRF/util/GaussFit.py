@@ -91,7 +91,7 @@ class GaussFit(object):
         """
         if len(guess) != 3:
             guess = self.GUESS
-        if len(fixed) != guess:
+        if len(fixed) != len(guess):
             fixed = []
             for i in guess:
                 fixed.append(False)
@@ -246,7 +246,7 @@ class GaussFit(object):
             # calculate uncertainty in the amplitude:
             dA = scipy.optimize.fminbound(
                 func=(lambda x: math.fabs(self.delta_chi2_amp(x, sign) - 1)), # min @ delta chi2 = 1
-                x1=0, x2=self.fit[0], # min is 0, max is 2x nominal
+                x1=0, x2=2*math.fabs(self.fit[0]), # min is 0, max is 2x nominal
                 full_output=False) # suppress full output
 
             # calculate uncertainty in the mean:

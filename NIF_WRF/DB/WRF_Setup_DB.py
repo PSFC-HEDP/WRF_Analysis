@@ -43,6 +43,12 @@ class WRF_Setup_DB(Generic_DB):
         query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
         return flatten(array_convert(query))
 
+    def get_wrf_ids(self) -> list:
+        """Get a list of unique WRF IDs in the table.
+        :returns: a python list of shot strings"""
+        query = self.c.execute('SELECT Distinct wrf_id from %s' % self.TABLE)
+        return flatten(array_convert(query))
+
     def insert(self, shot, wrf_type, shot_name, hohl_drawing, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id,
                poly_1, poly_2, vacuum_pre, vacuum_post):
         """Insert a new row of data into the table.

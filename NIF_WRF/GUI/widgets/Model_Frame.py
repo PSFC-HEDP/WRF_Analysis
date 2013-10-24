@@ -8,13 +8,19 @@ from NIF_WRF.GUI.widgets.Collapsible_Frame import *
 from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
 from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
 from NIF_WRF.DB.WRF_rhoR_Model_DB import *
+from NIF_WRF.DB.Shot_DB import *
 
 
 class Model_Frame(Collapsible_Frame):
     """Implement a collapsible frame for configuring rhoR models"""
 
-    def __init__(self, parent, text='',**options):
+    def __init__(self, parent, text='', shot=None, **options):
         Collapsible_Frame.__init__(self, parent, text, **options)
+
+        # for getting info from the database:
+        self.shot = shot
+        if shot is not None:
+            self.db = Shot_DB()
 
         self.__create_widgets__()
 
@@ -22,6 +28,35 @@ class Model_Frame(Collapsible_Frame):
         """Create the GUI elements"""
 
         n = 0  # for keeping track of the number of rows
+
+        # -------------------------
+        #    Database Queries
+        # -------------------------
+        if self.shot is not None:
+            try:
+                CapsuleOR = float(self.db.query_col(self.shot, 'Capsule OR (um)'))
+            except:
+                CapsuleOR = None
+            try:
+                AblatorThickness = float(self.db.query_col(self.shot, 'Ablator Thickness (um)'))
+            except:
+                AblatorThickness = None
+            try:
+                ShellMat = self.db.query_col(self.shot, 'Ablator')
+            except:
+                ShellMat = None
+            try:
+                GasP = float(self.db.query_col(self.shot, 'Gas Pressure (atm)'))
+            except:
+                GasP = None
+            try:
+                fD = float(self.db.query_col(self.shot, 'fD'))
+            except:
+                fD = None
+            try:
+                f3He = float(self.db.query_col(self.shot, 'f3He'))
+            except:
+                f3He = None
 
         # -------------------------
         #    Shell Configuration
@@ -33,7 +68,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='Ri (μm)').grid(row=n, column=0)
         self.entry_Ri = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ri).grid(row=n, column=1)
-        self.entry_Ri.set(str(rhoR_Model.def_Ri*1e4))
+        # set based on data availability:
+        if CapsuleOR is not None and AblatorThickness is not None:
+            self.entry_Ri.set(str( (CapsuleOR-AblatorThickness) ))
+        else:
+            self.entry_Ri.set(str(rhoR_Model.def_Ri*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Ri_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ri_err).grid(row=n, column=3)
@@ -44,7 +83,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='Ro (μm)').grid(row=n, column=0)
         self.entry_Ro = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ro).grid(row=n, column=1)
-        self.entry_Ro.set(str(rhoR_Model.def_Ro*1e4))
+        # set based on data availability:
+        if CapsuleOR is not None and AblatorThickness is not None:
+            self.entry_Ro.set(str( CapsuleOR ))
+        else:
+            self.entry_Ro.set(str(rhoR_Model.def_Ro*1e4))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_Ro_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_Ro_err).grid(row=n, column=3)
@@ -56,7 +99,11 @@ class Model_Frame(Collapsible_Frame):
         self.entry_shell_mat = tk.StringVar()
         shell_opts = list(rhoR_Model.shell_opts)
         tk.OptionMenu(self.subFrame, self.entry_shell_mat, *shell_opts).grid(row=n, column=1)
-        self.entry_shell_mat.set(shell_opts[0])
+        # set based on data availability
+        if self.shot is not None:
+            self.entry_shell_mat.set(ShellMat)
+        else:
+            self.entry_shell_mat.set(shell_opts[0])
         # watch for changes to selection, and update density when necessary
         self.entry_shell_mat.trace_variable('w',
                                             lambda *args: self.entry_shell_rho.set(
@@ -106,7 +153,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='P (atm)').grid(row=n, column=0)
         self.entry_P = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_P).grid(row=n, column=1)
-        self.entry_P.set(str(rhoR_Model.def_P0))
+        # set based on data availability:
+        if GasP is not None:
+            self.entry_P.set(str(GasP))
+        else:
+            self.entry_P.set(str(rhoR_Model.def_P0))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_P_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_P_err).grid(row=n, column=3)
@@ -117,7 +168,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='fD').grid(row=n, column=0)
         self.entry_fD = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_fD).grid(row=n, column=1)
-        self.entry_fD.set(str(rhoR_Model.def_fD))
+        # set based on data availability:
+        if fD is not None:
+            self.entry_fD.set(str(fD))
+        else:
+            self.entry_fD.set(str(rhoR_Model.def_fD))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_fD_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_fD_err).grid(row=n, column=3)
@@ -128,7 +183,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='f3He').grid(row=n, column=0)
         self.entry_f3He = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_f3He).grid(row=n, column=1)
-        self.entry_f3He.set(str(rhoR_Model.def_f3He))
+        # set based on data availability:
+        if f3He is not None:
+            self.entry_f3He.set(str(f3He))
+        else:
+            self.entry_f3He.set(str(rhoR_Model.def_f3He))
         tk.Label(self.subFrame, text='±').grid(row=n, column=2)
         self.entry_f3He_err = tk.StringVar()
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_f3He_err).grid(row=n, column=3)

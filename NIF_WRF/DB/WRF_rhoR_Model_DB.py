@@ -47,7 +47,7 @@ class WRF_rhoR_Model_DB(Generic_Analysis_DB):
                 Te_Gas_Err real, Te_Shell_Err real, Te_Abl_Err real, Te_Mix_Err real,
                 rho_Abl_Max_Err real, rho_Abl_Min_Err real, rho_Abl_Scale_Err real,
                 MixF_Err real, Tshell_Err real, Mrem_Err real)''' % self.TABLE)
-            self.c.execute('CREATE INDEX analysis_index on %s(shot)' % self.TABLE)
+            self.c.execute('CREATE INDEX rhoR_model_index on %s(shot)' % self.TABLE)
 
         # finish changes:
         self.db.commit()

@@ -35,7 +35,7 @@ class Shot_DB(Generic_DB):
         :returns: a list of shot names as strings
         """
         query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
-        return array_convert(query)
+        return flatten(array_convert(query))
 
     def insert(self, shot):
         """Add a new shot to the table. Data insertion done via update method ONLY (for shot db).
@@ -90,7 +90,13 @@ class Shot_DB(Generic_DB):
         assert isinstance(col, str)
 
         query = self.c.execute('SELECT [%s] from %s where shot=?' % (col, self.TABLE), (shot,))
-        value = array_convert(query)[0][0]
+
+        # sanity check:
+        value = flatten(array_convert(query))
+        if len(value) == 0:
+            return ''
+
+        value = value[0]
 
         # check if there is an error bar for this value:
         if (col + ' Unc') in self.get_column_names():

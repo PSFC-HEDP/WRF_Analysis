@@ -50,7 +50,7 @@ def mytime(time, inc, ProgressBar=None):
 # noinspection PyListCreation,PyListCreation,PyUnusedLocal
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
-                     model=None, add_fit_unc=False):
+                     model=None, add_fit_unc=False, fit_guess=None):
     """Analyze a NIF WRF spectrum.
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
@@ -69,8 +69,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param ShowSlide: (optional) set to True to display the summary slide after this method completes [default=False]
     :param model: (optional) the rhoR model to use; default values are used if none is given.
     :param add_fit_unc: (optional) Whether to add a chi^2 fit uncertainty to the error bars, in case it isn't already included [default=False]
+    :param fit_guess: (optional) Supplied guess to start the Gaussian fitting, as a list containing Y,E,sigma [default=None]
     :author: Alex Zylstra
-    :date: 2013/10/21
+    :date: 2013/10/24
     """
     # sanity checking on the inputs:
     assert isinstance(data, list) or isinstance(data, numpy.ndarray)
@@ -110,9 +111,10 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         if hohl_wall is not None:
             hohl = Hohlraum(data,
                             wall=hohl_wall,
-                            angles=LOS)
+                            angles=LOS,
+                            fit_guess=fit_guess)
         else:
-            hohl = Hohlraum(data, Thickness=hohl_thick)
+            hohl = Hohlraum(data, Thickness=hohl_thick, fit_guess=fit_guess)
 
         # get corrected spectrum:
         corr_data = hohl.get_data_corr()
@@ -185,9 +187,16 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # -----------------------------
     t1 = datetime.now()
     myprint(name + ' energy analysis...', ProgressBar=ProgressBar)
+
     # First, we need to perform a Gaussian fit to both raw and corrected data:
-    FitObjRaw = GaussFit(data, name=name)
-    FitObj = GaussFit(corr_data, name=name)
+    # input guess depends on whether we did a hohlraum correction:
+    if hohl is not None:
+        FitObjRaw = GaussFit(data, name=name, guess=hohl.get_fit_raw())
+        FitObj = GaussFit(corr_data, name=name, guess=hohl.get_fit_corr())
+    else:
+        FitObjRaw = GaussFit(data, name=name, guess=fit_guess)
+        FitObj = GaussFit(corr_data, name=name, guess=fit_guess)
+
     # get the fit and uncertainty:
     fit = FitObj.get_fit()
     fit_raw = FitObjRaw.get_fit()

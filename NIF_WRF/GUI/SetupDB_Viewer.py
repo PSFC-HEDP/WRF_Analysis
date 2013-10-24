@@ -13,8 +13,8 @@ class SetupDB_Viewer(Table_Viewer):
 
         # make the unique widgets
         self.title('Setup DB')
-        self.minsize(300,200)
-        self.maxsize(600,400)
+        self.minsize(500,200)
+        #self.maxsize(600,400)
 
         # Add some UI elements:
         label1 = tk.Label(self, text='Shot')
@@ -43,7 +43,7 @@ class SetupDB_Viewer(Table_Viewer):
 
         raw = self.db.query(shot)
         for row in raw:
-            tree_row = [row[0], row[2], row[3], row[6], row[4], row[7], row[8]]
+            tree_row = [row[0], row[2], row[4], row[7], row[5], row[8], row[9]]
             self.tree_data.append(tree_row)
 
     def update(self, *args):

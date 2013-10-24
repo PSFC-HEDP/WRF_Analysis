@@ -65,6 +65,14 @@ class WRF_Analyzer(tk.Toplevel):
         # if no shot was supplied, prompt for one:
         if self.shot is None:
             shots = self.init_db.get_shots()
+
+            # sanity check for edge case where no shots are available:
+            if len(shots) == 0:
+                from tkinter.messagebox import showerror
+                showerror('Error', message='No WRF data available, import some', parent=self)
+                self.__cancel__()
+                return
+
             dialog = Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots)
             self.shot = dialog.result
 
@@ -76,7 +84,6 @@ class WRF_Analyzer(tk.Toplevel):
         # if no DIM was supplied, prompt for one:
         if self.dim is None:
             dims = self.init_db.get_dims(self.shot)
-            print(self.shot)
             dialog = Option_Prompt(self, title='Select DIM', text='DIMs available for '+self.shot, options=dims)
             self.dim = dialog.result
 
@@ -148,7 +155,7 @@ class WRF_Analyzer(tk.Toplevel):
     def __generate_adv__(self, row):
         """Helper method to generate the GUI for advanced analysis options"""
         # set up the frame:
-        self.adv_frame = Model_Frame(self, text='Advanced', relief=tk.RAISED, borderwidth=1)
+        self.adv_frame = Model_Frame(self, text='Advanced', shot=self.shot, relief=tk.RAISED, borderwidth=1)
         self.adv_frame.grid(row=row, column=0, columnspan=2, sticky='nsew')
 
     def __run_analysis__(self, *args):
@@ -191,6 +198,7 @@ class WRF_Analyzer(tk.Toplevel):
         #summary = summary.encode('unicode-escape')
 
         # get the hohlraum wall:
+        # TODO: Improve handling of spectra that don't need correction (i.e. on pole). Checkbox? Other option fed into Analyze_Spectrum
         snout = self.setup_db.query_col(self.shot, self.dim, self.pos, 'snout')[0]
         hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
         wall = self.hohl_db.get_wall(drawing=hohl_drawing)
@@ -230,6 +238,15 @@ class WRF_Analyzer(tk.Toplevel):
         if OutputDir == '':  # user cancelled
             return
 
+        # Get a guess to help the fitting routine from the numbers in the initial analysis
+        guess_Y = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_yield')
+        guess_E = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_mean')
+        guess_s = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_sigma')
+        if len(guess_Y) > 0 and len(guess_E) > 0 and len(guess_s) > 0:
+            fit_guess = [guess_Y[0], guess_E[0], guess_s[0]]
+        else:
+            fit_guess = None
+
         # get the model
         model = self.adv_frame.get_rhoR_Analysis()
 
@@ -248,7 +265,8 @@ class WRF_Analyzer(tk.Toplevel):
                                   Nxy=Nxy,
                                   ProgressBar=None,
                                   ShowSlide=self.display_results.get(),
-                                  model=model)
+                                  model=model,
+                                  fit_guess=fit_guess)
 
         # add to DB:
         print(result)

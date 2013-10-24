@@ -75,7 +75,7 @@ class TestShot_DB(TestCase):
         # should now have one more row:
         testPass = self.shot.num_rows() == 2
         # also should contain the new name:
-        testPass = testPass and ( "N123456" in flatten(self.shot.get_shots()) )
+        testPass = testPass and ( "N123456" in self.shot.get_shots() )
 
         self.assertTrue(testPass,"Failed DB.Shot_DB.insert")
 

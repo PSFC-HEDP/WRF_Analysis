@@ -275,6 +275,7 @@ class WRF_Data_DB(Generic_DB):
 
         # now try to parse date:
         try:
+            date.replace('/','-')
             pytime = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M')
         except ValueError:
             print('Could not parse time: ' + date)

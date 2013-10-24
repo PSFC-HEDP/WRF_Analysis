@@ -2,6 +2,7 @@ __author__ = 'Alex Zylstra'
 
 from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.WRF_Inventory_DB import *
+import tkinter as tk
 
 class InventoryDB_Viewer(Table_Viewer):
     def __init__(self):
@@ -18,6 +19,10 @@ class InventoryDB_Viewer(Table_Viewer):
         # set the data
         self.update_data()
 
+        # add a button to update the database:
+        update_button = tk.Button(self, text='Update DB', command=self.refresh_from_setup)
+        self.header_widgets.append(update_button)
+
         # invoke the widget construction manually:
         self.__setup_widgets__()
         self.__build_tree__()
@@ -32,3 +37,7 @@ class InventoryDB_Viewer(Table_Viewer):
         for WRF in ids:
             row = [WRF, self.db.get_shots(WRF), self.db.get_status(WRF)]
             self.tree_data.append(row)
+
+    def refresh_from_setup(self):
+        self.db.refresh_from_setup()
+        self.refresh()
