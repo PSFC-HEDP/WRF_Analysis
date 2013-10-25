@@ -4,6 +4,7 @@ import numpy
 
 def load_image(filename) -> numpy.ndarray:
     """Load an image from file to a ndarray.
+
     :param filename: The file name of the image to load
     """
     import matplotlib.image as mpimg

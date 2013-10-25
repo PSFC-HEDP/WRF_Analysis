@@ -6,13 +6,13 @@ from NIF_WRF.Analysis.Hohlraum import *
 from NIF_WRF.DB.Hohlraum_DB import *
 
 class HohlraumDB_Plot(tk.Toplevel):
-    """Show a window which allows making plots of hohlraum profiles."""
+    """Show a window which allows making plots of hohlraum profiles.
 
-    def __init__(self, parent=None):
-        """
-        Initialize the window
         :param parent: (optional) the parent (usually should be None) [default=None]
         """
+
+    def __init__(self, parent=None):
+        """Initialize the window"""
         super(HohlraumDB_Plot, self).__init__(parent)
 
         # connect to the database
@@ -28,9 +28,9 @@ class HohlraumDB_Plot(tk.Toplevel):
         """Helper method to create the UI elements"""
         # radiobutton for name vs drawing mode
         self.radio_var = tk.IntVar()
-        self.radio1 = tk.Radiobutton(self, text='Name', variable=self.radio_var, value=0, command=self.radio_select)
+        self.radio1 = tk.Radiobutton(self, text='Name', variable=self.radio_var, value=0, command=self.__radio_select__)
         self.radio1.grid(row=0, column=0)
-        self.radio2 = tk.Radiobutton(self, text='Drawing', variable=self.radio_var, value=1, command=self.radio_select)
+        self.radio2 = tk.Radiobutton(self, text='Drawing', variable=self.radio_var, value=1, command=self.__radio_select__)
         self.radio2.grid(row=0, column=1)
 
         # label for Shot
@@ -43,6 +43,7 @@ class HohlraumDB_Plot(tk.Toplevel):
         if len(opts) == 0:
             opts = ['']
         self.selector = tk.OptionMenu(self, self.selector_var, *opts)
+        self.selector.configure(width=20)
         self.selector.grid(row=1, column=1)
 
         # entry functionality for min/max angle
@@ -64,7 +65,8 @@ class HohlraumDB_Plot(tk.Toplevel):
         self.close_button = tk.Button(self, text='Close', command=self.withdraw)
         self.close_button.grid(row=4, column=1)
 
-    def radio_select(self):
+    def __radio_select__(self):
+        """Respond to the user toggling radio buttons"""
         # get initial value
         init_val = self.selector_var.get()
 

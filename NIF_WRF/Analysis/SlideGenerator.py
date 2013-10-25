@@ -8,6 +8,7 @@ __author__ = 'Alex Zylstra'
 
 def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', interactive=False):
     """Make a summary slide and show it on the screen.
+
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
     :param Nxy: (optional) image data to display as N(x,y) {default=None}
@@ -35,6 +36,7 @@ def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', i
 
 def save_slide(fname, Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     """Make a summary slide and save it to a file.
+
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
     :param Nxy: (optional) image data to display as N(x,y) {default=None}
@@ -52,6 +54,7 @@ def save_slide(fname, Fit=None, Hohl=None, Nxy=None, name='', summary='', result
 
 def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     """Make a summary slide.
+
     :param Fit: the GaussFit object which describes the fit to the data
     :param Hohl: (optional) the Hohlraum object describing hohlraum correction (if applicable) {default=None}
     :param Nxy: (optional) image data to display as N(x,y) {default=None}

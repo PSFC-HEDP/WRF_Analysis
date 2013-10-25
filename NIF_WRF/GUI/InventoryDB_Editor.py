@@ -8,11 +8,12 @@ from NIF_WRF.GUI.widgets.Generic_Editor import *
 
 
 class InventoryDB_Editor(Generic_Editor):
+    """Perform basic editing of the inventory database.
+
+    :param parent: (optional) the parent (usually should be None) [default=None]
+    """
     def __init__(self, parent=None):
-        """
-        Initialize the editor
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        """
+        """Initialize the editor"""
         super(InventoryDB_Editor, self).__init__(WRF_Inventory_DB(Database.FILE),
                                                  parent=parent,
                                                  column_names=['WRF', '# shots', 'Status'])

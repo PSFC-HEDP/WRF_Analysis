@@ -4,14 +4,14 @@ from NIF_WRF.DB import Database
 
 class Shot_DB(Generic_DB):
     """Provide a wrapper for shot DB actions.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/07/11
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the shot database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the shot database wrapper and connect to the database."""
         super(Shot_DB, self).__init__(fname)  # call super constructor
         # name of the table for the shot data
         self.TABLE = Database.SHOT_TABLE
@@ -32,6 +32,7 @@ class Shot_DB(Generic_DB):
 
     def get_shots(self) -> list:
         """Get a list of unique shot names in the table.
+
         :returns: a list of shot names as strings
         """
         query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
@@ -39,6 +40,7 @@ class Shot_DB(Generic_DB):
 
     def insert(self, shot):
         """Add a new shot to the table. Data insertion done via update method ONLY (for shot db).
+
         :param shot: the new shot name (as str)
         """
         assert isinstance(shot, str)
@@ -56,6 +58,7 @@ class Shot_DB(Generic_DB):
 
     def update(self, shot, col, val):
         """Update a value in the table.
+
         :param shot: the shot number (as str)
         :param col: the column name to alter (as str)
         :param val: the column value
@@ -71,6 +74,7 @@ class Shot_DB(Generic_DB):
 
     def query(self, shot):
         """Find data rows specified by shot number.
+
         :param shot: the shot number to query (as str)
         :returns: the rows found for the shot from the SQL query
         """
@@ -81,6 +85,7 @@ class Shot_DB(Generic_DB):
 
     def query_col(self, shot, col):
         """Get data for a specific shot and column.
+
         :param shot: the shot to query (as str)
         :param col: name of the column you want (as str)
         :returns: column's value, or a 2 value tuple if there is an associated error bar

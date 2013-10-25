@@ -1,5 +1,6 @@
-from NIF_WRF.Analysis.rhoR_Model import *
+from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
 import numpy
+import math
 
 __author__ = 'Alex Zylstra'
 
@@ -10,6 +11,26 @@ class rhoR_Analysis(object):
     including fuel, shell, and ablated mass.
     This class encapsulates the model itself, adding in
     error bars and sensitivity analysis.
+    Arguments taken in the constructor are primarily shot-dependent initial conditions.
+
+    :param shell_mat: (optional) the shell material to use {default='CH'}
+    :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
+    :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
+    :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
+    :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
+    :param P0: (optional) initial gas fill pressure [atm] {default=50}
+    :param Te_Gas: (optional) gas electron temperature [keV] {default=3}
+    :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
+    :param Te_Abl: (optional) ablated mass electron temperature [keV] {default=0.3}
+    :param Te_Mix: (optional) mix mass electron temperature [keV] {default=0.5}
+    :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
+    :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
+    :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
+    :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.05}
+    :param Tshell: (optional) shell thickness during the implosion [cm] {default=40e-4}
+    :param Mrem: (optional) shell mass remaining during the implosion [fractional] {default=0.175}
+    :param E0: (optional) initial proton energy [MeV] {default=14.7}
+
     :author: Alex Zylstra
     :date: 2013/09/04
     """
@@ -46,25 +67,7 @@ class rhoR_Analysis(object):
                  Te_Gas_Err=2,Te_Shell_Err=0.1, Te_Abl_Err=0.1, Te_Mix_Err=0.2,
                  rho_Abl_Max_Err=0.5, rho_Abl_Min_Err=0.05, rho_Abl_Scale_Err=30e-4,
                  MixF_Err=0.005, Tshell_Err=10e-4, Mrem_Err=0.05):
-        """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
-        :param shell_mat: (optional) the shell material to use {default='CH'}
-        :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
-        :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
-        :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
-        :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
-        :param P0: (optional) initial gas fill pressure [atm] {default=50}
-        :param Te_Gas: (optional) gas electron temperature [keV] {default=3}
-        :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
-        :param Te_Abl: (optional) ablated mass electron temperature [keV] {default=0.3}
-        :param Te_Mix: (optional) mix mass electron temperature [keV] {default=0.5}
-        :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
-        :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
-        :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
-        :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.05}
-        :param Tshell: (optional) shell thickness during the implosion [cm] {default=40e-4}
-        :param Mrem: (optional) shell mass remaining during the implosion [fractional] {default=0.175}
-        :param E0: (optional) initial proton energy [MeV] {default=14.7}
-        """
+        """Initialize the rhoR model."""
         self.shell_mat = shell_mat  # shell material
 
         # set the error bars appropriately:
@@ -120,6 +123,7 @@ class rhoR_Analysis(object):
 
     def Eout(self, Rcm) -> tuple:
         """Main function, which calculates the proton energy downshift.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: Eout, error = final proton energy and its error bar [MeV]
         """
@@ -128,6 +132,7 @@ class rhoR_Analysis(object):
 
     def Calc_rhoR(self, E1, breakout=False) -> tuple:
         """Alternative analysis method: specify measured E and calc rhoR.
+
         :param E1: Measured proton energy [MeV]
         :returns: tuple containing (rhoR , Rcm , rhoR error) = modeled areal density to produce modeled E
         """
@@ -137,6 +142,7 @@ class rhoR_Analysis(object):
 
     def rhoR_Total(self, Rcm) -> tuple:
         """Calculate the total rhoR when the shell is at a given position.
+
         :param Rcm: shell radius [cm]
         :returns: tuple containing (rhoR,error) with error due to the model
         """
@@ -145,6 +151,7 @@ class rhoR_Analysis(object):
 
     def rhoR_Parts(self, Rcm) -> tuple:
         """Calculate the three components of rhoR.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: the three components of rhoR
         """
@@ -153,6 +160,7 @@ class rhoR_Analysis(object):
 
     def Calc_Rcm(self, E1, dE, ModelErr=True) -> tuple:
         """Calculate the shell Rcm.
+
         :param E1: the measured energy [MeV]
         :param dE: the energy uncertainty [MeV]
         :param ModelErr: (optional) whether to include model errors {default=True}
@@ -343,6 +351,7 @@ class rhoR_Analysis(object):
 
     def __call_func__(self, model, func, Rcm, E1=0):
         """Helper function for calculating errors. Calls an appropriate function of the model.
+
         :param model: The model object to call
         :param func: A string containing the function to call
         :param Rcm: The center of mass radius of the shell [cm]
@@ -361,6 +370,7 @@ class rhoR_Analysis(object):
 
     def __calc_error__(self, func, Rcm, E1=0, breakout=False):
         """Helper function for calculating error bars due to uncertainties in model assumptions.
+
         :param func: The functional to call (i.e. Eout)
         :param Rcm: The center of mass radius [cm]
         :param E1: (optional) The energy to pass to func [MeV]

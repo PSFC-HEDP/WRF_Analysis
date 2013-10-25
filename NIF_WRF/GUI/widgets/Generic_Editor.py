@@ -3,13 +3,15 @@ __author__ = 'Alex Zylstra'
 import tkinter as tk
 
 class Generic_Editor(tk.Toplevel):
+    """A generic editor for database objects.
+
+    :param db: the Database object to use
+    :param parent: (optional) the parent (usually should be None) [default=None]
+    :param column_names: (optional) the names to use for columns [default is to use SQL names]
+    """
+
     def __init__(self, db, parent=None, column_names=None):
-        """
-        Initialize the editor
-        :param db: the Database object to use
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        :param column_names: (optional) the names to use for columns [default is to use SQL names]
-        """
+        """Initialize the editor"""
         super(Generic_Editor, self).__init__(parent)
 
         self.db = db

@@ -6,12 +6,14 @@ from NIF_WRF.DB.Generic_Analysis_DB import *
 
 
 class Analysis_Viewer(Table_Viewer):
-    """Generic viewer for analysis data."""
+    """Generic viewer for analysis data.
+
+        :param db: The database object to use, which must be of type Generic_Analysis_DB
+        :param parent: (optional) The parent object [default=None]
+        """
 
     def __init__(self, db, parent=None):
-        """Initialize the viewer window.
-        :param db: The database object to use, which must be of type Generic_Analysis_DB
-        """
+        """Initialize the viewer window."""
         super(Analysis_Viewer, self).__init__(parent=None, build=False)
         assert isinstance(db, Generic_Analysis_DB)
 
@@ -37,16 +39,19 @@ class Analysis_Viewer(Table_Viewer):
 
         self.shot_var = tk.StringVar()
         self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
+        self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
         self.dim_var = tk.StringVar()
         self.dim_selector = tk.OptionMenu(frame, self.dim_var, [])
+        self.dim_selector.configure(width=20)
         self.dim_var.trace('w', self.update_dim)
         self.dim_selector.grid(row=1, column=1)
 
         self.pos_var = tk.StringVar()
         self.pos_selector = tk.OptionMenu(frame, self.pos_var, [])
+        self.pos_selector.configure(width=20)
         self.pos_var.trace('w', self.update_data)
         self.pos_selector.grid(row=2, column=1)
 

@@ -26,14 +26,14 @@ from NIF_WRF.util.Import_Nxy import load_image
 
 class WRF_Data_DB(Generic_DB):
     """Provide a wrapper for WRF spectra.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/08/05
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the WRF setup database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the WRF setup database wrapper and connect to the database."""
         super(WRF_Data_DB, self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.WRF_DATA_TABLE
@@ -56,6 +56,7 @@ class WRF_Data_DB(Generic_DB):
 
     def add_data(self, raw, image=None, hohl=False):
         """Add to the data DB from a raw CSV import and image import.
+
         :param raw: An imported WRF CSV file, as WRF_CSV object
         :param image: (optional) An imported N(x,y) image data array as numpy.ndarray [default=None]
         :param hohl: (optional) If the spectrum is corrected for the hohlraum [default=False]
@@ -67,6 +68,7 @@ class WRF_Data_DB(Generic_DB):
 
     def add_data_from_file(self, csv_file, image_file=None, hohl=False):
         """Import data from file(s) and add it to the database.
+
         :param csv_file: Location of the CSV file to import
         :param image_file: (optional) Location of the image file to import [default=None]
         :param hohl: (optional) If the spectrum is corrected for the hohlraum [default=False]
@@ -87,6 +89,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_dims(self, shot) -> list:
         """Get a list of all DIMs available for a given shot.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         """
         query = self.c.execute('SELECT Distinct dim from %s where shot=?' % self.TABLE, (shot,))
@@ -94,6 +97,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_positions(self, shot, dim) -> list:
         """Get a list of all DIMs available for a given shot and DIM.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         """
@@ -102,6 +106,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_dates(self, shot, dim, position) -> list:
         """Get a list of all datetime stamps available for a given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -115,6 +120,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_wrf_id(self, shot, dim, position) -> str:
         """Get the WRF ID used for the given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -132,6 +138,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_cr39_id(self, shot, dim, position) -> str:
         """Get the CR-39 ID used for the given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -151,6 +158,7 @@ class WRF_Data_DB(Generic_DB):
     def get_corrected(self, shot, dim, position, date) -> list:
         """Generally spectra can be available in either raw or corrected forms, or both. Return list contains False
            if the raw data is available, and True if the hohlraum-corrected data is.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -180,6 +188,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_spectrum(self, shot, dim, position, corr, date=None) -> list:
         """Get a spectrum.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -211,6 +220,7 @@ class WRF_Data_DB(Generic_DB):
 
     def get_Nxy(self, shot, dim, position, corr, date=None) -> list:
         """Get N(x,y) image data.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -242,6 +252,7 @@ class WRF_Data_DB(Generic_DB):
 
     def insert(self, shot, dim, position, wrf_id, cr39_id, date, hohl_corr, spectrum, image=None):
         """Insert a new row of data into the database.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999'
         :param dim: the DIM as a string, e.g. '0-0'
         :param position: the position as an integer, e.g. 1
@@ -309,6 +320,7 @@ class WRF_Data_DB(Generic_DB):
 
     def __latest_date__(self, shot, dim, position, corr=None):
         """Get the latest (i.e. most recent) date available for the given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1

@@ -8,14 +8,14 @@ from NIF_WRF.DB import Database
 
 class WRF_Inventory_DB(Generic_DB):
     """Provide a wrapper for WRF inventory DB actions.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/07/11
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the WRF inventory database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the WRF inventory database wrapper and connect to the database."""
         super(WRF_Inventory_DB,self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.WRF_INVENTORY_TABLE
@@ -38,12 +38,14 @@ class WRF_Inventory_DB(Generic_DB):
 
     def get_ids(self) -> list:
         """Get a list of (unique) WRF IDs in the database.
+
         :returns: a python list of the ID strings"""
         query = self.c.execute( 'SELECT Distinct id from %s' % self.TABLE)
         return flatten(array_convert(query))
 
     def get_shots(self, wrf_id):
         """Get number of shots for a given wedge ID.
+
         :param wrf_id: the WRF id (aka serial number) [as str]
         :returns: number of shots the wedge has been used on
         """
@@ -54,6 +56,7 @@ class WRF_Inventory_DB(Generic_DB):
 
     def get_status(self, wrf_id):
         """Get current stats for a given wedge ID.
+
         :param wrf_id: the WRF wrf_id (aka serial number) [as str]
         :returns: this wedge's status
         """
@@ -64,6 +67,7 @@ class WRF_Inventory_DB(Generic_DB):
 
     def insert(self, wrf_id, shots, status):
         """Insert a new row of data into the table.
+
         :param wrf_id: the WRF wrf_id (aka serial number) [as str]
         :param shots: the number of shots this wedge has been used on [int or str]
         :param status: the current WRF status [str]
@@ -91,6 +95,7 @@ class WRF_Inventory_DB(Generic_DB):
 
     def update(self, wrf_id, shots, status=None):
         """Update data for a wedge already in the table.
+
         :param wrf_id: the wedge wrf_id to update [str]
         :param shots: the number of shots this wedge has been used on [int or str]
         :param status: the current status of this wedge [str]

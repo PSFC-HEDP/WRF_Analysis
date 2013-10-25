@@ -21,14 +21,14 @@ from NIF_WRF.DB.Generic_Analysis_DB import *
 
 class WRF_Analysis_DB(Generic_Analysis_DB):
     """Provide a wrapper for WRF analysis, e.g. the stuff that comes from the analysis routines in this program.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/07/23
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the WRF analysis database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the WRF analysis database wrapper and connect to the database."""
         super(WRF_Analysis_DB, self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.WRF_ANALYSIS_TABLE
@@ -60,6 +60,7 @@ class WRF_Analysis_DB(Generic_Analysis_DB):
 
     def load_results(self, shot, dim, position, results):
         """Load the results of running the analysis code.
+
         :param shot: The shot number
         :param dim: the DIM
         :param position: The position

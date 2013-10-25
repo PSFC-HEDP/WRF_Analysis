@@ -5,6 +5,7 @@ from NIF_WRF.DB.Hohlraum_DB import *
 
 def HohlraumDB_Import():
     """Import a hohlraum definition file from CSV."""
+
     # get an existing filename:
     from tkinter.filedialog import askopenfilename
     FILEOPENOPTIONS = dict(defaultextension='.csv',

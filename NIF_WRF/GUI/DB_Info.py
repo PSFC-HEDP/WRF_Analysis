@@ -9,13 +9,13 @@ from NIF_WRF.DB.util import *
 
 
 class DB_Info(tk.Toplevel):
-    """Show a window of information about the database file in use."""
+    """Show a window of information about the database file in use.
+
+    :param parent: (optional) The parent UI window for this window [default=None]
+    """
 
     def __init__(self, parent=None):
-        """
-        Initialize the progress dialog
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        """
+        """ Initialize the progress dialog"""
         super(DB_Info, self).__init__(parent)
 
         # connect to the database

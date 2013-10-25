@@ -5,7 +5,10 @@ from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.Shot_DB import *
 
 class ShotDB_Viewer(Table_Viewer):
+    """View data stored in the shot database."""
+
     def __init__(self):
+        """Constructor"""
         super(ShotDB_Viewer, self).__init__(parent=None, build=False)
 
         # connect to the database
@@ -21,6 +24,7 @@ class ShotDB_Viewer(Table_Viewer):
         if len(shots) == 0:
             shots = ['']
         selector = tk.OptionMenu(self, self.selector_var, *shots)
+        selector.configure(width=20)
         self.header_widgets.append(selector)
         self.selector_var.trace('w', self.update_data)
 
@@ -29,6 +33,7 @@ class ShotDB_Viewer(Table_Viewer):
         self.__build_tree__()
 
     def update_data(self, *args):
+        """Update displayed data"""
         shot = self.selector_var.get()
         if shot is None or shot == '':
             return

@@ -3,13 +3,31 @@ import scipy.interpolate
 import scipy.integrate
 import numpy
 from NIF_WRF.util.Constants import *
-from NIF_WRF.util.StopPow import *
+from NIF_WRF.util.StopPow import StopPow_LP, FloatVector
 
 __author__ = 'Alex Zylstra'
 
 
 class rhoR_Model(object):
-    """3-part (shell, fuel, ablated mass) rhoR model.
+    """3-part (shell, fuel, ablated mass) rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
+
+    :param shell_mat: (optional) the shell material to use {default='CH'}
+    :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
+    :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
+    :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
+    :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
+    :param P0: (optional) initial gas fill pressure [atm] {default=50}
+    :param Te_Gas: (optional) gas electron temperature [keV] {default=1}
+    :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
+    :param Te_Abl: (optional) ablated mass electron temperature [keV] {default=0.3}
+    :param Te_Mix: (optional) mix mass electron temperature [keV] {default=0.3}
+    :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
+    :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
+    :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
+    :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.025}
+    :param Tshell: (optional) thickness of the shell in-flight [cm] {default = 40e-4}
+    :param Mrem: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
+    :param E0: (optional) initial proton energy [MeV] {default=14.7}
     :author: Alex Zylstra
     :date: 2013/09/04
     """
@@ -119,25 +137,7 @@ class rhoR_Model(object):
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
                  rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
                  Tshell=40e-4, Mrem=0.15, E0=14.7):
-        """Initialize the rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
-        :param shell_mat: (optional) the shell material to use {default='CH'}
-        :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
-        :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
-        :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
-        :param f3He: (optional) 3He atomic fraction in the fuel [fractional] {default=0.7}
-        :param P0: (optional) initial gas fill pressure [atm] {default=50}
-        :param Te_Gas: (optional) gas electron temperature [keV] {default=1}
-        :param Te_Shell: (optional) shell electron temperature [keV] {default=0.2}
-        :param Te_Abl: (optional) ablated mass electron temperature [keV] {default=0.3}
-        :param Te_Mix: (optional) mix mass electron temperature [keV] {default=0.3}
-        :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
-        :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
-        :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
-        :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.025}
-        :param Tshell: (optional) thickness of the shell in-flight [cm] {default = 40e-4}
-        :param Mrem: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
-        :param E0: (optional) initial proton energy [MeV] {default=14.7}
-        """
+        """Initialize the rhoR model."""
         self.shell_mat = shell_mat
         self.Ri = Ri
         self.Ro = Ro
@@ -257,6 +257,7 @@ class rhoR_Model(object):
 
     def Eout(self, Rcm) -> float:
         """Main function, which calculates the proton energy downshift.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: the final proton energy [MeV]
         """
@@ -269,6 +270,7 @@ class rhoR_Model(object):
 
     def __precompute_Eout__(self, Rcm) -> float:
         """Main function, which calculates the proton energy downshift.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: the final proton energy [MeV]
         """
@@ -298,6 +300,7 @@ class rhoR_Model(object):
 
     def Calc_rhoR(self, E1) -> tuple:
         """Alternative analysis method: specify measured E and calculate rhoR.
+
         :param E1: Measured proton energy [MeV]
         :returns: model areal density to produced measured E [g/cm2], Rcm [cm]
         """
@@ -317,6 +320,7 @@ class rhoR_Model(object):
     # ----------------------------------------------------------------
     def rho_Gas(self, Rcm) -> float:
         """Calculate gas density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: gas density [g/cc]
         """
@@ -325,6 +329,7 @@ class rhoR_Model(object):
 
     def rhoR_Gas(self, Rcm) -> float:
         """Calculate gas areal density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: the gas areal density [g/cm2]
         """
@@ -333,6 +338,7 @@ class rhoR_Model(object):
 
     def n_Gas(self, Rcm) -> tuple:
         """Calculate particle number density in the gas.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc]
         """
@@ -344,6 +350,7 @@ class rhoR_Model(object):
 
     def rho_Mix(self, Rcm) -> float:
         """Calculate the mix mass density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: mix mass density [g/cc]
         """
@@ -352,6 +359,7 @@ class rhoR_Model(object):
 
     def rhoR_Mix(self, Rcm,) -> float:
         """Calculate mix areal density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: mix mass areal density [g/cm2]"""
         V = (4 * math.pi / 3) * (Rcm - self.Tshell / 2) ** 3
@@ -359,6 +367,7 @@ class rhoR_Model(object):
 
     def n_Mix(self, Rcm) -> tuple:
         """Calculate mix number density
+
         :param Rcm: shell radius at shock BT [cm]
         :return: ni,ne [1/cc]
         """
@@ -368,24 +377,30 @@ class rhoR_Model(object):
 
     def rho_Shell(self, Rcm) -> float:
         """Calculate shell mass density.
+
         :param Rcm: shell radius at shock BT [cm]
-        :returns: mass density in the shell [g/cc] """
+        :returns: mass density in the shell [g/cc]
+        """
         m = self.Mass_Shell_Total * self.Mrem
         V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
         return m / V
 
     def rhoR_Shell(self, Rcm) -> float:
         """Calculate the shell's areal density.
+
         :param Rcm: shell radius at shock BT [cm]
-        :returns: areal density [g/cm2] """
+        :returns: areal density [g/cm2]
+        """
         m = self.Mass_Shell_Total * self.Mrem
         V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
         return self.Tshell * m / V
 
     def n_Shell(self, Rcm) -> tuple:
         """Calculate particle number density in the shell.
+
         :param Rcm: shell radius at shock BT [cm]
-        :returns: ni,ne [1/cc] """
+        :returns: ni,ne [1/cc]
+        """
         ni = self.rho_Shell(Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
         ne = self.__shell_AvgZ__[self.shell_mat] * ni
         return ni, ne
@@ -417,6 +432,7 @@ class rhoR_Model(object):
 
     def rho_Abl(self, r, Rcm) -> float:
         """Calculates the ablated mass density as a function of radius.
+
         :param r: the radius to calculate density at [cm]
         :param Rcm: shell radius at shock BT [cm]
         :returns: the mass density [g/cc]
@@ -432,6 +448,7 @@ class rhoR_Model(object):
 
     def rhoR_Abl(self, Rcm) -> float:
         """Calculate the ablated mass areal density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: areal density [g/cm2]"""
         r1, r2, r3 = self.get_Abl_radii(Rcm)
@@ -446,6 +463,7 @@ class rhoR_Model(object):
 
     def n_Abl(self, r, Rcm) -> tuple:
         """Calculate the ablated mass number density.
+
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc] """
         ni = self.rho_Abl(r, Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
@@ -454,8 +472,10 @@ class rhoR_Model(object):
 
     def rhoR_Total(self, Rcm) -> float:
         """Calculate the total rhoR for given conditions.
+
         :param Rcm: shell radius at shock BT [cm]
-        :returns the total areal density [g/cm2] """
+        :returns: the total areal density [g/cm2]
+        """
         ret = self.rhoR_Gas(Rcm)
         ret += self.rhoR_Mix(Rcm)
         ret += self.rhoR_Shell(Rcm)
@@ -464,8 +484,10 @@ class rhoR_Model(object):
 
     def rhoR_Parts(self, Rcm) -> tuple:
         """Get the three components of rhoR for given conditions.
+
         :param Rcm: shell radius at shock BT [cm]
-        :returns: a tuple containing (fuel,shell,ablated) rhoR [g/cm2] """
+        :returns: a tuple containing (fuel,shell,ablated) rhoR [g/cm2]
+        """
         gas = self.rhoR_Gas(Rcm)
         gas += self.rhoR_Mix(Rcm)
         shell = self.rhoR_Shell(Rcm)
@@ -480,6 +502,7 @@ class rhoR_Model(object):
 
     def Eout_GasMix(self, Ep, x, Rcm) -> float:
         """Calculate gas+mix downshift for protons
+
         :param Ep: proton energy [MeV]
         :param x: path length [um]
         :param Rcm: shell radius at shock BT [cm]
@@ -516,10 +539,12 @@ class rhoR_Model(object):
 
     def Eout_Shell(self, Ep, x, Rcm) -> float:
         """Calculate downshift in the shell.
+
         :param Ep: proton energy [MeV]
         :param x: path length [um]
         :param Rcm: shell radius at shock BT [cm]
-        :returns: downshifted energy [MeV] """
+        :returns: downshifted energy [MeV]
+        """
         ni, ne = self.n_Shell(Rcm)
         nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
         nf[0] = ne
@@ -538,10 +563,12 @@ class rhoR_Model(object):
 
     def dEdr_Abl(self, Ep, r, Rcm):
         """Calculate stopping power for protons in the ablated mass.
+
         :param Ep: proton energy [MeV]
         :param r: radius [cm]
         :param Rcm: shell radius at shock BT [cm]
-        :returns: stopping power [MeV/cm]"""
+        :returns: stopping power [MeV/cm]
+        """
         ni, ne = self.n_Abl(r, Rcm)
         nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
         nf[0] = ne

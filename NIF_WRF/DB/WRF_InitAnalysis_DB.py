@@ -12,7 +12,7 @@ from NIF_WRF.util.Import_WRF_CSV import WRF_CSV
 #  data_region_x0 int, data_region_x1 int, data_region_y0 int, data_region y1 int,
 #  back1_region_x0 int, back1_region_x1 int, back1_region_y0 int, back1_region_y1 int,
 #  back2_region_x0 int, back2_region_x1 int, back2_region_y0 int, back2_region_y1 int,
-#  c_limit real, e_limit real,
+#  c_limit real, e_limit real, Dmax real, dDmax real,
 #  d_low real, d_high real, d_auto bit, e_low real, e_high real,
 #  dve_c real, dve_dc real, fit_chi2 real, fit_e_min real, fit_e_max real,
 #  fit_mean real, fit_sigma real, fit_yield real,
@@ -28,14 +28,14 @@ from NIF_WRF.util.Import_WRF_CSV import WRF_CSV
 
 class WRF_InitAnalysis_DB(Generic_Analysis_DB):
     """Provide a wrapper for WRF 'initial analysis', e.g. the stuff that comes from the Analysis Program.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
-    :date: 2013/10/18
+    :date: 2013/10/24
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the WRF initial analysis database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the WRF initial analysis database wrapper and connect to the database."""
         super(WRF_InitAnalysis_DB, self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.WRF_INITANALYSIS_TABLE

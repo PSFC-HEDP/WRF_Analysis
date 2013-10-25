@@ -5,13 +5,13 @@ from NIF_WRF.DB.Shot_DB import *
 
 
 class SQL_Query(tk.Toplevel):
-    """Dialog to directly execute a SQL command"""
+    """Dialog to directly execute a SQL command
 
-    def __init__(self, parent=None):
-        """
-        Initialize the editor
         :param parent: (optional) the parent (usually should be None) [default=None]
         """
+
+    def __init__(self, parent=None):
+        """Initialize the editor"""
         super(SQL_Query, self).__init__(parent)
 
         # connect to the database

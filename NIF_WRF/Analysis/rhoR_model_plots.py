@@ -3,14 +3,15 @@
 import math
 
 from numpy import arange, zeros
-
-from NIF_WRF.Analysis.rhoR_Analysis import *
+from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
+from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
 __author__ = 'Alex Zylstra'
 
 def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(4,3)):
     """Plot rhoR model's curve versus energy.
+
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot
     :param E0: (optional) The initial proton energy in MeV [default=14.7]
@@ -96,6 +97,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
 
 def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(4,3)):
     """Plot rhoR model's curve of Rcm versus energy.
+
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
     :param E0: (optional) The initial proton energy in MeV [default=14.7]
@@ -166,6 +168,7 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
 
 def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(4,3)):
     """Plot rhoR model's curve versus center-of-mass radius.
+
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
     :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
@@ -225,6 +228,7 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
 
 def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(4,3)):
     """Plot the mass profile for a given center-of-mass radius
+
     :param analysis: the rhoR analysis model to plot
     :param Rcm: the center of mass radius to use for the plot [cm]
     :param dr: (optional) step size for Rcm in cm [default=0.001]
@@ -290,6 +294,7 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(4,3)):
 
 def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False, figsize=(4,3)):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
+
     :param analysis: the rhoR analysis model to plot
     :param filename: where to save the plot to
     :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
@@ -370,6 +375,7 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
 
 def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting rhoR vs energy for them.
+
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None
@@ -438,6 +444,7 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
 
 def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting Rcm vs rhoR for them.
+
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None
@@ -503,6 +510,7 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
 
 def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(4,3)):
     """Compare several rhoR models by plotting Rcm vs energy for them.
+
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None

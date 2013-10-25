@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 1
 
    NIF_WRF
+   NIF_WRF.Analysis
    NIF_WRF.DB
    NIF_WRF.GUI
    NIF_WRF.util

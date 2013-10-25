@@ -1,5 +1,6 @@
 __author__ = 'Alex Zylstra'
 
+# written to be py2/3 compatible:
 try:
     import Tkinter
     import tkFont
@@ -9,7 +10,7 @@ except ImportError:
 
 import ttk
 
-def sortby(tree, col, descending):
+def __sortby__(tree, col, descending):
     """Sort tree contents when a column is clicked on."""
     # grab values to sort
     data = [(tree.set(child, col), child) for child in tree.get_children('')]
@@ -21,17 +22,18 @@ def sortby(tree, col, descending):
 
     # switch the heading so that it will sort in the opposite direction
     tree.heading(col,
-        command=lambda col=col: sortby(tree, col, int(not descending)))
+        command=lambda col=col: __sortby__(tree, col, int(not descending)))
 
 class Table_Viewer(Tkinter.Toplevel):
-    """Implement a top-level window to display info in a tabular fashion. It's intended that this class is extended"""
+    """Implement a top-level window to display info in a tabular fashion. It's intended that this class is extended.
+
+    :param parent: (optional) The parent of this window [default=None]
+    :param build: (optional) Whether to call the widget building functions in the constructor [default=True]
+    """
 
 
     def __init__(self, parent=None, build=True):
-        """Initialize the table.
-        :param parent: (optional) The parent of this window [default=None]
-        :param build: (optional) Whether to call the widget building functions in the constructor [default=True]
-        """
+        """Initialize the table."""
         super(Table_Viewer, self).__init__(parent)
         # initializations:
         self.tree = None
@@ -80,7 +82,7 @@ class Table_Viewer(Tkinter.Toplevel):
         # add in new data:
         for col in self.tree_columns:
             self.tree.heading(col, text=col.title(),
-                command=lambda c=col: sortby(self.tree, c, 0))
+                command=lambda c=col: __sortby__(self.tree, c, 0))
             # set up with width based on font
             self.tree.column(col, width=tkFont.Font().measure(col.title()))
 

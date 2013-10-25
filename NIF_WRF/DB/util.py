@@ -2,6 +2,7 @@ import collections
 
 def array_convert(query) -> list:
     """Convert a database query to python array
+
     :param query: The result of a database query
     :returns: a list of converted values
     """
@@ -17,6 +18,7 @@ def array_convert(query) -> list:
 
 def flatten(x) -> list:
     """Flatten a list (useful for processing results)
+
     :param x: the list to flatten
     :returns: The flattened list
     """

@@ -14,7 +14,10 @@ from NIF_WRF.util.Import_Nxy import load_image
 
 
 class WRF_Importer(tk.Toplevel):
-    """Implement a GUI dialog for importing a WRF analysis."""
+    """Implement a GUI dialog for importing a WRF analysis.
+
+    :param parent: (optional) The parent UI element to this window [default=None]
+    """
 
     def __init__(self, parent=None):
         """Initialize the GUI."""

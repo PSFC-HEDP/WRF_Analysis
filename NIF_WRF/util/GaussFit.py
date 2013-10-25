@@ -9,6 +9,7 @@ import sys
 
 def Gaussian(x, A, mu, sigma):
     """Evaluate a Gaussian distribution.
+
     :param x: the independent variable
     :param A: amplitude of the distribution
     :param mu: mean of the distribution
@@ -22,16 +23,17 @@ def Gaussian(x, A, mu, sigma):
 
 class GaussFit(object):
     """Wrapper class for performing Gaussian fits to data.
+
+    :param data: The data to fit. Must be 3 x n array (i.e. 3 columns, n row).
+    :param guess: (optional) The initial guess for the fitting routine. Default [A,mu,sigma] = [5e7,10,1]
+    :param restrict_chi2: (optional) Whether we should restrict chi2 calculations to +/- 5 sigma of the mean. Default is true.
+    :param name: (optional) a text string describing this dataset / fit
     :author: Alex Zylstra
-    :date: 2013/07/05"""
+    :date: 2013/07/05
+    """
 
     def __init__(self, data, guess=[5e7, 10, 1], restrict_chi2=True, name=""):
-        """Constructor.
-        :param data: The data to fit. Must be 3 x n array (i.e. 3 columns, n row).
-        :param guess: (optional) The initial guess for the fitting routine. Default [A,mu,sigma] = [5e7,10,1]
-        :param restrict_chi2: (optional) Whether we should restrict chi2 calculations to +/- 5 sigma of the mean. Default is true.
-        :param name: (optional) a text string describing this dataset / fit
-        """
+        """Constructor."""
         # super constructor:
         super(GaussFit, self).__init__()
 
@@ -77,16 +79,18 @@ class GaussFit(object):
         self.fit, self.covariance = self.do_fit()
 
     def do_fit(self, method='chi^2', guess=[], fixed=[]) -> tuple:
-        """Perform the fit. Called automatically by the constructor. Can be invoked again with different initial guess if desired.
+        """Perform the fit. Called automatically by the constructor.
+        Can be invoked again with different initial guess if desired.
+
         :param method: (optional) Which method to use. Default is chi^2. Options are:
-        'fmin' downhill simplex minimization: minimizes chi^2 for the dataset using scipy.optimize.fmin
 
-        'leastsq' least-squares fit (warning: does not use error bars). Uses scipy.optimize.leastsq
+            'fmin' downhill simplex minimization: minimizes chi^2 for the dataset using `scipy.optimize.fmin`
 
-        'chi^2' chi^2 minimization using the scipy.optimize.curve_fit algorithm
+            'leastsq' least-squares fit (warning: does not use error bars). Uses `scipy.optimize.leastsq`
+
+            'chi^2' chi^2 minimization using the `scipy.optimize.curve_fit` algorithm
 
         :param guess: (optional) The initial guess for the fitting routine.
-
         :returns: tuple containing best fit parameters, and covariance matrix
         """
         if len(guess) != 3:
@@ -128,16 +132,21 @@ class GaussFit(object):
 
     def get_fit(self) -> list:
         """Get the calculated best fit.
-        :returns: a python list containing [a,mu,sigma] from the best fit."""
+
+        :returns: a python list containing [a,mu,sigma] from the best fit.
+        """
         return self.fit
 
     def get_covariance(self):
         """Get covariance matrix for the best fit.
-        :returns: covariance matrix (see scipy.optimize.curve_fit documentation)"""
+
+        :returns: covariance matrix (see scipy.optimize.curve_fit documentation)
+        """
         return self.covariance
 
     def eval_fit(self, x):
         """Evaluate the best fit.
+
         :param x: the independent variable
         :returns: the fit evaluated at x
         """
@@ -145,11 +154,14 @@ class GaussFit(object):
 
     def chi2(self):
         """Calculate total chi2 for best fit.
-        :returns: the value of chi2"""
+
+        :returns: the value of chi2
+        """
         return self.chi2_other(self.fit)
 
     def chi2_other(self, fit):
         """Calculate chi2 for any fit to this data.
+
         :param fit: a list containing the fit parameters [A,mu,sigma]
         :returns: chi2 for class data and fit
         """
@@ -170,11 +182,14 @@ class GaussFit(object):
 
     def red_chi2(self):
         """Calculate reduced chi2 for the best fit.
-        :returns: value of reduced chi2 for the best fit"""
+
+        :returns: value of reduced chi2 for the best fit
+        """
         return self.red_chi2_other(self.fit)
 
     def red_chi2_other(self, fit):
         """Calculate reduced chi2 for any fit to this data.
+
         :param fit: an array containing the fit parameters [A,mu,sigma]
         :returns: reduced chi2 for class data and fit
         """
@@ -182,9 +197,10 @@ class GaussFit(object):
 
     def delta_chi2_amp(self, dA, sign=1):
         """Calculate increase in chi2 due to a change in amplitude.
+
         :param dA: dA change in amplitude (A' = A + dA)
         :param sign: (optional) whether amplitude should be increased or decreased (default=1 -> increase)
-        :returns the change in chi2
+        :returns: the change in chi2
         """
         A = self.fit[0] + sign * dA
         # calculate a new best fit:
@@ -200,6 +216,7 @@ class GaussFit(object):
 
     def delta_chi2_mu(self, dmu, sign=1):
         """Calculate increase in chi2 due to a change in mean.
+
         :param dmu: change in mean (mu' = mu + dmu)
         :param sign: (optional) whether mean should be increased or decreased (default=1 -> increase)
         :returns: change in chi2
@@ -218,6 +235,7 @@ class GaussFit(object):
 
     def delta_chi2_sigma(self, ds, sign=1):
         """Calculate increase in chi2 due to a change in sigma.
+
         :param ds: change in sigma (sigma' = sigma + ds)
         :param sign: (optional) whether sigma should be increased or decreased (default=1 -> increase)
         :returns: change in chi2
@@ -235,8 +253,11 @@ class GaussFit(object):
         return chi2 - self.chi2()
 
     def chi2_fit_unc(self):
-        """Calculate uncertainty in the fit parameters. Routine: each fit parameter is varied to produce an increase of 1 in total chi2
-        :returns: list containing uncertainties [ [-A,+A] , [-mu,+mu] , [-sigma,+sigma] ]"""
+        """Calculate uncertainty in the fit parameters.
+        Routine: each fit parameter is varied to produce an increase of 1 in total chi2
+
+        :returns: list containing uncertainties [ [-A,+A] , [-mu,+mu] , [-sigma,+sigma] ]
+        """
         # return value: delta unc in each parameter
         delta = [[], [], []]
 
@@ -270,7 +291,9 @@ class GaussFit(object):
 
     def plot_file(self, fname):
         """Save a plot to file.
-        :param fname: the file to save"""
+
+        :param fname: the file to save
+        """
         # import matplotlib
         import matplotlib
         import matplotlib.pyplot as plt
@@ -286,6 +309,7 @@ class GaussFit(object):
 
     def plot_window(self, interactive=False):
         """Make a plot in a new UI window
+
         :param interactive: (optional) Whether to show the plot in interactive mode {default = false}
         """
         # import matplotlib
@@ -310,6 +334,7 @@ class GaussFit(object):
 
     def plot(self, ax=None):
         """Make a plot of the data and fit, drawn into given Axes.
+
         :param ax: Axes instance to plot into
         """
         # sanity check:

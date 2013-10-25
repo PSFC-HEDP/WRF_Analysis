@@ -5,6 +5,8 @@ from NIF_WRF.DB.WRF_Inventory_DB import *
 import tkinter as tk
 
 class InventoryDB_Viewer(Table_Viewer):
+    """Display data available in the inventory database"""
+
     def __init__(self):
         super(InventoryDB_Viewer, self).__init__(parent=None, build=False)
 
@@ -39,5 +41,6 @@ class InventoryDB_Viewer(Table_Viewer):
             self.tree_data.append(row)
 
     def refresh_from_setup(self):
+        """Refresh the displayed data from the Setup DB"""
         self.db.refresh_from_setup()
         self.refresh()

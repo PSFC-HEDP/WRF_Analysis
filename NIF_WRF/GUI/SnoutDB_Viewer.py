@@ -4,7 +4,10 @@ from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.Snout_DB import *
 
 class SnoutDB_Viewer(Table_Viewer):
+    """View the entries in the snout database."""
+
     def __init__(self):
+        """Constructor"""
         super(SnoutDB_Viewer, self).__init__(parent=None, build=False)
 
         # connect to the database

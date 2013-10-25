@@ -24,15 +24,16 @@ from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
 
 
 class WRF_Analyzer(tk.Toplevel):
-    """Implement a GUI dialog for providing input to the WRF analysis."""
+    """Implement a GUI dialog for providing input to the WRF analysis.
+
+    :param parent: (optional) The parent element in Tkinter [default=None]
+    :param shot: (optional) The shot number used, as a str [default prompts user]
+    :param dim: (optional) The DIM used, as a str [default prompts user]
+    :param pos: (optional) The WRF position used, as a str [default prompts user]
+    """
 
     def __init__(self, parent=None, shot=None, dim=None, pos=None):
-        """Initialize the GUI.
-        :param parent: (optional) The parent element in Tkinter [default=None]
-        :param shot: (optional) The shot number used, as a str [default prompts user]
-        :param dim: (optional) The DIM used, as a str [default prompts user]
-        :param pos: (optional) The WRF position used, as a str [default prompts user]
-        """
+        """Initialize the GUI."""
         super(WRF_Analyzer, self).__init__(master=parent)
 
         # necessary databases:
@@ -73,7 +74,7 @@ class WRF_Analyzer(tk.Toplevel):
                 self.__cancel__()
                 return
 
-            dialog = Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots)
+            dialog = Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots, width=20)
             self.shot = dialog.result
 
             # if the user canceled:
@@ -118,35 +119,47 @@ class WRF_Analyzer(tk.Toplevel):
         sep1.grid(row=3, column=0, columnspan=2, sticky='ew')
 
         # some options via checkbutton:
-        self.verbose_var = tk.BooleanVar()
-        check0 = tk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
-        check0.select()
+        self.hohl_var = tk.BooleanVar()
+        check0 = tk.Checkbutton(self, text='Hohlraum correction?', variable=self.hohl_var)
         check0.grid(row=4, column=0, columnspan=2, sticky='NS')
-        self.plot_var = tk.BooleanVar()
-        check1 = tk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
+        # set based on DIM:
+        if self.dim == '0-0':
+            check0.deselect()
+        else:
+            check0.select()
+
+        self.verbose_var = tk.BooleanVar()
+        check1 = tk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
         check1.select()
         check1.grid(row=5, column=0, columnspan=2, sticky='NS')
-        self.rhoR_plot_var = tk.BooleanVar()
-        check2 = tk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
+
+        self.plot_var = tk.BooleanVar()
+        check2 = tk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
+        check2.select()
         check2.grid(row=6, column=0, columnspan=2, sticky='NS')
-        self.display_results = tk.BooleanVar()
-        check3 = tk.Checkbutton(self, text='Display results?', variable=self.display_results)
-        check3.select()
+
+        self.rhoR_plot_var = tk.BooleanVar()
+        check3 = tk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
         check3.grid(row=7, column=0, columnspan=2, sticky='NS')
 
+        self.display_results = tk.BooleanVar()
+        check4 = tk.Checkbutton(self, text='Display results?', variable=self.display_results)
+        check4.select()
+        check4.grid(row=8, column=0, columnspan=2, sticky='NS')
+
         sep2 = ttk.Separator(self, orient='vertical')
-        sep2.grid(row=8, column=0, columnspan=2, sticky='ew')
+        sep2.grid(row=9, column=0, columnspan=2, sticky='ew')
 
         self.__generate_adv__(9)
 
         sep3 = ttk.Separator(self, orient='vertical')
-        sep3.grid(row=10, column=0, columnspan=2, sticky='ew')
+        sep3.grid(row=11, column=0, columnspan=2, sticky='ew')
 
         # buttons:
         go_button = tk.Button(self, text='Go', command=self.__run_analysis__)
-        go_button.grid(row=11, column=0)
+        go_button.grid(row=12, column=0)
         cancel_button = tk.Button(self, text='Cancel', command=self.__cancel__)
-        cancel_button.grid(row=11, column=1)
+        cancel_button.grid(row=12, column=1)
 
         # a couple key bindings:
         self.bind('<Return>', self.__run_analysis__)
@@ -163,7 +176,7 @@ class WRF_Analyzer(tk.Toplevel):
         # get the spectrum and image:
         spectrum = self.data_db.get_spectrum(self.shot, self.dim, self.pos, False)
         # sanity check:
-        if spectrum is None:  # TODO: troubleshoot, seems to have issues with multiple available spectra
+        if spectrum is None:
             from tkinter.messagebox import showerror
             showerror('Error', 'Could not load spectrum from database')
             return
@@ -197,30 +210,37 @@ class WRF_Analyzer(tk.Toplevel):
             summary = summary.replace('_',r'$\textunderscore$')
         #summary = summary.encode('unicode-escape')
 
-        # get the hohlraum wall:
-        # TODO: Improve handling of spectra that don't need correction (i.e. on pole). Checkbox? Other option fed into Analyze_Spectrum
+        # get snout info:
         snout = self.setup_db.query_col(self.shot, self.dim, self.pos, 'snout')[0]
-        hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
-        wall = self.hohl_db.get_wall(drawing=hohl_drawing)
-        hohl_thick = None
-        if wall is None or len(wall) == 0:
-            from tkinter.messagebox import askyesnocancel
-            response = askyesnocancel('Warning', 'Could not load hohlraum definition for ' + hohl_drawing
-                                                 + '. Specify manually?')
-            if response:
-                dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
-                Au = dialog.result
-                dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
-                DU = dialog.result
-                dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
-                Al = dialog.result
 
-                hohl_thick = [Au, DU, Al]
+        # get the hohlraum wall:
+        do_hohl_corr = self.hohl_var.get()
+        if do_hohl_corr:
+            hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
+            wall = self.hohl_db.get_wall(drawing=hohl_drawing)
+            hohl_thick = None
+            if wall is None or len(wall) == 0:
+                from tkinter.messagebox import askyesnocancel
+                response = askyesnocancel('Warning', 'Could not load hohlraum definition for ' + hohl_drawing
+                                                     + '. Specify manually?')
+                if response:
+                    from NIF_WRF.GUI.widgets.Value_Prompt import Value_Prompt
+                    dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
+                    Au = dialog.result
+                    dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
+                    DU = dialog.result
+                    dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
+                    Al = dialog.result
 
+                    hohl_thick = [Au, DU, Al]
+
+                wall = None
+
+                if response is None:
+                    return
+        else:
             wall = None
-
-            if response is None:
-                return
+            hohl_thick = None
 
         # calculate angles:
         theta = self.snout_db.get_theta(snout, self.dim, self.pos)[0]

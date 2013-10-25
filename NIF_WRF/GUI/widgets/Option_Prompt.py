@@ -5,7 +5,7 @@ import tkinter as tk
 class Option_Prompt(tk.Toplevel):
     """Implement a dialog window to prompt a user to select one of several options."""
 
-    def __init__(self, parent, title=None, text=None, options=[]):
+    def __init__(self, parent, title=None, text=None, options=[], width=10):
         """Initialize the dialog window"""
         super(Option_Prompt, self).__init__(parent)
         self.transient(parent)
@@ -15,7 +15,7 @@ class Option_Prompt(tk.Toplevel):
         self.grab_set()
 
         self.result = None
-        self.__create_widgets__(title, text, options)
+        self.__create_widgets__(title, text, options, width)
 
         self.protocol("WM_DELETE_WINDOW", self.cancel)
 
@@ -25,7 +25,7 @@ class Option_Prompt(tk.Toplevel):
 
         self.wait_window(self)
 
-    def __create_widgets__(self, title, text, options):
+    def __create_widgets__(self, title, text, options, width):
         """Create the UI"""
         if title is not None:
             self.title(title)
@@ -37,6 +37,7 @@ class Option_Prompt(tk.Toplevel):
         if options is not None:
             self.var = tk.StringVar()
             menu = tk.OptionMenu(self, self.var, *options)
+            menu.configure(width=width)
             menu.pack()
             menu.focus_force()
 

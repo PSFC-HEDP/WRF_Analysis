@@ -6,6 +6,7 @@ import os
 
 def read_csv(fname,crop=0,cols=[]) -> list:
     """Read CSV data from a file and do conversions.
+
     :param fname: the file name to read
     :param crop: the number of rows of header to drop
     :param cols: the columns to convert to float (default [] -> all columns)
@@ -35,6 +36,7 @@ def read_csv(fname,crop=0,cols=[]) -> list:
 
 def unique_vals(in_arr) -> list:
     """Remove duplicates from an array
+
     :param in_arr: the raw (1-D) array to remove duplicates from
     :returns: a list containing the unique values from in_arr
     """

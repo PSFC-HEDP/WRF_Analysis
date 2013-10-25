@@ -8,14 +8,14 @@ from NIF_WRF.DB.util import *
 
 class Generic_DB:
     """Python-based database utility for a generic database wrapper.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/06/11
     """
 
     def __init__(self, fname):
-        """Class constructor, which connects to the database
-        :param fname: the file location/name for the database
-        """
+        """Class constructor, which connects to the database"""
         import os
 
         if not os.path.exists(fname):
@@ -41,6 +41,7 @@ class Generic_DB:
 
     def num_rows(self) -> int:
         """Get the number of rows in the database table associated with this object.
+
         :returns: the number of rows in the table
         """
         query = self.c.execute('SELECT count(*) from %s' % self.TABLE)
@@ -49,12 +50,14 @@ class Generic_DB:
 
     def num_columns(self):
         """Get the number of columns in the table.
+
         :returns: the number of columns in the table
         """
         return len(self.get_columns())
 
     def get_columns(self) -> list:
         """Get a list of columns in the table.
+
         :returns: a list where each element is the column metainfo (name, type, etc).
         """
         query = self.c.execute('PRAGMA table_info(%s)' % self.TABLE)
@@ -62,6 +65,7 @@ class Generic_DB:
 
     def get_column_names(self) -> list:
         """Get a list of columns in the table.
+
         :returns: a list where each element is the column name
         """
         query = self.c.execute('PRAGMA table_info(%s)' % self.TABLE)
@@ -77,6 +81,7 @@ class Generic_DB:
 
     def sql_query(self, query, values=()):
         """Execute a generic SQL query. Be careful!
+
         :param query: the query to execute, i.e. a string in SQL syntax
         :returns: the result of the query
         """
@@ -89,6 +94,7 @@ class Generic_DB:
 
     def add_column(self, name, col_type):
         """Add a new column to the table.
+
         :param name: the name of the column you want to add
         :param col_type: a string defining the type of data for this column
         """
@@ -100,6 +106,7 @@ class Generic_DB:
 
     def csv_import(self, fname):
         """Read all data from a csv file into the table.
+
         :param fname: The CSV file to import from
         """
         # drop the existing table
@@ -151,6 +158,7 @@ class Generic_DB:
 
     def csv_export(self, fname):
         """Write all data from the table to a csv file
+
         :param fname: The file to write out to
         """
         with open(fname, 'w', newline='\n') as csvfile:

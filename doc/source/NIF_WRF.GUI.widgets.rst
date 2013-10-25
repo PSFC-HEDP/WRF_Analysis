@@ -57,6 +57,14 @@ widgets Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`String_Prompt` Module
+---------------------------
+
+.. automodule:: NIF_WRF.GUI.widgets.String_Prompt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`Table_View` Module
 ------------------------
 

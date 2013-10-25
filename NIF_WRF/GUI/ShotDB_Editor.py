@@ -5,11 +5,13 @@ from NIF_WRF.DB.Shot_DB import *
 
 
 class ShotDB_Editor(tk.Toplevel):
+    """Edit information in the shot database.
+
+    :param parent: (optional) the parent (usually should be None) [default=None]
+    """
+
     def __init__(self, parent=None):
-        """
-        Initialize the editor
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        """
+        """Initialize the editor"""
         super(ShotDB_Editor, self).__init__(parent)
 
         # connect to the database
@@ -41,6 +43,7 @@ class ShotDB_Editor(tk.Toplevel):
         if len(shots) == 0:
             shots = ['']
         self.shot_selector = tk.OptionMenu(self, self.shot_selector_var, *shots)
+        self.shot_selector.configure(width=20)
         self.shot_selector.grid(row=1, column=1)
         self.shot_selector_var.trace('w', self.update_data)
         
@@ -50,6 +53,7 @@ class ShotDB_Editor(tk.Toplevel):
         if len(columns) == 0:
             columns = ['']
         self.col_selector = tk.OptionMenu(self, self.col_selector_var, *columns)
+        self.col_selector.configure(width=20)
         self.col_selector.grid(row=2, column=1)
         self.col_selector_var.trace('w', self.update_data)
 

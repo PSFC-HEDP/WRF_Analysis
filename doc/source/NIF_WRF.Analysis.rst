@@ -1,6 +1,7 @@
 Analysis Package
 ================
 
+
 :mod:`Analysis` Package
 -----------------------
 
@@ -25,16 +26,8 @@ Analysis Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`SlideGenerator` Module
-----------------------------
-
-.. automodule:: NIF_WRF.Analysis.SlideGenerator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`rhoR_Analysis` Module
----------------------------
+------------------------
 
 .. automodule:: NIF_WRF.Analysis.rhoR_Analysis
     :members:
@@ -57,3 +50,10 @@ Analysis Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`SlideGenerator` Module
+----------------------------
+
+.. automodule:: NIF_WRF.Analysis.SlideGenerator
+    :members:
+    :undoc-members:
+    :show-inheritance:

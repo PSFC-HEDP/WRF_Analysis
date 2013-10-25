@@ -3,9 +3,17 @@ __author__ = 'Alex Zylstra'
 import tkinter as tk
 
 class SimpleTable(tk.Toplevel):
-    """Implement a very simple table display, using only tkinter elements. Currently has issues"""
+    """Implement a very simple table display, using only tkinter elements. Currently has issues.
+
+    :param parent: The parent UI object
+    :param rows: (optional) number of rows to display [default=10]
+    :param columns: (optional) number of columns to display [default=2]
+    :param title: (optional) Window title to display [default='']
+    :param width: (optional) Width of the display window [default=10]
+    """
 
     def __init__(self, parent, rows=10, columns=2, title="", width=10):
+        """Constructor"""
         # use black background so it "peeks through" to
         # form grid lines
         super(SimpleTable, self).__init__(parent, background="black")
@@ -42,11 +50,23 @@ class SimpleTable(tk.Toplevel):
         self.title(title)
 
     def set(self, row, column, value):
+        """Set the value at a specified location in the table.
+
+        :param row: The row index
+        :param column: The column index
+        :param value: The value to set at row, column
+        """
         widget = self._widgets[row][column]
         widget.configure(text=value)
 
     def get(self, row, column):
+        """Get the value currently contained in the cell.
+
+        :param row: The row to get
+        :param column: The column to get
+        :returns: `str` representation of the value
+        """
         return self._widgets[row][column].cget('text')
 
-    def myfunction(self, event):
+    def __myfunction__(self, event):
         self.text_area.configure(scrollregion=self.text_area.bbox("all"),width=200,height=200)

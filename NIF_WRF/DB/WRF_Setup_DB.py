@@ -9,14 +9,14 @@ from NIF_WRF.DB import Database
 
 class WRF_Setup_DB(Generic_DB):
     """Provide a wrapper for WRF Setup DB actions.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/07/11
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the WRF setup database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the WRF setup database wrapper and connect to the database."""
         super(WRF_Setup_DB, self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.WRF_SETUP_TABLE
@@ -39,19 +39,24 @@ class WRF_Setup_DB(Generic_DB):
 
     def get_shots(self) -> list:
         """Get a list of unique shot names in the table.
-        :returns: a python list of shot strings"""
+
+        :returns: a python list of shot strings
+        """
         query = self.c.execute('SELECT Distinct shot from %s' % self.TABLE)
         return flatten(array_convert(query))
 
     def get_wrf_ids(self) -> list:
         """Get a list of unique WRF IDs in the table.
-        :returns: a python list of shot strings"""
+
+        :returns: a python list of shot strings
+        """
         query = self.c.execute('SELECT Distinct wrf_id from %s' % self.TABLE)
         return flatten(array_convert(query))
 
     def insert(self, shot, wrf_type, shot_name, hohl_drawing, dim, r, snout, position, wrf_id, cr39_1_id, cr39_2_id, cr39_3_id,
                poly_1, poly_2, vacuum_pre, vacuum_post):
         """Insert a new row of data into the table.
+
         :param shot: the shot ID (eg 'N130102-001-999')
         :param wrf_type: the WRF module drawing # (eg AAA10-108020-10)
         :param shot_name: text description of the shot
@@ -118,6 +123,7 @@ class WRF_Setup_DB(Generic_DB):
 
     def update(self, shot, dim, snout, position, col, val):
         """Update an existing row in the table.
+
         :param shot: the shot number
         :param dim: the DIM (eg '90-78')
         :param snout: name of the snout used
@@ -139,6 +145,7 @@ class WRF_Setup_DB(Generic_DB):
 
     def query(self, shot):
         """Find data specified by shot number.
+
         :param shot: the shot number to query
         :returns: all rows found for shot
         """
@@ -150,10 +157,11 @@ class WRF_Setup_DB(Generic_DB):
 
     def query_col(self, shot, dim, position, col):
         """Get data for a specific shot and column.
-        :param shot the shot to query
+
+        :param shot: the shot to query
         :param dim: the DIM (eg '90-78')
         :param position: the WRF position # (1,2,3,4,...)
-        :param col name of the column you want
+        :param col: name of the column you want
         :returns: the column's value"""
         # sanity checks:
         assert isinstance(shot, str)
@@ -174,8 +182,10 @@ class WRF_Setup_DB(Generic_DB):
 
     def find_wrf(self, wrf_id) -> list:
         """Get a list of shots that a WRF was used on
-        :param wrf_id the WRF id
-        :returns: a python list of the shots"""
+
+        :param wrf_id: the WRF id
+        :returns: a python list of the shots
+        """
         # sanity check:
         assert isinstance(wrf_id, str)
 
@@ -186,8 +196,10 @@ class WRF_Setup_DB(Generic_DB):
     # @return python array of shots
     def find_cr39(self, cr39_id) -> list:
         """Get a list of shots that a piece of CR-39 was used on (presumably just one)
-        :param cr39_id the CR-39 ID or serial number
-        :returns: a python list of the shots"""
+
+        :param cr39_id: the CR-39 ID or serial number
+        :returns: a python list of the shots
+        """
         # sanity check:
         assert isinstance(cr39_id, str)
 

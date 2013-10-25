@@ -1,12 +1,14 @@
 # Implement functionality for hohlraum corrections
 
 import os
-
+import sys
 import numpy
+import math
 import scipy.interpolate
 import scipy.stats
+import scipy.optimize
 
-from NIF_WRF.util.GaussFit import *
+from NIF_WRF.util.GaussFit import GaussFit
 from NIF_WRF.util import StopPow
 
 
@@ -14,6 +16,7 @@ __author__ = 'Alex Zylstra'
 
 def LOS_r(z, theta) -> float:
     """Calculate radius along LOS given z.
+
     :param z: the axial position in cm
     :param theta: theta the LOS polar angle
     :returns: r the radial position in cm
@@ -24,6 +27,7 @@ def LOS_r(z, theta) -> float:
 
 def LOS_z(r, theta) -> float:
     """Calculate z along LOS given r.
+
     :param r: the radial position in cm
     :param theta: the LOS polar angle
     :returns: z the axial position in cm
@@ -34,6 +38,7 @@ def LOS_z(r, theta) -> float:
 
 def double_list_sort(list1, list2) -> tuple:
     """Sort two lists simultaneously, using first as key.
+
     :param list1: first list (will be sorted by this one)
     :param list2: second list
     :returns: tuple (list1,list2) sorted
@@ -44,6 +49,7 @@ def double_list_sort(list1, list2) -> tuple:
 
 def flatten(l) -> list:
     """Flatten a list, i.e. [[1,2],[3,4]] -> [1,2,3,4]
+
     :param l: the list to flatten
     :returns: the flattened list
     """
@@ -51,9 +57,19 @@ def flatten(l) -> list:
 
 
 class Hohlraum(object):
-    """Wrapper class for hohlraum corrections, and associated metrics
+    """Wrapper class for hohlraum corrections, and associated metrics.
+    You must supply either the thickness array or an array containing wall data plus view angles.
+
+    :param raw: the raw spectrum
+    :param wall: python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
+    :param angles: python array of [theta_min, theta_max] range in polar angle
+    :param Thickness: the [Au,DU,Al] thickness in um
+    :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
+    :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
+
     :author: Alex Zylstra
-    :date: 2013/10/21"""
+    :date: 2013/10/21
+    """
     OutputDir = 'AnalysisOutputs'
 
     mode_wall = 'Wall'
@@ -68,14 +84,7 @@ class Hohlraum(object):
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
     def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None):
-        """Constructor for the hohlraum. You must supply either the thickness array or an array containing wall data plus view angles.
-        :param raw: the raw spectrum
-        :param wall: python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
-        :param angles: python array of [theta_min, theta_max] range in polar angle
-        :param Thickness: the [Au,DU,Al] thickness in um
-        :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
-        :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
-        """
+        """Constructor for the hohlraum. """
         super(Hohlraum, self).__init__() # super constructor
 
         # initializations:
@@ -135,6 +144,7 @@ class Hohlraum(object):
 
     def __calc_from_wall__(self, wall, angles):
         """Calculate the material thicknesses from a wall definition. Sets the class variables Au, DU, and Al.
+
         :param wall: python list of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
         :param angles: python list of [theta_min, theta_max] range in polar angle
         """
@@ -194,6 +204,7 @@ class Hohlraum(object):
 
     def __calc_layer_thickness__(self, inner_r, inner_z, outer_r, outer_z, angles, n=50) -> tuple:
         """Calculate the average thickness of a wall layer
+
         :param inner_r: list of r values for points defining the inner wall
         :param inner_z: list of z values for points defining the inner wall
         :param outer_r: list of r values for points defining the outer wall
@@ -237,6 +248,7 @@ class Hohlraum(object):
 
     def __correct_spectrum__(self, Al=None, DU=None, Au=None):
         """Calculate the corrected spectrum.
+
         :param Al: (optional) the aluminum thickness in um
         :param DU: (optional) the uranium thickness in um
         :param Au: (optional) the gold thickness in um
@@ -285,6 +297,7 @@ class Hohlraum(object):
 
     def shift_energy(self, E, Al=None, DU=None, Au=None):
         """Calculate the energy shift for a given incident energy.
+
         :param E: the incident energy for a proton in MeV
         :param Al: (optional) the aluminum thickness in um
         :param DU: (optional) the uranium thickness in um
@@ -326,34 +339,46 @@ class Hohlraum(object):
 
     def get_fit_raw(self) -> list:
         """Get the fit to the raw data.
-        :returns: an list containing [Yp,Ep,sigma]"""
+
+        :returns: an list containing [Yp,Ep,sigma]
+        """
         return self.raw_fit.get_fit()
 
     def get_fit_corr(self) -> list:
         """Get the fit to the corrected data.
-        :returns: a list containing [Yp,Ep,sigma]"""
+
+        :returns: a list containing [Yp,Ep,sigma]
+        """
         return self.corr_fit.get_fit()
 
     def get_data_raw(self) -> list:
         """Get the raw data.
-        :returns: a list containing the raw data"""
+
+        :returns: a list containing the raw data
+        """
         return self.raw
 
     def get_data_corr(self):
         """Get the hohlraum-corrected data.
-        :returns: a list containing the corrected data."""
+
+        :returns: a list containing the corrected data.
+        """
         return self.corr
 
     def get_E_shift(self):
         """Get the peak's energy shift due to the hohlraum.
-        :returns: the peak shift in MeV """
+
+        :returns: the peak shift in MeV
+        """
         raw = self.raw_fit.get_fit()[1]
         corr = self.corr_fit.get_fit()[1]
         return corr - raw
 
     def get_unc(self):
         """Get the uncertainty due to the hohlraum correction with given thickness uncertainties.
-        :returns: the uncertainties as [ [-dY,+dy] , [-dE,+dE] , [-ds,+ds] ] """
+
+        :returns: the uncertainties as [ [-dY,+dy] , [-dE,+dE] , [-ds,+ds] ]
+        """
         # nominal raw and corrected energies:
         fit_nominal = self.corr_fit.get_fit()
 
@@ -410,6 +435,7 @@ class Hohlraum(object):
 
     def plot_file(self, fname):
         """Generate a plot and save it to a file.
+
         :param fname: the file to save to
         """
         import matplotlib
@@ -426,7 +452,9 @@ class Hohlraum(object):
 
     def plot_window(self, interactive=False):
         """Make a plot in a new UI window.
-        :param interactive: (optional) whether to use the interactive mode {default=False}"""
+
+        :param interactive: (optional) whether to use the interactive mode {default=False}
+        """
         import matplotlib
         import matplotlib.pyplot as plt
 
@@ -448,6 +476,7 @@ class Hohlraum(object):
 
     def plot(self, ax=None):
         """Make a plot of the spectrum data (raw & corrected) and fit.
+
         :param ax: matplotlib Axes instance to plot into
         """
         import matplotlib.pyplot as plt
@@ -550,6 +579,7 @@ class Hohlraum(object):
 
     def plot_hohlraum_file(self, fname):
         """Save a hohlraum profile plot to file.
+
         :param fname: the file to save to
         """
         # sanity check, in thickness mode we cannot plot anything:
@@ -570,7 +600,9 @@ class Hohlraum(object):
 
     def plot_hohlraum_window(self, interactive=False):
         """Make a new hohlraum profile plot in a UI window.
-        :param interactive: (optional) whether to use the interactive mode {default=False} """
+
+        :param interactive: (optional) whether to use the interactive mode {default=False}
+        """
         # sanity check, in thickness mode we cannot plot anything:
         if self.mode == Hohlraum.mode_thick:
             return
@@ -596,6 +628,7 @@ class Hohlraum(object):
 
     def plot_hohlraum(self, ax=None):
         """ Make a plot of the hohlraum wall and LOS into given Axes.
+
         :param ax: matplotlib Axes instance to plot into
         """
         import matplotlib.pyplot as plt

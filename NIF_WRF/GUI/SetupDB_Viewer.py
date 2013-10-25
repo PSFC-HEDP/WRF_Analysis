@@ -5,6 +5,8 @@ from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.WRF_Setup_DB import *
 
 class SetupDB_Viewer(Table_Viewer):
+    """View information in the setup database."""
+
     def __init__(self):
         super(SetupDB_Viewer, self).__init__(parent=None, build=False)
 
@@ -17,12 +19,13 @@ class SetupDB_Viewer(Table_Viewer):
         #self.maxsize(600,400)
 
         # Add some UI elements:
-        label1 = tk.Label(self, text='Shot')
-        self.header_widgets.append(label1)
+        #label1 = tk.Label(self, text='Shot')
+        #self.header_widgets.append(label1)
 
         self.shot_var = tk.StringVar()
         shots = self.db.get_shots()
         self.shot_selector = tk.OptionMenu(self, self.shot_var, *shots)
+        self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update)
         self.header_widgets.append(self.shot_selector)
 

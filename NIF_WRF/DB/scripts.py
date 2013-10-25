@@ -31,6 +31,7 @@ def initialize():
 
 def export_all(export_dir=os.path.join(Database.DIR,'csv')):
     """Export all tables as CSV.
+
     :param export_dir: (optional) where to export CSV files to [default=Database.DIR+'csv']
     """
     os.makedirs(export_dir, exist_ok=True)
@@ -65,6 +66,7 @@ def export_all(export_dir=os.path.join(Database.DIR,'csv')):
 
 def import_all(import_dir=os.path.join(Database.DIR,'csv')):
     """Import all tables from CSV files.
+
     :param import_dir: (optional) where to import CSV files from [default=Database.DIR]
     """
     os.makedirs(import_dir, exist_ok=True)

@@ -7,6 +7,11 @@ from NIF_WRF.GUI.widgets.Generic_Editor import *
 
 
 class SetupDB_Editor(Generic_Editor):
+    """Basic editor for the setup database.
+
+    :param parent: (optional) the parent UI element [default=None]
+    """
+
     def __init__(self, parent=None):
         """
         Initialize the editor

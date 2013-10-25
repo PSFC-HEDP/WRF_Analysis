@@ -7,17 +7,20 @@ from NIF_WRF.DB import Database
 class Generic_Analysis_DB(Generic_DB):
     """The analysis tables are indexed by shot, DIM, and position with date stamps
     and fairly arbitrary columns beyond that.
+
     This class is an abstraction of that concept, and handles most of the heavy
     lifting for the analysis table objects. Note that inheriting classes must have columns:
+
     shot text, dim text, position int, analysis_date datetime
+
+    :param fname: the file location/name for the database
+
     :author: Alex Zylstra
     :date: 2013/07/23
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the analysis database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the analysis database wrapper and connect to the database."""
         super(Generic_Analysis_DB, self).__init__(fname) # call super constructor
 
     def get_shots(self):
@@ -27,6 +30,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def get_dims(self, shot):
         """Get all DIMs present for a given shot.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         """
         query = self.c.execute('SELECT Distinct dim from %s WHERE shot=?' % self.TABLE, (shot,))
@@ -34,6 +38,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def get_pos(self, shot, dim):
         """Get available positions for a given shot and DIM.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         """
@@ -42,6 +47,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def insert(self, shot, dim, position, analysis_date):
         """ Insert a new row of data into the table. This is done with a minimum amount of info, add more via set_column
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1
@@ -66,6 +72,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def set_column(self, shot, dim, position, column_name, value, analysis_date=None):
         """Set the value of a specified column for row corresponding to given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1
@@ -91,6 +98,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def get_value(self, shot, dim, position, column_name, analysis_date=None):
         """Get a specific value from the table.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1
@@ -114,6 +122,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def get_row(self, shot, dim, position, analysis_date=None) -> list:
         """Get all values (e.g. a row) for a given shot, DIM, and position.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1
@@ -136,6 +145,7 @@ class Generic_Analysis_DB(Generic_DB):
 
     def __latest_date__(self, shot, dim, position):
         """Get the latest analysis date for the given shot, DIM, position. Helper function for data retrieval.
+
         :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
         :param dim: the DIM as a string, e.g. '0-0' (as str)
         :param position: the position as an integer or str, e.g. 1

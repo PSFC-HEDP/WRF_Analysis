@@ -14,14 +14,14 @@ from NIF_WRF.DB.Generic_DB import *
 
 class Hohlraum_DB(Generic_DB):
     """Provide a wrapper for hohlraum DB actions.
+
+    :param fname: (optional) the file location/name for the database [default=Database.FILE]
     :author: Alex Zylstra
     :date: 2013/07/31
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the hohlraum database wrapper and connect to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the hohlraum database wrapper and connect to the database."""
         super(Hohlraum_DB, self).__init__(fname)  # call super constructor
         # name of the table for the hohlraum data
         self.TABLE = Database.HOHLRAUM_TABLE
@@ -43,6 +43,7 @@ class Hohlraum_DB(Generic_DB):
 
     def add_from_file(self, fname):
         """Add a set of points to the database from a CSV file.
+
         :param fname: the file to open
         """
         assert os.path.isfile(fname)  # sanity check
@@ -58,6 +59,7 @@ class Hohlraum_DB(Generic_DB):
 
     def get_names(self) -> list:
         """Get a list of unique hohlraum names in the table.
+
         :returns: a list containing the unique names (as str)
         :rtype: list
         """
@@ -75,8 +77,9 @@ class Hohlraum_DB(Generic_DB):
 
     def get_drawing_name(self, drawing) -> str:
         """Get the name for a drawing number.
+
         :param drawing: the drawing number to query as str
-        :returns a unique name found for the drawing number
+        :returns: a unique name found for the drawing number
         :rtype: str
         """
         # sanity check:
@@ -87,6 +90,7 @@ class Hohlraum_DB(Generic_DB):
 
     def get_name_drawing(self, name) -> str:
         """Get the drawing number for a given name.
+
         :param name: the hohlraum design name you want to query (as str)
         :returns: a unique drawing number found for that name
         :rtype: str
@@ -129,6 +133,7 @@ class Hohlraum_DB(Generic_DB):
 
     def insert(self, drawing, name, layer, material, r, z):
         """Insert a new row of data into the table.
+
         :param drawing: the hohlraum drawing number (as str)
         :param name: the hohlraum configuration name (as str)
         :param layer: the material wall index (0,1,2,..)
@@ -158,6 +163,7 @@ class Hohlraum_DB(Generic_DB):
 
     def drop(self, drawing, layer):
         """Drop a wall in the table.
+
         :param drawing: the hohlraum drawing (as str)
         :param layer: the layer index (0,1,2...)
         """
@@ -171,6 +177,7 @@ class Hohlraum_DB(Generic_DB):
 
     def query_drawing(self, drawing, layer=None) -> list:
         """Find data specified by drawing and position.
+
         :param drawing: the hohlraum drawing number (as str)
         :param layer: (optional) the wall layer index [default = all layers]
         :returns: all rows found which match name and layer
@@ -188,6 +195,7 @@ class Hohlraum_DB(Generic_DB):
 
     def query_name(self, name, layer=None):
         """Find data specified by name and position.
+
         :param name: the hohlraum configuration name (as str)
         :param layer: (optional) the wall layer index [default = all layers]
         :returns: all rows found which match name and layer

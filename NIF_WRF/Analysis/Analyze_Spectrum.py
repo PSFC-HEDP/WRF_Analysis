@@ -5,17 +5,19 @@ import os
 from datetime import *
 import csv
 import math
-from NIF_WRF.Analysis.rhoR_Analysis import *
-from NIF_WRF.Analysis.rhoR_model_plots import *
+import numpy
+from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
+from NIF_WRF.Analysis.rhoR_model_plots import plot_rhoR_v_Energy, plot_Rcm_v_Energy, plot_rhoR_v_Rcm
 from NIF_WRF.GUI import WRF_Progress_Dialog
-from NIF_WRF.util.GaussFit import *
-from NIF_WRF.Analysis.Hohlraum import *
-from NIF_WRF.Analysis.SlideGenerator import *
+from NIF_WRF.util.GaussFit import GaussFit
+from NIF_WRF.Analysis.Hohlraum import Hohlraum
+from NIF_WRF.Analysis.SlideGenerator import show_slide, save_slide
 
 __author__ = 'Alex Zylstra'
 
 def diff(a, b):
     """Calculate the difference between a and b.
+
     :param a: The first number
     :param b: The second number
     :returns: The difference between a and b as a positive number
@@ -24,18 +26,20 @@ def diff(a, b):
 
 def myprint(text, ProgressBar=None):
     """Handle output for the analysis. Either prints to command line (if ProgressBar is None) or updates the bar.
+
     :param text: The text to either display or print
     :param ProgressBar: The ProgressBar to use for GUI mode
     """
     # CLI mode:
     if ProgressBar is None:
-        print(text)            
+        print(text)
     # GUI mode:
     #else:
         #ProgressBar.set_text(text)
-        
+
 def mytime(time, inc, ProgressBar=None):
     """Display a time elapsed on CLI or update ProgressBar.
+
     :param inc: How much to increment the progress bar
     :param time: If in CLI mode, displays a time elapsed in seconds
     :param ProgressBar: The ProgressBar to use for GUI mode
@@ -47,11 +51,11 @@ def mytime(time, inc, ProgressBar=None):
         current = ProgressBar.counter.get()
         ProgressBar.counter.set(current+inc)
 
-# noinspection PyListCreation,PyListCreation,PyUnusedLocal
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
                      model=None, add_fit_unc=False, fit_guess=None):
     """Analyze a NIF WRF spectrum.
+
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
     :param spectrum_systematic: Systematic total error bars in spectrum as [dY,dE,dsigma]

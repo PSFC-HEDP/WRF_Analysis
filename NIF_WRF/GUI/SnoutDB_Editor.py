@@ -4,11 +4,13 @@ from NIF_WRF.DB.Snout_DB import *
 from NIF_WRF.GUI.widgets.Generic_Editor import *
 
 class SnoutDB_Editor(Generic_Editor):
+    """Edit the information in the snout database
+
+    :param parent: (optional) the parent (usually should be None) [default=None]
+    """
+
     def __init__(self, parent=None):
-        """
-        Initialize the editor
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        """
+        """Initialize the editor"""
         super(SnoutDB_Editor, self).__init__(Snout_DB(Database.FILE),
                                              parent=parent,
                                              column_names=['Name', 'DIM', 'Pos', 'r (cm)', 'θ (deg)', 'ϕ (deg)'])

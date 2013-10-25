@@ -4,11 +4,13 @@ import tkinter as tk
 import ttk
 
 class WRF_Progress_Dialog(tk.Toplevel):
+    """Implement a generic progress bar dialog.
+
+    :param parent: (optional) the parent (usually should be None) [default=None]
+    """
+
     def __init__(self, parent=None):
-        """
-        Initialize the progress dialog
-        :param parent: (optional) the parent (usually should be None) [default=None]
-        """
+        """Initialize the progress dialog"""
         super(WRF_Progress_Dialog, self).__init__(parent)
 
         self.__createUI__()

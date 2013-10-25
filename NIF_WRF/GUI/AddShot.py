@@ -7,9 +7,13 @@ from NIF_WRF.DB.Snout_DB import *
 from NIF_WRF.GUI.SetupDB_Editor import *
 
 class AddShot(tk.Toplevel):
-    """A GUI routine for streamlining the process of adding a shot."""
+    """A GUI routine for streamlining the process of adding a shot.
+
+    :param parent: The parent UI element for this window
+    """
 
     def __init__(self, parent=None):
+        """Constructor"""
         super(AddShot, self).__init__(master=parent)
         # open the snout DB:
         self.snout_db = Snout_DB(Database.FILE)
@@ -25,6 +29,7 @@ class AddShot(tk.Toplevel):
         tk.Grid.columnconfigure(self, 1, weight=1)
 
     def __create_widgets__(self):
+        """Create the UI elements"""
         # shot number:
         self.label1 = tk.Label(self, text='Shot Num')
         self.label1.grid(row=0, column=0)

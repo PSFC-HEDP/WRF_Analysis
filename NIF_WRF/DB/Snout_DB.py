@@ -13,14 +13,14 @@ from NIF_WRF.DB import Database
 
 class Snout_DB(Generic_DB):
     """Provide a wrapper for snout DB actions.
+
+    :param fname: the file location/name for the database
     :author: Alex Zylstra
     :date: 2013/08/05
     """
 
     def __init__(self, fname=Database.FILE):
-        """Initialize the snout database wrapper and connects to the database.
-        :param fname: the file location/name for the database
-        """
+        """Initialize the snout database wrapper and connects to the database."""
         super(Snout_DB,self).__init__(fname) # call super constructor
         # name of the table for the snout data
         self.TABLE = Database.SNOUT_TABLE
@@ -42,6 +42,7 @@ class Snout_DB(Generic_DB):
 
     def get_names(self) -> list:
         """Get a list of unique snout names in the table.
+
         :returns: a list of snout names
         :rtype: list
         """
@@ -50,6 +51,7 @@ class Snout_DB(Generic_DB):
 
     def get_pos(self, name, DIM) -> list:
         """Get a list of (unique) positions for the configuration specified by name and DIM.
+
         :param name: the snout name (as str)
         :param DIM: DIM the NIF DIM (text, e.g. '90-78') (as str)
         :returns: a python list of the positions (integers)
@@ -63,6 +65,7 @@ class Snout_DB(Generic_DB):
 
     def get_DIM(self, name) -> list:
         """Get a list of (unique) DIMs for the configuration specified.
+
         :param name: the snout name (as str)
         :returns: a python list of DIMs (strings)
         """
@@ -75,6 +78,7 @@ class Snout_DB(Generic_DB):
 
     def insert(self, name, DIM, pos, theta, phi, r):
         """Insert a new row of data into the table.
+
         :param name: the snout configuration name (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position number (1,2,3,4,...)
@@ -110,6 +114,7 @@ class Snout_DB(Generic_DB):
 
     def update(self, name, DIM, pos, col, val):
         """Update an existing row in the table.
+
         :param name: the snout configuration name (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position number (1,2,3,4,...)
@@ -130,10 +135,11 @@ class Snout_DB(Generic_DB):
 
     def query(self, name, DIM, pos) -> list:
         """Get all rows for a given name and position.
+
         :param name: the name of the configuration you want (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position # (int)
-        :returns:all rows found which match name and pos
+        :returns: all rows found which match name and pos
         :rtype: list
         """
         # sanity checks:
@@ -148,6 +154,7 @@ class Snout_DB(Generic_DB):
 
     def get_r(self, name, DIM, pos):
         """Get the position for given parameters.
+
         :param name: the name of the configuration you want (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position # (int)
@@ -164,6 +171,7 @@ class Snout_DB(Generic_DB):
 
     def get_theta(self, name, DIM, pos):
         """Get the polar angle for given parameters.
+
         :param name: the name of the configuration you want (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position # (int)
@@ -180,6 +188,7 @@ class Snout_DB(Generic_DB):
 
     def get_phi(self, name, DIM, pos):
         """Get the azimuthal for given parameters.
+
         :param name: the name of the configuration you want (as str)
         :param DIM: the NIF DIM (text, e.g. '90-78') (as str)
         :param pos: the WRF position # (int)

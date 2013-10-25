@@ -12,7 +12,12 @@ from NIF_WRF.DB.Shot_DB import *
 
 
 class Model_Frame(Collapsible_Frame):
-    """Implement a collapsible frame for configuring rhoR models"""
+    """Implement a collapsible frame for configuring rhoR models.
+
+    :param parent: The parent (i.e. containing) object
+    :param text: (optional) text to display at the top [default='']
+    :param shot: (optional) The shot number to use when populating some fields from the Shot DB [default=None]
+    """
 
     def __init__(self, parent, text='', shot=None, **options):
         Collapsible_Frame.__init__(self, parent, text, **options)
@@ -309,8 +314,11 @@ class Model_Frame(Collapsible_Frame):
         tk.Entry(self.subFrame, width=8, textvariable=self.entry_E0).grid(row=n, column=1)
         self.entry_E0.set(str(rhoR_Model.def_E0))
 
-    def get_rhoR_Analysis(self):
-        """Get a rhoR_Analysis object as specified by the option boxes in this frame"""
+    def get_rhoR_Analysis(self) -> rhoR_Analysis:
+        """Get a rhoR_Analysis object as specified by the option boxes in this frame.
+
+        :returns: :py:class:`NIF_WRF.Analysis.rhoR_Analysis`
+        """
         self.__update_param__()
 
         # create a new rhoR_Analysis with the passed parameters
@@ -325,8 +333,11 @@ class Model_Frame(Collapsible_Frame):
 
         return ret
 
-    def get_rhoR_Model(self):
-        """Get a rhoR_Model object as specified by the option boxes in this frame"""
+    def get_rhoR_Model(self) -> rhoR_Model:
+        """Get a rhoR_Model object as specified by the option boxes in this frame.
+
+        :returns: :py:class:`NIF_WRF.Analysis.rhoR_Model`
+        """
         self.__update_param__()
 
         # create a new rhoR_Analysis with the passed parameters
@@ -338,10 +349,12 @@ class Model_Frame(Collapsible_Frame):
         return ret
 
     def add_to_db(self, shot, dim, position):
-        """Add the model parameters to the database
+        """Add the model parameters to the database.
+
         :param shot: The shot number
         :param dim: the DIM
-        :param position: The position"""
+        :param position: The position
+        """
         self.__update_param__()
 
         # construct the appropriate dict

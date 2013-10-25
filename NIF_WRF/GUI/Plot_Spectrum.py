@@ -11,12 +11,13 @@ from NIF_WRF.DB.WRF_Data_DB import *
 
 
 class Plot_Spectrum(tk.Toplevel):
-    """Generic viewer for spectrum plots"""
+    """Generic viewer for spectrum plots
+
+    :param parent: (optional) The parent UI window to this one [default=None]
+    """
 
     def __init__(self, parent=None):
-        """Initialize the viewer window.
-        :param db: The database object to use, which must be of type Generic_Analysis_DB
-        """
+        """Initialize the viewer window."""
         super(Plot_Spectrum, self).__init__(parent=parent)
 
         # initializations
@@ -52,16 +53,19 @@ class Plot_Spectrum(tk.Toplevel):
 
         self.shot_var = tk.StringVar()
         self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
+        self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
         self.dim_var = tk.StringVar()
         self.dim_selector = tk.OptionMenu(frame, self.dim_var, [])
+        self.dim_selector.configure(width=20)
         self.dim_var.trace('w', self.update_dim)
         self.dim_selector.grid(row=1, column=1)
 
         self.pos_var = tk.StringVar()
         self.pos_selector = tk.OptionMenu(frame, self.pos_var, [])
+        self.pos_selector.configure(width=20)
         self.pos_var.trace('w', self.update_plot)
         self.pos_selector.grid(row=2, column=1)
 
