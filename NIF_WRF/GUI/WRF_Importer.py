@@ -108,7 +108,7 @@ class WRF_Importer(tk.Toplevel):
             return
 
         # make a progress bar, since this can be lengthy:
-        self.iconify()
+        #self.iconify()
 
         # use the DB's method to load the data
         db = WRF_Data_DB()

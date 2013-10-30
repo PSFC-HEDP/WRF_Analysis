@@ -51,6 +51,10 @@ class Model_Frame(Collapsible_Frame):
             except:
                 ShellMat = None
             try:
+                ShellDopant = self.db.query_col(self.shot, 'Dopant')
+            except:
+                ShellDopant = None
+            try:
                 GasP = float(self.db.query_col(self.shot, 'Gas Pressure (atm)'))
             except:
                 GasP = None
@@ -103,10 +107,23 @@ class Model_Frame(Collapsible_Frame):
         tk.Label(self.subFrame, text='Shell').grid(row=n, column=0)
         self.entry_shell_mat = tk.StringVar()
         shell_opts = list(rhoR_Model.shell_opts)
-        tk.OptionMenu(self.subFrame, self.entry_shell_mat, *shell_opts).grid(row=n, column=1)
+        shellbox = tk.OptionMenu(self.subFrame, self.entry_shell_mat, *shell_opts)
+        shellbox.grid(row=n, column=1)
+        shellbox.configure(width=10)
         # set based on data availability
         if self.shot is not None:
-            self.entry_shell_mat.set(ShellMat)
+            # extra check for plastic:
+            if ShellMat == 'CH':
+                if ShellDopant == 'Ge':
+                    self.entry_shell_mat.set('CHGe')
+                elif ShellDopant == 'Si':
+                    self.entry_shell_mat.set('CHSi')
+                elif ShellDopant == 'Si2x' or ShellDopant == '2xSi':
+                    self.entry_shell_mat.set('CHSi')
+                else:
+                    self.entry_shell_mat.set('CH')
+            else:
+                self.entry_shell_mat.set(ShellMat)
         else:
             self.entry_shell_mat.set(shell_opts[0])
         # watch for changes to selection, and update density when necessary

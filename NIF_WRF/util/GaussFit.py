@@ -28,11 +28,12 @@ class GaussFit(object):
     :param guess: (optional) The initial guess for the fitting routine. Default [A,mu,sigma] = [5e7,10,1]
     :param restrict_chi2: (optional) Whether we should restrict chi2 calculations to +/- 5 sigma of the mean. Default is true.
     :param name: (optional) a text string describing this dataset / fit
+    :param limits: (optional) Energy limits to restrict the fit, in the form [min,max].
     :author: Alex Zylstra
     :date: 2013/07/05
     """
 
-    def __init__(self, data, guess=[5e7, 10, 1], restrict_chi2=True, name=""):
+    def __init__(self, data, guess=[5e7, 10, 1], restrict_chi2=True, name="", limits=None):
         """Constructor."""
         # super constructor:
         super(GaussFit, self).__init__()
@@ -54,7 +55,7 @@ class GaussFit(object):
         # name of the dataset / fit
         name = ""
 
-        # copy data:
+        # copy data
         self.data = numpy.copy(data)
 
         # set guess parameters:
@@ -75,8 +76,32 @@ class GaussFit(object):
             self.data_y[i] = data[i][1]
             self.data_err[i] = data[i][2]
 
+        # Set restricted data sets if necessary:
+        if limits is not None and isinstance(limits,list) and len(limits)==2:
+            minE = limits[0]
+            maxE = limits[1]
+            # Find indices corresponding to limits:
+            minI = 0
+            maxI = len(self.data_x)-1
+            while minI < maxI and self.data_x[minI] < minE:
+                minI += 1
+            while maxI > minI+1 and self.data_x[maxI] > maxE:
+                maxI -= 1
+
+            # set up the arrays:
+            self.data_lim = numpy.copy(self.data[minI:maxI+1])
+            self.data_x_lim = numpy.copy(self.data_x[minI:maxI+1])
+            self.data_y_lim = numpy.copy(self.data_y[minI:maxI+1])
+            self.data_err_lim = numpy.copy(self.data_err[minI:maxI+1])
+        else:
+            # 'limited' arrays are equivalent to regular arrays:
+            self.data_lim = self.data
+            self.data_x_lim = self.data_x
+            self.data_y_lim = self.data_y
+            self.data_err_lim = self.data_err
+
         # perform the fit:
-        self.fit, self.covariance = self.do_fit()
+        self.fit, self.covariance = self.do_fit(guess=guess)
 
     def do_fit(self, method='chi^2', guess=[], fixed=[]) -> tuple:
         """Perform the fit. Called automatically by the constructor.
@@ -116,7 +141,7 @@ class GaussFit(object):
             def func(p, x, y):
                 return y-gaussian(p, x)
 
-            result = scipy.optimize.leastsq(func, guess, args=(self.data_x, self.data_y), full_output=True)
+            result = scipy.optimize.leastsq(func, guess, args=(self.data_x_lim, self.data_y_lim), full_output=True)
 
             if result[4] != (1 or 2 or 3 or 4):
                 print("Error fitting data\n",result[3])
@@ -127,7 +152,7 @@ class GaussFit(object):
             def gaussian2(x, A, mu, sigma):
                 return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
 
-            result = scipy.optimize.curve_fit(gaussian2, self.data_x, self.data_y, p0=guess, sigma=self.data_err)
+            result = scipy.optimize.curve_fit(gaussian2, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
             return result[0], result[1]
 
     def get_fit(self) -> list:
@@ -168,7 +193,7 @@ class GaussFit(object):
         chi2 = 0
 
         # iterate over all data:
-        for point in self.data:
+        for point in self.data_lim:
             # sanity check that error bar is not zero:
             if point[2] != 0:
                 # if we want to restrict chi2, only count if we are within 5 sigma of mean:
@@ -193,7 +218,7 @@ class GaussFit(object):
         :param fit: an array containing the fit parameters [A,mu,sigma]
         :returns: reduced chi2 for class data and fit
         """
-        return self.chi2_other(fit) / ( len(self.data) - 3 )
+        return self.chi2_other(fit) / ( len(self.data_lim) - 3 )
 
     def delta_chi2_amp(self, dA, sign=1):
         """Calculate increase in chi2 due to a change in amplitude.
@@ -207,7 +232,7 @@ class GaussFit(object):
         def temp_gauss(x, mu, sigma):
             return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
         guess = [self.fit[1], self.fit[2]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x, self.data_y, p0=guess, sigma=self.data_err)
+        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
         fit = result[0]
 
         chi2 = self.chi2_other([A, fit[0], fit[1]])
@@ -226,7 +251,7 @@ class GaussFit(object):
         def temp_gauss(x, A, sigma):
             return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
         guess = [self.fit[0], self.fit[2]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x, self.data_y, p0=guess, sigma=self.data_err)
+        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
         fit = result[0]
 
         chi2 = self.chi2_other([fit[0], mu, fit[1]])
@@ -245,7 +270,7 @@ class GaussFit(object):
         def temp_gauss(x, A, mu):
             return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
         guess = [self.fit[0], self.fit[1]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x, self.data_y, p0=guess, sigma=self.data_err)
+        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
         fit = result[0]
 
         chi2 = self.chi2_other([fit[0], fit[1], sigma])
@@ -356,38 +381,38 @@ class GaussFit(object):
         # make an evaluted fit dataset for plotting
         fit_x = []
         fit_y = []
-        x = self.data_x[0]
-        dx = (self.data_x[1] - x) / 10
-        while x < self.data_x[-1]:
+        x = self.data_x_lim[0]
+        dx = (self.data_x_lim[1] - x) / 10
+        while x < self.data_x_lim[-1]:
             fit_x.append(x)
             fit_y.append(self.eval_fit(x))
             x += dx
 
-        ax.plot(fit_x, fit_y, 'r--')
+        plot, = ax.plot(fit_x, fit_y, 'r--')
 
         # add text with fit parameters
         # location for the text: (based on line position)
         x = self.fit[1] + 4 * self.fit[2]
-        y = self.fit[0] * 6 / 8
+        y = numpy.max(self.data_y) * 6 / 8
         # construct a text string to display:
         text = r'$Y_p$ = ' + '{:.2e}'.format(self.fit[0])
         ax.text(x, y, # data
                 text, # text to display
                 backgroundcolor='white') # fill background
         # new line of text
-        y = self.fit[0] * 5 / 8
+        y = y * 5/6
         text = r'$E_p$ = ' + '{:.2f}'.format(self.fit[1]) + ' MeV'
         ax.text(x, y, # data
                 text, # text to display
                 backgroundcolor='white') # fill background
         # new line of text
-        y = self.fit[0] * 4 / 8
+        y = y * 4/5
         text = r'$\sigma_p$ = ' + '{:.2f}'.format(self.fit[2]) + ' MeV'
         ax.text(x, y, # data
                 text, # text to display
                 backgroundcolor='white') # fill background
         # new line of text
-        y = self.fit[0] * 3 / 8
+        y = y * 3/4
         text = r'$\chi^2$ red. = ' + '{:.2f}'.format(self.red_chi2())
         ax.text(x, y, # data
                 text, # text to display

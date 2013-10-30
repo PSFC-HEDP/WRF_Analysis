@@ -51,7 +51,7 @@ class rhoR_Model(object):
     # CHGe = standard plastic, with 0.5% Ge dopant, same mass density
     # CHSi = standard plastic, with 1.0% Si dopant, same mass density
     # plastic with higher hydrogen content
-    shell_opts = ['CH', 'HDC', 'SiO2', 'Be', 'CHGe', 'CHSi', 'CH2']
+    shell_opts = ['CH', 'HDC', 'SiO2', 'Be', 'CHGe', 'CHSi', 'CHSi2x', 'CH2']
 
     __shell_rho__ = {   'CH': 1.084, 
                         'HDC': 3.5, 
@@ -59,6 +59,7 @@ class rhoR_Model(object):
                         'Be': 1.85, 
                         'CHGe': 1.084, 
                         'CHSi': 1.084,
+                        'CHSi2x': 1.084,
                         'CH2': 1.084}
 
     __shell_A__ = {     'CH': [1,12,16], 
@@ -67,6 +68,7 @@ class rhoR_Model(object):
                         'Be': [9],
                         'CHGe': [1,12,16,72.6],
                         'CHSi': [1,12,16,28.1],
+                        'CHSi2x': [1,12,16,28.1],
                         'CH2': [1,12]}
 
     __shell_AvgA__ = {  'CH': 5.728, 
@@ -75,6 +77,7 @@ class rhoR_Model(object):
                         'Be': 9.,
                         'CHGe': 5.862,
                         'CHSi': 5.817,
+                        'CHSi2x': 5.906,
                         'CH2': 4.66}
 
     __shell_Z__ = {     'CH': [1,6,8], 
@@ -83,6 +86,7 @@ class rhoR_Model(object):
                         'Be': [4],
                         'CHGe': [1,6,8,32],
                         'CHSi': [1,6,8,14],
+                        'CHSi2x': [1,6,8,14],
                         'CH2': [1,6]}
 
     __shell_AvgZ__ = {  'CH': 3.19, 
@@ -91,6 +95,7 @@ class rhoR_Model(object):
                         'Be': 4.,
                         'CHGe': 3.248,
                         'CHSi': 3.233,
+                        'CHSi2x': 3.276,
                         'CH2': 2.665}
 
     __shell_F__ = {     'CH': [0.572,0.423,0.005], 
@@ -99,6 +104,7 @@ class rhoR_Model(object):
                         'Be': [1],
                         'CHGe': [0.571,0.422,0.005,0.002],
                         'CHSi': [0.570,0.421,0.005,0.004],
+                        'CHSi2x': [0.567,0.419,0.006,0.008],
                         'CH2': [0.667,0.333]}
 
     # some info for the gas:

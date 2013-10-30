@@ -53,7 +53,7 @@ def mytime(time, inc, ProgressBar=None):
 
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
-                     model=None, add_fit_unc=False, fit_guess=None):
+                     model=None, add_fit_unc=False, fit_guess=None, limits=None):
     """Analyze a NIF WRF spectrum.
 
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
@@ -74,6 +74,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param model: (optional) the rhoR model to use; default values are used if none is given.
     :param add_fit_unc: (optional) Whether to add a chi^2 fit uncertainty to the error bars, in case it isn't already included [default=False]
     :param fit_guess: (optional) Supplied guess to start the Gaussian fitting, as a list containing Y,E,sigma [default=None]
+    :param limits: (optional) Energy limits for fitting to the spectrum. Default (None) uses entire spectrum.
     :author: Alex Zylstra
     :date: 2013/10/24
     """
@@ -116,12 +117,14 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
             hohl = Hohlraum(data,
                             wall=hohl_wall,
                             angles=LOS,
-                            fit_guess=fit_guess)
+                            fit_guess=fit_guess,
+                            limits=limits)
         else:
-            hohl = Hohlraum(data, Thickness=hohl_thick, fit_guess=fit_guess)
+            hohl = Hohlraum(data, Thickness=hohl_thick, fit_guess=fit_guess, limits=limits)
 
         # get corrected spectrum:
         corr_data = hohl.get_data_corr()
+        corr_limits = hohl.get_limits_corr()
         # get hohlraum uncertainty:
         unc_hohl = hohl.get_unc()
 
@@ -169,6 +172,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
         corr_data = data
         hohl = None
         unc_hohl = None
+        corr_limits = limits
 
         # add info to the return dict
         results['Au'] = 0
@@ -195,11 +199,11 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # First, we need to perform a Gaussian fit to both raw and corrected data:
     # input guess depends on whether we did a hohlraum correction:
     if hohl is not None:
-        FitObjRaw = GaussFit(data, name=name, guess=hohl.get_fit_raw())
-        FitObj = GaussFit(corr_data, name=name, guess=hohl.get_fit_corr())
+        FitObjRaw = GaussFit(data, name=name, guess=hohl.get_fit_raw(), limits=limits)
+        FitObj = GaussFit(corr_data, name=name, guess=hohl.get_fit_corr(), limits=corr_limits)
     else:
-        FitObjRaw = GaussFit(data, name=name, guess=fit_guess)
-        FitObj = GaussFit(corr_data, name=name, guess=fit_guess)
+        FitObjRaw = GaussFit(data, name=name, guess=fit_guess, limits=limits)
+        FitObj = GaussFit(corr_data, name=name, guess=fit_guess, limits=corr_limits)
 
     # get the fit and uncertainty:
     fit = FitObj.get_fit()

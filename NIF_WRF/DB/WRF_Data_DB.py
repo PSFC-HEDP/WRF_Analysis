@@ -310,11 +310,11 @@ class WRF_Data_DB(Generic_DB):
         else:
             # update the spectrum:
             command = 'UPDATE %s set [spectrum]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
-            self.c.execute(command, (shot, dim, position, date, hohl_corr, bin_spectrum,))
+            self.c.execute(command, (bin_spectrum, shot, dim, position, date, hohl_corr,))
             # update the image if appropriate:
             if image is not None:
                 command = 'UPDATE %s set [nxy]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
-                self.c.execute(command, (shot, dim, position, date, hohl_corr, bin_image,))
+                self.c.execute(command, (bin_image, shot, dim, position, date, hohl_corr,))
 
         self.db.commit()
 
@@ -347,3 +347,68 @@ class WRF_Data_DB(Generic_DB):
         avail_date = flatten(array_convert(query))
         avail_date.sort()
         return avail_date[-1]
+
+    def fix_import(self):
+        """Fix import problem with binary strings encoded inside of regular string"""
+        # iterate over all data:
+        for shot in self.get_shots():
+            for dim in self.get_dims(shot):
+                for pos in self.get_positions(shot, dim):
+                    for date in self.get_dates(shot, dim, pos):
+                        for corr in self.get_corrected(shot, dim, pos, date):
+                            print('Fixing ', shot, dim, pos, date, corr)
+                            # fix for the spectrum data:
+                            query = self.c.execute('SELECT spectrum from %s where shot=? AND dim=? AND position=? AND hohl_corr=? AND date=?'
+                                                   % self.TABLE,
+                                                   (shot, dim, pos, corr, date,))
+
+                            query = array_convert(query)
+
+                            if len(query) > 0:
+                                # Get the string:
+                                bin_str = query[0][0]
+                                # try to set it normally:
+                                try:
+                                    spectrum = numpy.loads(bin_str)
+                                except:  # binary string can get "wrapped" inside a normal string
+                                    foo = eval(bin_str)
+                                    spectrum = numpy.loads(foo)
+                            else:
+                                spectrum = None
+
+                            # fix the image data:
+                            query = self.c.execute('SELECT nxy from %s where shot=? AND dim=? AND position=? AND hohl_corr=? AND date=?'
+                                                   % self.TABLE,
+                                                   (shot, dim, pos, corr, date,))
+
+                            query = array_convert(query)
+
+                            if len(query) > 0:
+                                bin_str = query[0][0]
+                                if len(bin_str) > 0:
+                                    # try to set it normally:
+                                    try:
+                                        image = numpy.loads(bin_str)
+                                    except:  # binary string can get "wrapped" inside a normal string
+                                        foo = eval(bin_str)
+                                        image = numpy.loads(foo)
+                                else:
+                                    image = None
+
+                            else:
+                                image = None
+
+                            # set the data:
+                            bin_spectrum = spectrum.dumps()
+                            bin_image = ''
+                            if image is not None:
+                                bin_image = image.dumps()
+                            # update the spectrum:
+                            command = 'UPDATE %s set [spectrum]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
+                            self.c.execute(command, (bin_spectrum, shot, dim, pos, date, corr,))
+                            # update the image if appropriate:
+                            if image is not None:
+                                command = 'UPDATE %s set [nxy]=? WHERE shot=? AND dim=? AND position=? AND date=? AND hohl_corr=?' % self.TABLE
+                                self.c.execute(command, (bin_image, shot, dim, pos, date, corr,))
+
+        self.db.commit()

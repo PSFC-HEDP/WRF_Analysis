@@ -21,6 +21,7 @@ from NIF_WRF.GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
 from NIF_WRF.Analysis.Analyze_Spectrum import Analyze_Spectrum
 from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
 from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
+from NIF_WRF.GUI.Plot_Spectrum import Plot_Spectrum
 
 
 class WRF_Analyzer(tk.Toplevel):
@@ -89,7 +90,7 @@ class WRF_Analyzer(tk.Toplevel):
             self.dim = dialog.result
 
             # if the user canceled:
-            if self.shot is None:
+            if self.dim is None:
                 self.__cancel__()
                 return
 
@@ -100,28 +101,25 @@ class WRF_Analyzer(tk.Toplevel):
             self.pos = dialog.result
 
             # if the user canceled:
-            if self.shot is None:
+            if self.pos is None:
                 self.__cancel__()
                 return
 
         # now make some UI:
         # display shot/dim/pos as labels:
-        label1 = tk.Label(self, text='Shot: ' + self.shot)
+        label1 = tk.Label(self, text=self.shot + ', ' + self.dim + ' Pos ' + str(self.pos))
         label1.grid(row=0, column=0, columnspan=2, sticky='NS')
-
-        label2 = tk.Label(self, text='DIM: ' + self.dim)
-        label2.grid(row=1, column=0, columnspan=2, sticky='NS')
-
-        label3 = tk.Label(self, text='Pos: ' + self.pos)
-        label3.grid(row=2, column=0, columnspan=2, sticky='NS')
+        # Button to launch a plot of the raw data in a separate window:
+        plot_button = tk.Button(self, text='Plot', command=self.__plot__)
+        plot_button.grid(row=1, column=0, columnspan=2, sticky='NS')
 
         sep1 = ttk.Separator(self, orient="vertical")
-        sep1.grid(row=3, column=0, columnspan=2, sticky='ew')
+        sep1.grid(row=2, column=0, columnspan=2, sticky='ew')
 
         # some options via checkbutton:
         self.hohl_var = tk.BooleanVar()
         check0 = tk.Checkbutton(self, text='Hohlraum correction?', variable=self.hohl_var)
-        check0.grid(row=4, column=0, columnspan=2, sticky='NS')
+        check0.grid(row=3, column=0, columnspan=2, sticky='NS')
         # set based on DIM:
         if self.dim == '0-0':
             check0.deselect()
@@ -131,35 +129,48 @@ class WRF_Analyzer(tk.Toplevel):
         self.verbose_var = tk.BooleanVar()
         check1 = tk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
         check1.select()
-        check1.grid(row=5, column=0, columnspan=2, sticky='NS')
+        check1.grid(row=4, column=0, columnspan=2, sticky='NS')
 
         self.plot_var = tk.BooleanVar()
         check2 = tk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
         check2.select()
-        check2.grid(row=6, column=0, columnspan=2, sticky='NS')
+        check2.grid(row=5, column=0, columnspan=2, sticky='NS')
 
         self.rhoR_plot_var = tk.BooleanVar()
         check3 = tk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
-        check3.grid(row=7, column=0, columnspan=2, sticky='NS')
+        check3.grid(row=6, column=0, columnspan=2, sticky='NS')
 
         self.display_results = tk.BooleanVar()
         check4 = tk.Checkbutton(self, text='Display results?', variable=self.display_results)
         check4.select()
-        check4.grid(row=8, column=0, columnspan=2, sticky='NS')
+        check4.grid(row=7, column=0, columnspan=2, sticky='NS')
 
         sep2 = ttk.Separator(self, orient='vertical')
-        sep2.grid(row=9, column=0, columnspan=2, sticky='ew')
+        sep2.grid(row=8, column=0, columnspan=2, sticky='ew')
 
-        self.__generate_adv__(9)
+        self.energy_limits = tk.BooleanVar()
+        check5 = tk.Checkbutton(self, text='Energy limits?', variable=self.energy_limits)
+        check5.grid(row=9, column=0, columnspan=2, sticky='NS')
+        self.min_energy = tk.StringVar()
+        self.max_energy = tk.StringVar()
+        box1 = tk.Entry(self, width=10, textvariable=self.min_energy)
+        box1.grid(row=10, column=0)
+        box2 = tk.Entry(self, width=10, textvariable=self.max_energy)
+        box2.grid(row=10, column=1)
+
+        sep2 = ttk.Separator(self, orient='vertical')
+        sep2.grid(row=11, column=0, columnspan=2, sticky='ew')
+
+        self.__generate_adv__(12)
 
         sep3 = ttk.Separator(self, orient='vertical')
-        sep3.grid(row=11, column=0, columnspan=2, sticky='ew')
+        sep3.grid(row=14, column=0, columnspan=2, sticky='ew')
 
         # buttons:
         go_button = tk.Button(self, text='Go', command=self.__run_analysis__)
-        go_button.grid(row=12, column=0)
+        go_button.grid(row=15, column=0)
         cancel_button = tk.Button(self, text='Cancel', command=self.__cancel__)
-        cancel_button.grid(row=12, column=1)
+        cancel_button.grid(row=15, column=1)
 
         # a couple key bindings:
         self.bind('<Return>', self.__run_analysis__)
@@ -170,6 +181,10 @@ class WRF_Analyzer(tk.Toplevel):
         # set up the frame:
         self.adv_frame = Model_Frame(self, text='Advanced', shot=self.shot, relief=tk.RAISED, borderwidth=1)
         self.adv_frame.grid(row=row, column=0, columnspan=2, sticky='nsew')
+
+    def __plot__(self):
+        """Generate a plot of the raw data"""
+        Plot_Spectrum(self, shot=self.shot, dim=self.dim, pos=self.pos)
 
     def __run_analysis__(self, *args):
         """Run the analysis routine for the selected parameters"""
@@ -196,15 +211,19 @@ class WRF_Analyzer(tk.Toplevel):
         systematic[2] = self.init_db.get_value(self.shot, self.dim, self.pos, 'unc_sigma_sys')[0]
 
         # get a name and summary
-        name = self.shot + '_' + self.dim + '_Pos' + self.pos
+        name = self.shot + '_' + self.dim + '_Pos' + str(self.pos)
         # Get the shot title/name description thing
         shot_name_query = self.setup_db.query_col(self.shot, self.dim, self.pos, 'shot_name')
         # check for errors
         if shot_name_query is None or len(shot_name_query) is 0:
             from tkinter.messagebox import showerror
-            showerror('Error', 'Could not load shot meta info (name), aborting analysis. Add it to the setup DB.')
+            showerror('Error', 'Could not load shot meta info (name). Add it to the setup DB.')
+            summary = self.shot
+            print(self.shot)
+            print(self.setup_db.get_shots())
             return
-        summary = self.shot + ' , ' + shot_name_query[0]
+        else:
+            summary = self.shot + ' , ' + shot_name_query[0]
         # if we are using TeX for rendering, then fix underscores:
         if matplotlib.rcParams['text.usetex'] == True:
             summary = summary.replace('_',r'$\textunderscore$')
@@ -221,23 +240,35 @@ class WRF_Analyzer(tk.Toplevel):
             hohl_thick = None
             if wall is None or len(wall) == 0:
                 from tkinter.messagebox import askyesnocancel
+
+                # First, lets try to pick hohlraum from a list:
                 response = askyesnocancel('Warning', 'Could not load hohlraum definition for ' + hohl_drawing
-                                                     + '. Specify manually?')
+                                                     + '. Choose from list?')
                 if response:
-                    from NIF_WRF.GUI.widgets.Value_Prompt import Value_Prompt
-                    dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
-                    Au = dialog.result
-                    dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
-                    DU = dialog.result
-                    dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
-                    Al = dialog.result
+                    dialog = Option_Prompt(self, title='Choose hohlraum', text='Pre-existing hohlraums',
+                                           options=self.hohl_db.get_drawings())
+                    wall = self.hohl_db.get_wall(drawing=dialog.result)
+                elif not response:
+                    response = askyesnocancel('Warning', 'Could not load hohlraum definition for ' + hohl_drawing
+                                                         + '. Specify manually?')
+                    if response:
+                        from NIF_WRF.GUI.widgets.Value_Prompt import Value_Prompt
+                        dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
+                        Au = dialog.result
+                        dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
+                        DU = dialog.result
+                        dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
+                        Al = dialog.result
 
-                    hohl_thick = [Au, DU, Al]
+                        hohl_thick = [Au, DU, Al]
+                        wall = None
+                    else:
+                        wall = None
 
-                wall = None
-
-                if response is None:
+                elif response is None:
                     return
+                else:
+                    wall = None
         else:
             wall = None
             hohl_thick = None
@@ -267,6 +298,17 @@ class WRF_Analyzer(tk.Toplevel):
         else:
             fit_guess = None
 
+        # energy limits if requested:
+        if self.energy_limits.get():
+            try:
+                minE = float(self.min_energy.get())
+                maxE = float(self.max_energy.get())
+                limits = [minE,maxE]
+            except:
+                limits = None
+        else:
+            limits = None
+
         # get the model
         model = self.adv_frame.get_rhoR_Analysis()
 
@@ -286,7 +328,8 @@ class WRF_Analyzer(tk.Toplevel):
                                   ProgressBar=None,
                                   ShowSlide=self.display_results.get(),
                                   model=model,
-                                  fit_guess=fit_guess)
+                                  fit_guess=fit_guess,
+                                  limits=limits)
 
         # add to DB:
         print(result)

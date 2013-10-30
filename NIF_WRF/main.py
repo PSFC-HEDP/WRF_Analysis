@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+import logging
+logging.warning('foo')
+
 from NIF_WRF.GUI import WRF_Analyzer, Plot_Spectrum
 
 __author__ = 'Alex Zylstra'
@@ -225,6 +229,10 @@ class Application(tk.Tk):
         from NIF_WRF.DB.scripts import export_all
         export_all(export_dir=save_dir)
 
+        # show a notification that the export is complete:
+        from tkinter.messagebox import showinfo
+        showinfo(message='Export to CSV complete')
+
     def importCSV(self):
         """Import the database information from CSV files."""
         # get an existing directory
@@ -241,6 +249,10 @@ class Application(tk.Tk):
         # call the import script:
         from NIF_WRF.DB.scripts import import_all
         import_all(import_dir=open_dir)
+
+        # show a notification that the import is complete:
+        from tkinter.messagebox import showinfo
+        showinfo(message='Import from CSV complete')
 
 def main():
     #root = Tkinter.Tk()

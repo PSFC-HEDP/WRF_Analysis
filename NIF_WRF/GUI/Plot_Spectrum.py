@@ -1,27 +1,34 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-
 import ttk
+import numpy
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-
+from NIF_WRF.util.GaussFit import Gaussian
 from NIF_WRF.DB.WRF_Data_DB import *
+from NIF_WRF.DB.WRF_Analysis_DB import *
+from NIF_WRF.DB.WRF_InitAnalysis_DB import *
 
 
 class Plot_Spectrum(tk.Toplevel):
     """Generic viewer for spectrum plots
 
     :param parent: (optional) The parent UI window to this one [default=None]
+    :param shot: (optional) The shot number to use [default=None]
+    :param dim: (optional) The DIM to use [default=None]
+    :param pos: (optional) The position to use [default=None]
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, shot=None, dim=None, pos=None):
         """Initialize the viewer window."""
-        super(Plot_Spectrum, self).__init__(parent=parent)
+        super(Plot_Spectrum, self).__init__()
 
         # initializations
         self.db = WRF_Data_DB()
+        self.analysis_db = WRF_Analysis_DB()
+        self.initanalysis_db = WRF_InitAnalysis_DB()
         self.canvas = None
         self.ax = None
 
@@ -30,12 +37,13 @@ class Plot_Spectrum(tk.Toplevel):
         #self.maxsize(900,600)
 
         # make the UI:
-        self.__create_widgets__()
+        self.__create_widgets__(shot, dim, pos)
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
 
-    def __create_widgets__(self):
+    def __create_widgets__(self, shot, dim, pos):
+        """Create the UI elements"""
         # make a frame for stuff:
         frame = tk.Frame(self)
 
@@ -51,19 +59,19 @@ class Plot_Spectrum(tk.Toplevel):
         if len(shots) == 0:
             shots = ['']
 
-        self.shot_var = tk.StringVar()
+        self.shot_var = tk.StringVar(value=shot)
         self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
-        self.dim_var = tk.StringVar()
+        self.dim_var = tk.StringVar(value=dim)
         self.dim_selector = tk.OptionMenu(frame, self.dim_var, [])
         self.dim_selector.configure(width=20)
         self.dim_var.trace('w', self.update_dim)
         self.dim_selector.grid(row=1, column=1)
 
-        self.pos_var = tk.StringVar()
+        self.pos_var = tk.StringVar(value=pos)
         self.pos_selector = tk.OptionMenu(frame, self.pos_var, [])
         self.pos_selector.configure(width=20)
         self.pos_var.trace('w', self.update_plot)
@@ -74,8 +82,13 @@ class Plot_Spectrum(tk.Toplevel):
         self.corr_var_check.grid(row=3, column=0, columnspan=2)
         self.corr_var.trace('w', self.update_plot)
 
+        self.fit_var = tk.BooleanVar()
+        self.fit_var_check = tk.Checkbutton(frame, text='Show fit?', variable=self.fit_var)
+        self.fit_var_check.grid(row=4, column=0, columnspan=2)
+        self.fit_var.trace('w', self.update_plot)
+
         sep = ttk.Separator(frame, orient='vertical')
-        sep.grid(row=4, column=0, columnspan=2, sticky='ew')
+        sep.grid(row=5, column=0, columnspan=2, sticky='ew')
 
         # add the frame
         frame.pack()
@@ -83,6 +96,9 @@ class Plot_Spectrum(tk.Toplevel):
         # add a frame for the plot:
         self.plot_frame = tk.Frame(self)
         self.plot_frame.pack()
+
+        # Try to display data (if shot, dim, pos are supplied):
+        self.update_plot()
 
 
     def update_shot(self, *args):
@@ -126,6 +142,9 @@ class Plot_Spectrum(tk.Toplevel):
             self.pos_selector['menu'].add_command(label=val,
                              command=lambda value=val:
                                   self.pos_var.set(value))
+
+        # also update the displayed plot:
+        self.update_plot()
 
     def update_plot(self, *args):
         """Update the displayed plot"""
@@ -184,6 +203,28 @@ class Plot_Spectrum(tk.Toplevel):
         self.ax.grid(True)
         self.ax.set_xlabel('Energy (MeV)')
         self.ax.set_ylabel('Yield / MeV')
+
+        # Show a fit if requested:
+        if self.fit_var.get():
+            try:
+                dx = 0.1 * (max(data_x)-min(data_x))/len(data_x)
+                fit_x = numpy.arange(min(data_x), max(data_x), dx)
+                if self.corr_var.get():
+                    fit_Y = self.analysis_db.get_value(shot, dim, pos, 'Yield')[0]
+                    fit_E = self.analysis_db.get_value(shot, dim, pos, 'Energy')[0]
+                    fit_s = self.analysis_db.get_value(shot, dim, pos, 'Sigma')[0]
+                else:
+                    fit_Y = self.initanalysis_db.get_value(shot, dim, pos, 'fit_yield')[0]
+                    fit_E = self.initanalysis_db.get_value(shot, dim, pos, 'fit_mean')[0]
+                    fit_s = self.initanalysis_db.get_value(shot, dim, pos, 'fit_sigma')[0]
+                fit_y = numpy.zeros_like(fit_x)
+                for i in range(len(fit_x)):
+                    fit_y[i] = Gaussian(fit_x[i], fit_Y, fit_E, fit_s)
+
+                self.ax.plot(fit_x, fit_y, 'r--')
+            except Exception as inst:
+                print('Could not show fit')
+                print(inst)
 
         # check to see if we need to create the canvas:
         if self.canvas is None:

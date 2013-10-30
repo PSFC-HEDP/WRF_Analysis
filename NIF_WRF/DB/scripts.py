@@ -96,4 +96,7 @@ def import_all(import_dir=os.path.join(Database.DIR,'csv')):
     DB.csv_import(os.path.join(import_dir, 'wrf_analysis.csv'))
 
     DB = WRF_rhoR_Model_DB(Database.FILE)
-    DB.csv_export(os.path.join(import_dir, 'wrf_rhor_model.csv'))
+    DB.csv_import(os.path.join(import_dir, 'wrf_rhor_model.csv'))
+
+    wspec = WRF_Data_DB(Database.FILE)
+    wspec.fix_import()

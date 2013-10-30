@@ -66,6 +66,7 @@ class Hohlraum(object):
     :param Thickness: the [Au,DU,Al] thickness in um
     :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
     :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
+    :param limits: (optional) Energy limits (of raw spectrum) to use for fitting. Default uses entire spectrum.
 
     :author: Alex Zylstra
     :date: 2013/10/21
@@ -83,7 +84,7 @@ class Hohlraum(object):
     DU_SRIM = StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
-    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None):
+    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None):
         """Constructor for the hohlraum. """
         super(Hohlraum, self).__init__() # super constructor
 
@@ -93,6 +94,8 @@ class Hohlraum(object):
         self.fit_guess = fit_guess
         self.corr = []  # corrected spectrum
         self.corr_fit = []  # Gaussian fit to the corrected spectrum
+        self.limits = limits
+        self.corr_limits = []
 
         # thickness in um of three hohlraum components:
         self.Au = 0  # Calculated or given thickness of Au
@@ -138,6 +141,13 @@ class Hohlraum(object):
 
             # correct the spectrum:
             self.__correct_spectrum__()
+
+            # calculate corrected spectrum limits:
+            if limits is not None:
+                self.corr_limits = [self.shift_energy(self.limits[0], Au=self.Au, DU=self.DU, Al=self.Al),
+                                    self.shift_energy(self.limits[1], Au=self.Au, DU=self.DU, Al=self.Al)]
+            else:
+                self.corr_limits = None
 
             # fit to the data:
             self.__fit_data__()
@@ -326,16 +336,16 @@ class Hohlraum(object):
         """Calculate fits to the raw and shifted spectra."""
         # fit to the raw data:
         if self.fit_guess is not None:
-            self.raw_fit = GaussFit(self.raw, guess=self.fit_guess)
+            self.raw_fit = GaussFit(self.raw, guess=self.fit_guess, limits=self.limits)
         else:
-            self.raw_fit = GaussFit(self.raw)
+            self.raw_fit = GaussFit(self.raw, limits=self.limits)
 
         # fit corrected data:
         g = [self.get_fit_raw()[0],
              self.shift_energy(self.get_fit_raw()[1]),
              self.get_fit_raw()[2]]
 
-        self.corr_fit = GaussFit(self.corr, guess=g)
+        self.corr_fit = GaussFit(self.corr, guess=g, limits=self.corr_limits)
 
     def get_fit_raw(self) -> list:
         """Get the fit to the raw data.
@@ -364,6 +374,20 @@ class Hohlraum(object):
         :returns: a list containing the corrected data.
         """
         return self.corr
+
+    def get_limits(self):
+        """Get the limits used for fitting the raw data.
+
+        :returns: a list containing [min,max]
+        """
+        return self.limits
+
+    def get_limits_corr(self):
+        """Get the limits used for fitting the corrected data.
+
+        :returns: a list containing [min,max]
+        """
+        return self.corr_limits
 
     def get_E_shift(self):
         """Get the peak's energy shift due to the hohlraum.
@@ -553,7 +577,7 @@ class Hohlraum(object):
         # add text with fit parameters
         # location for the text: (based on line position)
         x = self.get_fit_corr()[1] + 3 * self.get_fit_corr()[2]
-        y = self.get_fit_corr()[0] * 3 / 4
+        y = numpy.max(corr_y) * 3 / 4
         # construct a text string to display:
         text = r'$E_{raw}$ = ' + '{:.2f}'.format(self.get_fit_raw()[1]) + ' MeV'
         # write text to the plot:
@@ -563,7 +587,7 @@ class Hohlraum(object):
                 backgroundcolor='white')  # fill background
                 #bbox=dict(ec='red', fc='white', alpha=1.0, pad=1.1))  # add boundary
         x = self.get_fit_corr()[1] + 3 * self.get_fit_corr()[2]
-        y = self.get_fit_corr()[0] * 1 / 2
+        y = y * 5/6
         text = r'$E_{corr}$ = ' + '{:.2f}'.format(self.get_fit_corr()[1]) + ' MeV'
         # write text to the plot:
         ax.text(x, y,  # data

@@ -110,6 +110,9 @@ class Analysis_Viewer(Table_Viewer):
                              command=lambda value=val:
                                   self.pos_var.set(value))
 
+        # update the displayed data
+        self.update_data()
+
 
     def update_data(self, *args):
         """Retrieve all data from the DB to display."""
