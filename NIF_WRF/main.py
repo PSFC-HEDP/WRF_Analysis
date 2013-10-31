@@ -3,11 +3,14 @@
 import logging
 logging.warning('foo')
 
-from NIF_WRF.GUI import WRF_Analyzer, Plot_Spectrum
+# TODO: Improve error handling, logging, and notifications
+# TODO: Better detection of shot number by splitting _ vs -
+# TODO: Add drop ability to hohlraum import
+# TODO: Remember last directory? For various opening/saving modules
 
 __author__ = 'Alex Zylstra'
-__date__ = '2013-09-19'
-__version__ = '0.1.0'
+__date__ = '2013-10-30'
+__version__ = '0.1.1'
 
 import tkinter as tk
 import ttk
@@ -27,13 +30,15 @@ from NIF_WRF.GUI.InitialAnalysis_Viewer import *
 from NIF_WRF.GUI.FinalAnalysis_Viewer import *
 from NIF_WRF.GUI.WRF_Importer import *
 from NIF_WRF.GUI.AddShot import *
-from NIF_WRF.GUI.Plot_Spectrum import *
-from NIF_WRF.GUI.WRF_Analyzer import *
+from NIF_WRF.GUI.Plot_Spectrum import Plot_Spectrum
+from NIF_WRF.GUI.WRF_Analyzer import WRF_Analyzer
+from NIF_WRF.GUI.Plot_RhoR import Plot_RhoR
+from NIF_WRF.GUI.Plot_Yield import Plot_Yield
+from NIF_WRF.GUI.Plot_Shot import Plot_Shot
 
 
 class Application(tk.Tk):
-    """docstring for Application"""
-    #bigFont = tk.font(family='Arial', size=14, weight='bold')
+    """Analysis and database application for the NIF WRF data"""
     bigFont = ("Arial", "14", "bold")
     Font = ("Arial", "12")
 
@@ -120,34 +125,46 @@ class Application(tk.Tk):
         self.finalAnalysisViewButton = tk.Button(self, text='Final', command=self.viewFinalAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.finalAnalysisViewButton.grid(row=9, column=2, sticky=tk.N)
 
-        # spectrum DB controls
-        self.spectrumInfo = tk.Label(self, text="Spectra", font=self.Font, background='lightgray')
-        self.spectrumInfo.grid(row=10, column=0)
-        self.spectrumPlotButton = tk.Button(self, text='Plot', command=self.plotSpectrum, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.spectrumPlotButton.grid(row=10, column=1)
-
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
-        ttk_sep_2.grid(row=11, column=0, columnspan=3, sticky='ew')
+        ttk_sep_2.grid(row=10, column=0, columnspan=3, sticky='ew')
 
         # options for adding data, etc
         self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
-        self.label3.grid(row=12, column=0)
+        self.label3.grid(row=11, column=0)
         self.addAnalysisButton = tk.Button(self, text='Analyze', command=self.Analyze, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addAnalysisButton.grid(row=13, column=0)
+        self.addAnalysisButton.grid(row=12, column=0)
         self.addWRFButton = tk.Button(self, text='Add WRF', command=self.addWRF, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addWRFButton.grid(row=13, column=1)
+        self.addWRFButton.grid(row=12, column=1)
         self.addShotButton = tk.Button(self, text='Add Shot', command=self.addShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.addShotButton.grid(row=13, column=2)
+        self.addShotButton.grid(row=12, column=2)
         self.csvExportButton = tk.Button(self, text='Export CSV', command=self.exportCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvExportButton.grid(row=14, column=0)
+        self.csvExportButton.grid(row=13, column=0)
         self.csvImportButton = tk.Button(self, text='Import CSV', command=self.importCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
-        self.csvImportButton.grid(row=14, column=1)
+        self.csvImportButton.grid(row=13, column=1)
 
         ttk_sep_3 = ttk.Separator(self, orient="vertical")
-        ttk_sep_3.grid(row=15, column=0, columnspan=3, sticky='ew')
+        ttk_sep_3.grid(row=14, column=0, columnspan=3, sticky='ew')
+
+        # For making plots of various stuff:
+        self.plotInfo = tk.Label(self, text='Plots', font=self.bigFont, background='lightgray')
+        self.plotInfo.grid(row=15, column=0)
+
+        self.spectrumPlotButton = tk.Button(self, text='Spectra', command=self.plotSpectrum, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.spectrumPlotButton.grid(row=15, column=1)
+
+        self.shotPlotButton = tk.Button(self, text='Shot', command=self.plotShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotPlotButton.grid(row=15, column=2)
+
+        self.rhoRPlotButton = tk.Button(self, text='ρR', command=self.plotRhoR, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.rhoRPlotButton.grid(row=16, column=1)
+        self.YieldPlotButton = tk.Button(self, text='Yield', command=self.plotYield, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.YieldPlotButton.grid(row=16, column=2)
+
+        ttk_sep_4 = ttk.Separator(self, orient="vertical")
+        ttk_sep_4.grid(row=17, column=0, columnspan=3, sticky='ew')
 
         self.quitButton = tk.Button(self, text='Quit', command=self.quit, font=self.Font, bg='lightgray', highlightbackground='lightgray')
-        self.quitButton.grid(row=16, column=0, columnspan=3, sticky='S')
+        self.quitButton.grid(row=18, column=0, columnspan=3, sticky='S')
 
     def DB_Info(self):
         DB_Info()
@@ -194,9 +211,6 @@ class Application(tk.Tk):
     def viewFinalAnalysisDB(self):
         FinalAnalysis_Viewer()
 
-    def plotSpectrum(self):
-        Plot_Spectrum()
-
     def Analyze(self):
         WRF_Analyzer()
 
@@ -207,6 +221,18 @@ class Application(tk.Tk):
         WRF_Importer()
         #foo = WRF_Progress_Dialog(None)
         #foo.progress_bar.start()
+
+    def plotSpectrum(self):
+        Plot_Spectrum()
+
+    def plotShot(self):
+        Plot_Shot()
+
+    def plotRhoR(self):
+        Plot_RhoR()
+
+    def plotYield(self):
+        Plot_Yield()
 
     def exportCSV(self):
         """Save the database information to CSV files."""

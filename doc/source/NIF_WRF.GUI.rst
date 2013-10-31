@@ -73,10 +73,34 @@ GUI Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`Plot_RhoR` Module
+---------------------------
+
+.. automodule:: NIF_WRF.GUI.Plot_RhoR
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`Plot_Shot` Module
+---------------------------
+
+.. automodule:: NIF_WRF.GUI.Plot_Shot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`Plot_Spectrum` Module
 ---------------------------
 
 .. automodule:: NIF_WRF.GUI.Plot_Spectrum
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`Plot_Yield` Module
+---------------------------
+
+.. automodule:: NIF_WRF.GUI.Plot_Yield
     :members:
     :undoc-members:
     :show-inheritance:

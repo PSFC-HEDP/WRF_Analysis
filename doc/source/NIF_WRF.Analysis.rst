@@ -27,7 +27,7 @@ Analysis Package
     :show-inheritance:
 
 :mod:`rhoR_Analysis` Module
-------------------------
+---------------------------
 
 .. automodule:: NIF_WRF.Analysis.rhoR_Analysis
     :members:
@@ -50,6 +50,14 @@ Analysis Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`Shot_Analysis` Module
+---------------------------
+
+.. automodule:: NIF_WRF.Analysis.Shot_Analysis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    
 :mod:`SlideGenerator` Module
 ----------------------------
 
