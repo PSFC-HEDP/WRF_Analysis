@@ -35,6 +35,8 @@ from NIF_WRF.GUI.WRF_Analyzer import WRF_Analyzer
 from NIF_WRF.GUI.Plot_RhoR import Plot_RhoR
 from NIF_WRF.GUI.Plot_Yield import Plot_Yield
 from NIF_WRF.GUI.Plot_Shot import Plot_Shot
+from NIF_WRF.GUI.Plot_ShotAsymmetry import Plot_ShotAsymmetry
+from NIF_WRF.GUI.Plot_Asymmetry import Plot_Asymmetry
 
 
 class Application(tk.Tk):
@@ -160,11 +162,18 @@ class Application(tk.Tk):
         self.YieldPlotButton = tk.Button(self, text='Yield', command=self.plotYield, font=self.Font, background='lightgray', highlightbackground='lightgray')
         self.YieldPlotButton.grid(row=16, column=2)
 
+        self.plotInfo = tk.Label(self, text='Asymmetries', font=self.Font, background='lightgray')
+        self.plotInfo.grid(row=17, column=0)
+        self.shotAsymmetryButton = tk.Button(self, text='Shot', command=self.plotShotAsymmetry, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotAsymmetryButton.grid(row=17, column=1)
+        self.asymmetryButton = tk.Button(self, text='All', command=self.plotAsymmetry, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.asymmetryButton.grid(row=17, column=2)
+
         ttk_sep_4 = ttk.Separator(self, orient="vertical")
-        ttk_sep_4.grid(row=17, column=0, columnspan=3, sticky='ew')
+        ttk_sep_4.grid(row=18, column=0, columnspan=3, sticky='ew')
 
         self.quitButton = tk.Button(self, text='Quit', command=self.quit, font=self.Font, bg='lightgray', highlightbackground='lightgray')
-        self.quitButton.grid(row=18, column=0, columnspan=3, sticky='S')
+        self.quitButton.grid(row=19, column=0, columnspan=3, sticky='S')
 
     def DB_Info(self):
         DB_Info()
@@ -233,6 +242,12 @@ class Application(tk.Tk):
 
     def plotYield(self):
         Plot_Yield()
+
+    def plotShotAsymmetry(self):
+        Plot_ShotAsymmetry()
+
+    def plotAsymmetry(self):
+        Plot_Asymmetry()
 
     def exportCSV(self):
         """Save the database information to CSV files."""
