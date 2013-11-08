@@ -43,7 +43,14 @@ class DB_Info(tk.Toplevel):
         self.label2 = tk.Label(self, text="Size")
         self.label2.grid(row=1, column=0, sticky='NSEW', padx=2, pady=2)
         if os.path.exists(Database.FILE):
-            self.size_label = tk.Label(self, text=str(os.path.getsize(Database.FILE)/1024)+'KB')
+            size = os.path.getsize(Database.FILE)
+            if size < 2**10:
+                text = str(size) + ' B'
+            elif size < 2**20:
+                text = '{:.1f}'.format(size/1024) + ' kB'
+            else:
+                text = '{:.1f}'.format(size/1048576) + ' MB'
+            self.size_label = tk.Label(self, text=text)
             self.size_label.grid(row=1, column=1, sticky='NSEW', padx=2, pady=2)
 
         # add list of tables

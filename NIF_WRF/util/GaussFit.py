@@ -1,9 +1,15 @@
 import math
 import numpy
-import scipy.optimize
-import scipy.stats
+import scipy
+try:
+    import scipy.interpolate
+    import scipy.optimize
+    import scipy.stats
+except:
+    import syslog
+    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import matplotlib
-import matplotlib.pyplot as plt
+import matplotlib.pyplot
 import sys
 
 
@@ -364,7 +370,7 @@ class GaussFit(object):
         """
         # sanity check:
         if ax is None:
-            ax = plt.gca()
+            ax = matplotlib.pyplot.gca()
 
         # plot the data with error bars
         ax.errorbar(

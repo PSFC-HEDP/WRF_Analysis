@@ -4,8 +4,7 @@ import tkinter as tk
 import ttk
 import numpy as np
 import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+import matplotlib.pyplot
 from NIF_WRF.DB.WRF_Analysis_DB import *
 from NIF_WRF.DB.Snout_DB import *
 from NIF_WRF.Analysis.Shot_Analysis import avg_Yield
@@ -106,7 +105,7 @@ class Plot_Shot(tk.Toplevel):
         # generate axes if necessary:
         if self.ax is None:
             #self.fig = plt.Figure(figsize=(4,3))
-            self.fig = plt.Figure()
+            self.fig = matplotlib.pyplot.Figure()
             self.ax = self.fig.add_subplot(111)
         else:  # if ax exists, clear it:
             self.ax.clear()
@@ -115,7 +114,7 @@ class Plot_Shot(tk.Toplevel):
 
         # set matplotlib backend
         if matplotlib.get_backend() != 'tkagg':
-            plt.switch_backend('TkAgg')
+            matplotlib.pyplot.switch_backend('TkAgg')
 
         # Define styles for the DIMs:
         style = {'0-0': 'ro', '90-78': 'bo'}
@@ -171,11 +170,11 @@ class Plot_Shot(tk.Toplevel):
 
         # check to see if we need to create the canvas:
         if self.canvas is None:
-            self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+            self.canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(self.fig, master=self)
             self.canvas.show()
             self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1.0)
 
-            toolbar = NavigationToolbar2TkAgg(self.canvas, self.plot_frame)
+            toolbar = matplotlib.backends.backend_tkagg.NavigationToolbar2TkAgg(self.canvas, self.plot_frame)
             toolbar.update()
             self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 

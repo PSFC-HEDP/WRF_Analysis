@@ -4,12 +4,20 @@ import os
 import sys
 import numpy
 import math
+import scipy
 import scipy.interpolate
-import scipy.stats
 import scipy.optimize
-
+import scipy.stats
+#try:
+#    import scipy.interpolate
+#    import scipy.optimize
+#    import scipy.stats
+#except:
+#    import syslog
+#    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
+import matplotlib
 from NIF_WRF.util.GaussFit import GaussFit
-from NIF_WRF.util import StopPow
+import NIF_WRF.util.StopPow
 
 
 __author__ = 'Alex Zylstra'
@@ -77,11 +85,11 @@ class Hohlraum(object):
     mode_thick = 'Thick'
 
     # set up SRIM calculators:
-    Al_SRIM = StopPow.StopPow_SRIM(
+    Al_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Aluminum.txt"))  # SRIM stopping power for Al
-    Au_SRIM = StopPow.StopPow_SRIM(
+    Au_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Gold.txt"))  # SRIM stopping power for Au
-    DU_SRIM = StopPow.StopPow_SRIM(
+    DU_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
     def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None):
@@ -462,12 +470,10 @@ class Hohlraum(object):
 
         :param fname: the file to save to
         """
-        import matplotlib
-        import matplotlib.pyplot as plt
         if matplotlib.get_backend() != 'agg':
-            plt.switch_backend('Agg')
+            matplotlib.pyplot.switch_backend('Agg')
         # get the figure:
-        fig = plt.figure()
+        fig = matplotlib.pyplot.figure()
         ax = fig.add_subplot(111)
         self.plot(ax)
 
@@ -479,34 +485,30 @@ class Hohlraum(object):
 
         :param interactive: (optional) whether to use the interactive mode {default=False}
         """
-        import matplotlib
-        import matplotlib.pyplot as plt
-
         # os detection
         if sys.platform.startswith('linux'):  # generic *nix
-            plt.switch_backend('TkAgg')
+            matplotlib.pyplot.switch_backend('TkAgg')
         elif sys.platform.startswith('darwin'):  # Mac OS X
             if matplotlib.get_backend() != 'MacOSX':
-                plt.switch_backend('MacOSX')
+                matplotlib.pyplot.switch_backend('MacOSX')
         # use interactive mode if requested:
-        plt.interactive(interactive)
+        matplotlib.pyplot.interactive(interactive)
 
         # get the figure:
-        fig = plt.figure()
+        fig = matplotlib.pyplot.figure()
         ax = fig.add_subplot(111)
         self.plot(ax)
 
-        plt.show()
+        matplotlib.pyplot.show()
 
     def plot(self, ax=None):
         """Make a plot of the spectrum data (raw & corrected) and fit.
 
         :param ax: matplotlib Axes instance to plot into
         """
-        import matplotlib.pyplot as plt
         # sanity check:
         if ax is None:
-            ax = plt.gca()
+            ax = matplotlib.pyplot.gca()
 
         # split up raw data into columns:
         raw_x = numpy.zeros(len(self.raw))
@@ -610,12 +612,10 @@ class Hohlraum(object):
         if self.mode == Hohlraum.mode_thick:
             return
 
-        import matplotlib
-        import matplotlib.pyplot as plt
         if matplotlib.get_backend() != 'agg':
-            plt.switch_backend('Agg')
+            matplotlib.pyplot.switch_backend('Agg')
         # get the figure:
-        fig = plt.figure()
+        fig = matplotlib.pyplot.figure()
         ax = fig.add_subplot(111)
         self.plot_hohlraum(ax)
 
@@ -631,34 +631,30 @@ class Hohlraum(object):
         if self.mode == Hohlraum.mode_thick:
             return
 
-        import matplotlib
-        import matplotlib.pyplot as plt
-
         # os detection
         if sys.platform.startswith('linux'):  # generic *nix
-            plt.switch_backend('TkAgg')
+            matplotlib.pyplot.switch_backend('TkAgg')
         elif sys.platform.startswith('darwin'):  # Mac OS X
             if matplotlib.get_backend() != 'MacOSX':
-                plt.switch_backend('MacOSX')
+                matplotlib.pyplot.switch_backend('MacOSX')
         # use interactive mode if requested:
-        plt.interactive(interactive)
+        matplotlib.pyplot.interactive(interactive)
 
         # get the figure:
-        fig = plt.figure()
+        fig = matplotlib.pyplot.figure()
         ax = fig.add_subplot(111)
         self.plot_hohlraum(ax)
 
-        plt.show()
+        matplotlib.pyplot.show()
 
     def plot_hohlraum(self, ax=None):
         """ Make a plot of the hohlraum wall and LOS into given Axes.
 
         :param ax: matplotlib Axes instance to plot into
         """
-        import matplotlib.pyplot as plt
         # sanity check:
         if ax is None:
-            ax = plt.gca()
+            ax = matplotlib.pyplot.gca()
 
         # iterate over all layers:
         # noinspection PyTypeChecker

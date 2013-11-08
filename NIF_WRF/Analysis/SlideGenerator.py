@@ -2,6 +2,8 @@
 
 import sys
 import numpy
+import matplotlib
+import matplotlib.pyplot
 
 __author__ = 'Alex Zylstra'
 
@@ -17,21 +19,18 @@ def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', i
     :param results: (optional) a text description of the final results {default=''}
     :param interactive: (optional) whether to use the interactive mode {default=False}
     """
-    import matplotlib
-    import matplotlib.pyplot as plt
-
     # os detection
     if sys.platform.startswith('linux'):  # generic *nix
-        plt.switch_backend('TkAgg')
+        matplotlib.pyplot.switch_backend('TkAgg')
     elif sys.platform.startswith('darwin'):  # Mac OS X
         if matplotlib.get_backend() != 'MacOSX':
-            plt.switch_backend('MacOSX')
+            matplotlib.pyplot.switch_backend('MacOSX')
     # use interactive mode if requested:
-    plt.interactive(interactive)
+    matplotlib.pyplot.interactive(interactive)
 
     # make the figure:
     make_slide(Fit, Hohl, Nxy, name, summary, results)
-    plt.show()
+    matplotlib.pyplot.show()
 
 
 def save_slide(fname, Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
@@ -44,12 +43,10 @@ def save_slide(fname, Fit=None, Hohl=None, Nxy=None, name='', summary='', result
     :param summary: (optional) a text description {default=''}
     :param results: (optional) a text description of the final results {default=''}
     """
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
     make_slide(Fit, Hohl, Nxy, name, summary, results)
-    plt.savefig(fname)
+    matplotlib.pyplot.savefig(fname)
 
 
 def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
@@ -62,19 +59,15 @@ def make_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results=''):
     :param summary: (optional) a text description {default=''}
     :param results: (optional) a text description of the final results {default=''}
     """
-    import matplotlib.rcsetup
-    import matplotlib.gridspec as gridspec
-    import matplotlib.pyplot as plt
-    import matplotlib.image as mpimg
 
-    fig = plt.figure(figsize=(11, 8.5))
-    gs = gridspec.GridSpec(2, 2,
+    fig = matplotlib.pyplot.figure(figsize=(11, 8.5))
+    gs = matplotlib.gridspec.GridSpec(2, 2,
                            width_ratios=[2, 3],
                            height_ratios=[2, 3])
-    ax1 = plt.subplot(gs[0, 0])
-    ax2 = plt.subplot(gs[0, 1])
-    ax3 = plt.subplot(gs[1, 0])
-    ax4 = plt.subplot(gs[1, 1])
+    ax1 = matplotlib.pyplot.subplot(gs[0, 0])
+    ax2 = matplotlib.pyplot.subplot(gs[0, 1])
+    ax3 = matplotlib.pyplot.subplot(gs[1, 0])
+    ax4 = matplotlib.pyplot.subplot(gs[1, 1])
 
     # top right box for text info:
     ax2.set_ylim([-1, 1])

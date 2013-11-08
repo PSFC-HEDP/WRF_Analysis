@@ -162,4 +162,5 @@ class Generic_Analysis_DB(Generic_DB):
         # array conversion:
         avail_date = flatten(array_convert(query))
         avail_date.sort()
+        # TODO: occasional IndexError: list index out of range
         return avail_date[-1]

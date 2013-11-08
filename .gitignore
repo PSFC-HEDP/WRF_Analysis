@@ -5,12 +5,4 @@
 StopPow.py
 test/runAnalysis/AnalysisOutputs
 
-*.pyc
-
-*.pyc
-
-*.pyc
-
-Analysis/__pycache__/rhoR_Analysis.cpython-33.pyc
-
-Analysis/__pycache__/rhoR_Analysis.cpython-33.pyc
+build

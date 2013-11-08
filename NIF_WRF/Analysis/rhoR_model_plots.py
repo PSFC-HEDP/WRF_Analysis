@@ -1,7 +1,7 @@
 # Functions for making plots of the rhoR model
 
 import math
-
+import matplotlib
 from numpy import arange, zeros
 from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
 from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
@@ -28,11 +28,8 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     # lists of things to plot:
     EnergyList = []
@@ -51,7 +48,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     p0, = ax.plot(RhoRList, EnergyList, color+'-')
     ax.plot(RhoRListPlusErr, EnergyList, color+'--')
@@ -114,11 +111,8 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     # lists of things to plot:
     EnergyList = []
@@ -145,7 +139,7 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, EnergyList, color+'-')
     ax.plot(RcmListPlusErr, EnergyList, color+'--')
@@ -182,11 +176,8 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     # lists of things to plot:
     RcmList = []
@@ -208,7 +199,7 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, RhoRList, color+'-')
     ax.plot(RcmList, RhoRListPlusErr, color+'--')
@@ -242,11 +233,8 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(4,3)):
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     # get modeled shell thickness:
     Tshell = analysis.Tshell[1]
@@ -271,7 +259,7 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(4,3)):
         Abl_x.append(x * 1e4)
 
     # make a plot window:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     # add plots for three regions:
     ax.plot(Gas_x, Gas_y, 'r-')
@@ -309,10 +297,8 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
         return
 
     # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     # lists of things to plot:
     RcmList = []
@@ -343,7 +329,7 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     ax.plot(RcmList, FuelList, 'r-')
     ax.plot(RcmList, MixList, 'r--')
@@ -393,11 +379,8 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
     for x in analyses:
         assert isinstance(x, rhoR_Model)
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     plot_x = []
     plot_y = []
@@ -420,7 +403,7 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []
@@ -460,11 +443,8 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
     for x in analyses:
         assert isinstance(x, rhoR_Model)
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     plot_x = []
     plot_y = []
@@ -487,7 +467,7 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []
@@ -521,11 +501,8 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
     for x in analyses:
         assert isinstance(x, rhoR_Model)
 
-    # import matplotlib
-    import matplotlib
-    import matplotlib.pyplot as plt
     if matplotlib.get_backend() != 'agg':
-        plt.switch_backend('Agg')
+        matplotlib.pyplot.switch_backend('Agg')
 
     plot_x = []
     plot_y = []
@@ -548,7 +525,7 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = plt.figure(figsize=figsize)
+    fig = matplotlib.pyplot.figure(figsize=figsize)
     ax = fig.add_subplot(111)
     for i in range(len(plot_x)):
         opts = []

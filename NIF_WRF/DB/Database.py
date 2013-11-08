@@ -1,19 +1,12 @@
 # Define parameters for the sqlite3 database
 __author__ = 'Alex Zylstra'
-import sys
+import os
 
 # Directory where the main database is stored
-# OS dependent
-if sys.platform.startswith('linux'):
-    # where the database is stored
-    DIR = '/home/alex'
-    # Directory where the tests are stored
-    TEST_DIR = '/home/alex/test/'
-elif sys.platform.startswith('darwin'):
-    # where the database is stored
-    DIR = '/Users/alex'
-    # Directory where the tests are stored
-    TEST_DIR = '/Users/alex/test/'
+# where the database is stored
+DIR = os.path.expanduser('~')
+# Directory where the tests are stored
+TEST_DIR = os.path.join(os.path.expanduser('~'),'test')
 
 import os
 

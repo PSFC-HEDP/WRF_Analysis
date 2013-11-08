@@ -1,6 +1,11 @@
 import math
+import scipy
 import scipy.interpolate
-import scipy.integrate
+#try:
+#    import scipy.interpolate
+#except:
+#    import syslog
+#    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
 from NIF_WRF.util.Constants import *
 from NIF_WRF.util.StopPow import StopPow_LP, FloatVector
