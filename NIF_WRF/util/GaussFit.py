@@ -238,7 +238,7 @@ class GaussFit(object):
         def temp_gauss(x, mu, sigma):
             return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
         guess = [self.fit[1], self.fit[2]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
+        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim, xtol=1e-4)
         fit = result[0]
 
         chi2 = self.chi2_other([A, fit[0], fit[1]])

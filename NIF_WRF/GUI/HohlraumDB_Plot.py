@@ -111,5 +111,6 @@ class HohlraumDB_Plot(tk.Toplevel):
             data = self.db.query_drawing(self.selector_var.get())
 
         # launch the hohlraum:
-        h = Hohlraum(raw=None, wall=data, angles=[90-14.1, 90-13.1])
+        angles = [float(self.theta_max_var.get()), float(self.theta_min_var.get())]
+        h = Hohlraum(raw=None, wall=data, angles=angles)
         h.plot_hohlraum_window(interactive=True)

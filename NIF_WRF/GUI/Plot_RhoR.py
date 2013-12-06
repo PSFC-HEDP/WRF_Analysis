@@ -18,9 +18,10 @@ class Plot_RhoR(tk.Toplevel):
     def __init__(self, parent=None):
         """Initialize the viewer window."""
         super(Plot_RhoR, self).__init__()
+        # Set the window title:
+        self.title('ρR summary plot')
 
         # initializations
-        self.db = WRF_Analysis_DB()
         self.canvas = None
         self.ax = None
 
@@ -32,9 +33,6 @@ class Plot_RhoR(tk.Toplevel):
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
-
-        # Set the window title:
-        self.title('ρR summary plot')
 
     def __create_widgets__(self):
         """Create the UI elements"""
@@ -84,6 +82,7 @@ class Plot_RhoR(tk.Toplevel):
 
     def __generate_data__(self):
         """Generate the data for plotting"""
+        db = WRF_Analysis_DB()
         # arrays for the data, error bars, and label
         self.x = []
         self.y = []
@@ -95,7 +94,7 @@ class Plot_RhoR(tk.Toplevel):
         # loop for each DIM:
         for dim in ['0-0', '90-78']:
             # arrays for the individual DIMs
-            n = len(self.db.get_shots())
+            n = len(db.get_shots())
             data_x = np.ndarray(n, dtype=np.float64)
             data_y = np.ndarray(n, dtype=np.float64)
             data_err_ran = np.ndarray(n, dtype=np.float64)
@@ -105,7 +104,7 @@ class Plot_RhoR(tk.Toplevel):
             self.label.append(dim)
 
             # loop over every shot
-            for shot in self.db.get_shots():
+            for shot in db.get_shots():
                 rhoR, drhoR_ran = Shot_Analysis.avg_rhoR(shot, dim, error=Shot_Analysis.ERR_RANDOM)
                 rhoR, drhoR_sys = Shot_Analysis.avg_rhoR(shot, dim, error=Shot_Analysis.ERR_SYSTEMATIC)
                 rhoR, drhoR_tot = Shot_Analysis.avg_rhoR(shot, dim, error=Shot_Analysis.ERR_TOTAL)
@@ -130,6 +129,7 @@ class Plot_RhoR(tk.Toplevel):
             self.err_ran.append(data_err_ran)
             self.err_sys.append(data_err_sys)
             self.err_tot.append(data_err_tot)
+            self.shots = db.get_shots()
 
     def update_plot(self, *args):
         """Update the displayed plot"""
@@ -163,7 +163,7 @@ class Plot_RhoR(tk.Toplevel):
         self.ax.set_ylabel(r'$\rho$R (mg/cm$^2$)')
         self.ax.set_xticks([])
         self.ax.set_ylim(50,200)
-        self.ax.set_xlim(0,len(self.db.get_shots())+1)
+        self.ax.set_xlim(0,np.max(self.x)+1)
 
         # get the appropriate error bar:
         yerr = [[],[]]
@@ -185,9 +185,8 @@ class Plot_RhoR(tk.Toplevel):
 
         # add some legends:
         if show_shots:
-            shots = self.db.get_shots()
-            for i in range(len(shots)):
-                self.ax.text(i+1, 48, shots[i], ha='center', va='top', rotation='vertical', fontsize=6)
+            for i in range(len(self.shots)):
+                self.ax.text(i+1, 48, self.shots[i], ha='center', va='top', rotation='vertical', fontsize=6)
         # finale:
         self.ax.legend(loc=2, numpoints=1)
 

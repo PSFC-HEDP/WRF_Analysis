@@ -34,8 +34,8 @@ def generate_shot_dim_summary(shot, dim, fname=None):
         Yp_tot = numpy.sqrt(Yp_ran**2 + Yp_sys**2)
         file.writerow(['Yield',
                       '{:.2e}'.format(Yp),
-                      '{:.1f}'.format(100*Yp_ran/Yp)+'%',
                       '{:.1f}'.format(100*Yp_sys/Yp)+'%',
+                      '{:.1f}'.format(100*Yp_ran/Yp)+'%',
                       '{:.1f}'.format(100*Yp_tot/Yp)+'%'])
 
         # Shock rhoR
@@ -45,8 +45,8 @@ def generate_shot_dim_summary(shot, dim, fname=None):
         rhoR_tot = numpy.sqrt(rhoR_ran**2 + rhoR_sys**2)
         file.writerow(['rhoR',
                       '{:.1f}'.format(rhoR)+'\t',
-                      '{:.1f}'.format(rhoR_ran),
                       '{:.1f}'.format(rhoR_sys),
+                      '{:.1f}'.format(rhoR_ran),
                       '{:.1f}'.format(rhoR_tot)])
 
 def all_shot_dim_summary(dir='', use_shot_dirs=False):
@@ -90,11 +90,11 @@ def generate_allshot_summary(fname=None):
     file.writerow(['Shot',
                    '0-0 rhoR (mg/cm2)', 'ran unc (mg/cm2)', 'tot unc (mg/cm2)',
                    '90-78 rhoR (mg/cm2)', 'ran unc (mg/cm2)', 'tot unc (mg/cm2)',
-                   'Yield', 'Tot Unc'])
+                   'Yield', 'Tot Unc', 'Eq Rcm (um)', 'Tot Unc'])
 
     # write a row for each shot:
     for shot in db.get_shots():
-        row = [shot, '', '', '', '', '', '', '', '']
+        row = [shot, '', '', '', '', '', '', '', '', '', '']
 
         # get all the info:
         for dim in db.get_dims(shot):
@@ -102,6 +102,9 @@ def generate_allshot_summary(fname=None):
                 Yp, Yp_err = Shot_Analysis.avg_Yield(shot, dim)
                 row[7] = '{:.2e}'.format(Yp)
                 row[8] = '{:.2e}'.format(Yp_err)
+                Rcm, Rcm_err = Shot_Analysis.avg_Rcm(shot, dim)
+                row[9] = '{:.2f}'.format(Rcm)
+                row[10] = '{:.2f}'.format(Rcm_err)
             rhoR, rhoR_tot_err = Shot_Analysis.avg_rhoR(shot, dim)
             rhoR_ran_err = Shot_Analysis.avg_rhoR(shot, dim, Shot_Analysis.ERR_RANDOM)[1]
             if dim == '0-0':

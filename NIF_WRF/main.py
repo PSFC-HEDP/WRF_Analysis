@@ -7,6 +7,10 @@ syslog.openlog("Python")
 # TODO: Better detection of shot number by splitting _ vs -
 # TODO: Add drop ability to hohlraum import
 # TODO: Remember last directory? For various opening/saving modules
+# TODO: cr39_2_id not grayed out for -10 setups
+# TODO: Should close “Add Shot” thing after spawning setup windows
+# TODO: No way to add a shot to the shot DB? “Add Shot” should do this
+# TODO: Need to catch bugs while running analysis and display error message
 
 __author__ = 'Alex Zylstra'
 __date__ = '2013-11-08'
@@ -278,7 +282,9 @@ class Application(tk.Tk):
         Plot_Shot()
 
     def plotRhoR(self):
-        Plot_RhoR()
+        import threading
+        thread = threading.Thread(group=None, target=Plot_RhoR)
+        thread.start()
 
     def plotYield(self):
         Plot_Yield()
@@ -348,7 +354,7 @@ class Application(tk.Tk):
                 self.__cancel__()
                 return
 
-            dialog = Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots, width=20)
+            dialog = Option_Prompt.Option_Prompt(self, title='Select shot', text='Shot numbers available', options=shots, width=20)
             shot = dialog.result
 
             # if the user canceled:
@@ -358,7 +364,7 @@ class Application(tk.Tk):
         # if no DIM was supplied, prompt for one:
         if DIM is None:
             dims = db.get_dims(shot)
-            dialog = Option_Prompt(self, title='Select DIM', text='DIMs available for '+shot, options=dims)
+            dialog = Option_Prompt.Option_Prompt(self, title='Select DIM', text='DIMs available for '+shot, options=dims)
             DIM = dialog.result
 
             # if the user canceled:
