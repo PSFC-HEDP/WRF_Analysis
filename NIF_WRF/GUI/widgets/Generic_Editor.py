@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 
 class Generic_Editor(tk.Toplevel):
     """A generic editor for database objects.
@@ -26,6 +27,8 @@ class Generic_Editor(tk.Toplevel):
         self.bind('<Return>', self.write)
         self.bind('<Escape>', self.close)
 
+        self.configure(background='#eeeeee')
+
     def __createUI__(self, columns=None):
         """Helper method to create the UI elements"""
         # get a list of columns
@@ -40,12 +43,12 @@ class Generic_Editor(tk.Toplevel):
         # iteratively create the UI:
         for i in range(len(columns)):
             # create a label
-            label = tk.Label(self, text=columns[i])
+            label = ttk.Label(self, text=columns[i])
             label.grid(row=i, column=0)
 
             # and a box for entry
             var = tk.StringVar()
-            entry = tk.Entry(self, textvariable=var)
+            entry = ttk.Entry(self, textvariable=var)
             entry.grid(row=i, column=1)
             entry.bind('<Return>', self.write)
 
@@ -55,9 +58,9 @@ class Generic_Editor(tk.Toplevel):
             self.vars.append(var)
 
         # some control buttons
-        self.write_button = tk.Button(self, text='Write', command=self.write)
+        self.write_button = ttk.Button(self, text='Write', command=self.write)
         self.write_button.grid(row=len(columns), column=0, sticky='s')
-        self.close_button = tk.Button(self, text='Close', command=self.close)
+        self.close_button = ttk.Button(self, text='Close', command=self.close)
         self.close_button.grid(row=len(columns), column=1, sticky='s')
 
     def close(self, *args):

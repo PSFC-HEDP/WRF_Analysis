@@ -1,7 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 import numpy as np
 import matplotlib
 import matplotlib.pyplot
@@ -27,6 +27,7 @@ class Plot_Asymmetry(tk.Toplevel):
 
         # make the UI:
         self.__create_widgets__()
+        self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
@@ -40,12 +41,12 @@ class Plot_Asymmetry(tk.Toplevel):
         frame = tk.Frame(self)
 
         self.show_shots_var = tk.BooleanVar()
-        self.show_shots_var_check = tk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
+        self.show_shots_var_check = ttk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
         self.show_shots_var_check.grid(row=0, column=0, columnspan=2)
         self.show_shots_var.trace('w', self.update_plot)
 
         self.show_chi2_var = tk.BooleanVar()
-        self.show_chi2_var_check = tk.Checkbutton(frame, text='Show χ^2?', variable=self.show_chi2_var)
+        self.show_chi2_var_check = ttk.Checkbutton(frame, text='Show χ^2?', variable=self.show_chi2_var)
         self.show_chi2_var_check.grid(row=1, column=0, columnspan=2)
         self.show_chi2_var.trace('w', self.update_plot)
 
@@ -53,7 +54,7 @@ class Plot_Asymmetry(tk.Toplevel):
         label2 = tk.Label(frame, text='l = ')
         label2.grid(row=2, column=0)
         self.mode_var = tk.StringVar(value='2')
-        self.mode_selector = tk.Entry(frame, textvariable=self.mode_var)
+        self.mode_selector = ttk.Entry(frame, textvariable=self.mode_var)
         self.mode_selector.configure(width=20)
         self.mode_var.trace('w', self.update_plot)
         self.mode_selector.grid(row=2, column=1)

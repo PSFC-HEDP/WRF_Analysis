@@ -1,6 +1,8 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
+
 from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.Shot_DB import *
 
@@ -17,13 +19,14 @@ class ShotDB_Viewer(Table_Viewer):
         # make the unique widgets
         self.title('Shot DB')
         self.minsize(300,200)
+        self.configure(background='#eeeeee')
 
         # shot selector
         self.selector_var = tk.StringVar()
         shots = self.db.get_shots()
         if len(shots) == 0:
             shots = ['']
-        selector = tk.OptionMenu(self, self.selector_var, *shots)
+        selector = ttk.OptionMenu(self, self.selector_var, *shots)
         selector.configure(width=20)
         self.header_widgets.append(selector)
         self.selector_var.trace('w', self.update_data)

@@ -1,7 +1,8 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
+
 import numpy
 import matplotlib
 import matplotlib.pyplot
@@ -37,6 +38,7 @@ class Plot_Spectrum(tk.Toplevel):
 
         # make the UI:
         self.__create_widgets__(shot, dim, pos)
+        self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
@@ -47,11 +49,11 @@ class Plot_Spectrum(tk.Toplevel):
         frame = tk.Frame(self)
 
         # Add some UI elements:
-        label1 = tk.Label(frame, text='Shot')
+        label1 = ttk.Label(frame, text='Shot')
         label1.grid(row=0, column=0)
-        label2 = tk.Label(frame, text='DIM')
+        label2 = ttk.Label(frame, text='DIM')
         label2.grid(row=1, column=0)
-        label3 = tk.Label(frame, text='Pos')
+        label3 = ttk.Label(frame, text='Pos')
         label3.grid(row=2, column=0)
 
         shots = self.db.get_shots()
@@ -59,30 +61,30 @@ class Plot_Spectrum(tk.Toplevel):
             shots = ['']
 
         self.shot_var = tk.StringVar(value=shot)
-        self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
+        self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
         self.dim_var = tk.StringVar(value=dim)
-        self.dim_selector = tk.OptionMenu(frame, self.dim_var, [])
+        self.dim_selector = ttk.OptionMenu(frame, self.dim_var, [])
         self.dim_selector.configure(width=20)
         self.dim_var.trace('w', self.update_dim)
         self.dim_selector.grid(row=1, column=1)
 
         self.pos_var = tk.StringVar(value=pos)
-        self.pos_selector = tk.OptionMenu(frame, self.pos_var, [])
+        self.pos_selector = ttk.OptionMenu(frame, self.pos_var, [])
         self.pos_selector.configure(width=20)
         self.pos_var.trace('w', self.update_plot)
         self.pos_selector.grid(row=2, column=1)
 
         self.corr_var = tk.BooleanVar()
-        self.corr_var_check = tk.Checkbutton(frame, text='Hohlraum corrected?', variable=self.corr_var)
+        self.corr_var_check = ttk.Checkbutton(frame, text='Hohlraum corrected?', variable=self.corr_var)
         self.corr_var_check.grid(row=3, column=0, columnspan=2)
         self.corr_var.trace('w', self.update_plot)
 
         self.fit_var = tk.BooleanVar()
-        self.fit_var_check = tk.Checkbutton(frame, text='Show fit?', variable=self.fit_var)
+        self.fit_var_check = ttk.Checkbutton(frame, text='Show fit?', variable=self.fit_var)
         self.fit_var_check.grid(row=4, column=0, columnspan=2)
         self.fit_var.trace('w', self.update_plot)
 

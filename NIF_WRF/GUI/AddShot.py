@@ -1,7 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 from NIF_WRF.DB import Database
 from NIF_WRF.DB.Snout_DB import *
 from NIF_WRF.GUI.SetupDB_Editor import *
@@ -23,6 +23,7 @@ class AddShot(tk.Toplevel):
 
         self.title('Add a shot')
         self.minsize(width=400, height=200)
+        self.configure(background='#eeeeee')
 
         # stretch the column to fill all space:
         tk.Grid.columnconfigure(self, 0, weight=1)
@@ -31,22 +32,22 @@ class AddShot(tk.Toplevel):
     def __create_widgets__(self):
         """Create the UI elements"""
         # shot number:
-        self.label1 = tk.Label(self, text='Shot Num')
+        self.label1 = ttk.Label(self, text='Shot Num')
         self.label1.grid(row=0, column=0)
         self.shot_num_var = tk.StringVar()
-        self.shot_num = tk.Entry(self, textvariable=self.shot_num_var)
+        self.shot_num = ttk.Entry(self, textvariable=self.shot_num_var)
         self.shot_num.grid(row=0, column=1, columnspan=2)
 
-        self.label0 = tk.Label(self, text='Shot Name')
+        self.label0 = ttk.Label(self, text='Shot Name')
         self.label0.grid(row=1, column=0)
         self.shot_name_var = tk.StringVar()
-        self.shot_name = tk.Entry(self, textvariable=self.shot_name_var)
+        self.shot_name = ttk.Entry(self, textvariable=self.shot_name_var)
         self.shot_name.grid(row=1, column=1, columnspan=2)
 
-        self.label0 = tk.Label(self, text='Hohlraum Drawing')
+        self.label0 = ttk.Label(self, text='Hohlraum Drawing')
         self.label0.grid(row=2, column=0)
         self.hohl_draw_var = tk.StringVar()
-        self.hohl_draw = tk.Entry(self, textvariable=self.hohl_draw_var)
+        self.hohl_draw = ttk.Entry(self, textvariable=self.hohl_draw_var)
         self.hohl_draw.grid(row=2, column=1, columnspan=2)
 
         ttk_sep_1 = ttk.Separator(self, orient="vertical")

@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 
 class String_Prompt(tk.Toplevel):
     """Implement a dialog window to prompt a user to input a string. The value can be retrieved by the `result` member::
@@ -32,6 +33,8 @@ class String_Prompt(tk.Toplevel):
         self.bind('<Return>', self.__ok__)
         self.bind('<Escape>', self.__cancel__)
 
+        self.configure(background='#eeeeee')
+
         self.wait_window(self)
 
     def __create_widgets__(self, title, text, default):
@@ -40,12 +43,12 @@ class String_Prompt(tk.Toplevel):
             self.title(title)
 
         if text is not None:
-            label1 = tk.Label(self, text=text)
+            label1 = ttk.Label(self, text=text)
             label1.pack()
 
         if default is not None:
             self.var = tk.StringVar(value=str(default))
-            entry = tk.Entry(self, textvariable=self.var)
+            entry = ttk.Entry(self, textvariable=self.var)
             entry.pack()
             entry.focus_force()
 
@@ -55,9 +58,9 @@ class String_Prompt(tk.Toplevel):
         """Add the OK and cancel buttons"""
         box = tk.Frame(self)
 
-        w = tk.Button(box, text="OK", width=10, command=self.__ok__)
+        w = ttk.Button(box, text="OK", width=10, command=self.__ok__)
         w.pack(side=tk.LEFT, padx=5, pady=5)
-        w = tk.Button(box, text="Cancel", width=10, command=self.__cancel__)
+        w = ttk.Button(box, text="Cancel", width=10, command=self.__cancel__)
         w.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.bind("<Return>", self.__ok__)

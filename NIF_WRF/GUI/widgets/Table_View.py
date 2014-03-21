@@ -8,7 +8,7 @@ except ImportError:
     import tkinter as Tkinter
     import tkinter.font as tkFont
 
-import ttk
+import tkinter.ttk as ttk
 
 def __sortby__(tree, col, descending):
     """Sort tree contents when a column is clicked on."""
@@ -51,6 +51,8 @@ class Table_Viewer(Tkinter.Toplevel):
         self.bind('<Escape>', self.close)
         self.bind('<Control-r>', self.refresh)
         self.bind('<Command-r>', self.refresh)
+
+        self.configure(background='#eeeeee')
 
     def __setup_widgets__(self):
         """Add the widgets and table to the GUI"""

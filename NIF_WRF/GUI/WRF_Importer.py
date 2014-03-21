@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 import os
 
 from NIF_WRF.DB import Database
@@ -33,6 +34,8 @@ class WRF_Importer(tk.Toplevel):
         tk.Grid.columnconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 1, weight=1)
 
+        self.configure(background='#eeeeee')
+
         self.title('Import a WRF')
 
         # a couple key bindings:
@@ -42,34 +45,34 @@ class WRF_Importer(tk.Toplevel):
     def __create_widgets__(self):
         """Create the UI elements for the import"""
         # controls for selecting a CSV and image file:
-        self.label1 = tk.Label(self, text='Select CSV')
+        self.label1 = ttk.Label(self, text='Select CSV')
         self.label1.grid(row=0, column=0)
 
-        self.label_csv = tk.Label(self, text='')
+        self.label_csv = ttk.Label(self, text='')
         self.label_csv.grid(row=1, column=0, columnspan=2)
 
-        self.label2 = tk.Label(self, text='Select image')
+        self.label2 = ttk.Label(self, text='Select image')
         self.label2.grid(row=2, column=0)
 
-        self.label_image = tk.Label(self, text='')
+        self.label_image = ttk.Label(self, text='')
         self.label_image.grid(row=3, column=0, columnspan=2)
 
-        self.csv_button = tk.Button(self, text='Open CSV', command=self.select_csv)
+        self.csv_button = ttk.Button(self, text='Open CSV', command=self.select_csv)
         self.csv_button.grid(row=0, column=1)
 
-        self.image_button = tk.Button(self, text='Open N(x,y)', command=self.select_Nxy)
+        self.image_button = ttk.Button(self, text='Open N(x,y)', command=self.select_Nxy)
         self.image_button.grid(row=2, column=1)
 
         # option to run analysis
         self.run_analysis_var = tk.BooleanVar()
-        self.run_analysis = tk.Checkbutton(self, text='Run analysis', variable=self.run_analysis_var)
+        self.run_analysis = ttk.Checkbutton(self, text='Run analysis', variable=self.run_analysis_var)
         self.run_analysis.select()  # start activated
         self.run_analysis.grid(row=4, column=0, columnspan=2)
 
         # control buttons at the bottom:
-        self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
+        self.cancel_button = ttk.Button(self, text='Cancel', command=self.withdraw)
         self.cancel_button.grid(row=5, column=0)
-        self.go_button = tk.Button(self, text='Go', command=self.do_import)
+        self.go_button = ttk.Button(self, text='Go', command=self.do_import)
         self.go_button.grid(row=5, column=1)
 
     def select_csv(self):

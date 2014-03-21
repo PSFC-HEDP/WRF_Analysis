@@ -3,6 +3,7 @@ __author__ = 'Alex Zylstra'
 from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.WRF_Inventory_DB import *
 import tkinter as tk
+import tkinter.ttk as ttk
 
 class InventoryDB_Viewer(Table_Viewer):
     """Display data available in the inventory database"""
@@ -17,12 +18,13 @@ class InventoryDB_Viewer(Table_Viewer):
         self.title('Inventory DB')
         self.minsize(300,200)
         self.maxsize(600,400)
+        self.configure(background='#eeeeee')
 
         # set the data
         self.update_data()
 
         # add a button to update the database:
-        update_button = tk.Button(self, text='Update DB', command=self.refresh_from_setup)
+        update_button = ttk.Button(self, text='Update DB', command=self.refresh_from_setup)
         self.header_widgets.append(update_button)
 
         # invoke the widget construction manually:

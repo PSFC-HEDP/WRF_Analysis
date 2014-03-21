@@ -1,7 +1,8 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot
@@ -29,6 +30,7 @@ class Plot_Yield(tk.Toplevel):
 
         # make the UI:
         self.__create_widgets__()
+        self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
@@ -42,7 +44,7 @@ class Plot_Yield(tk.Toplevel):
         frame = tk.Frame(self)
 
         self.show_shots_var = tk.BooleanVar()
-        self.show_shots_var_check = tk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
+        self.show_shots_var_check = ttk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
         self.show_shots_var_check.grid(row=0, column=0, columnspan=2)
         self.show_shots_var.trace('w', self.update_plot)
 

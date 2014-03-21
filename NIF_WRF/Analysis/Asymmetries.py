@@ -145,41 +145,54 @@ def fit_shot(shot, l, error='random'):
         # Retrieve data from the DB
         theta = []
         rhoR = []
-        rhoR_err = []
+        rhoR_err_ran = []
+        rhoR_err_sys = []
+        Rcm_err_sys = []
         for dim in db.get_dims(shot):
             for pos in db.get_pos(shot, dim):
                 val = db.get_value(shot, dim, pos, 'rhoR')[0]
                 err_ran = db.get_value(shot, dim, pos, 'rhoR_ran_unc')[0]
                 err_sys = db.get_value(shot, dim, pos, 'rhoR_sys_unc')[0]
-
+                R_sys = db.get_value(shot, dim, pos, 'Rcm_sys_unc')[0]*1e-4  # need to convert to cm
                 angle = db_snout.get_theta('Generic', dim, pos)[0]
-                if error == 'random':
-                    err = err_ran
-                else:
-                    err = np.sqrt(err_sys**2 + err_ran**2)
 
                 theta.append(angle)
                 rhoR.append(val)
-                rhoR_err.append(err)
+                rhoR_err_ran.append(err_ran)
+                rhoR_err_sys.append(err_sys)
+                Rcm_err_sys.append(R_sys)
 
         if len(theta) < 2:
-            raise ValueError
+            raise ValueError("Not enough DIMs to fit!")
         # if there are only 2 points scipy is silly and refuses to give pcov
         # fix by adding a third point with giant error bar so it doesn't affect fit
         if len(theta) == 2:
             theta.append(theta[0])
             rhoR.append(rhoR[0])
-            rhoR_err.append(3*rhoR_err[0])
+            rhoR_err_ran.append(3*rhoR_err_ran[0])
+            rhoR_err_sys.append(3*rhoR_err_sys[0])
             theta.append(theta[1])
             rhoR.append(rhoR[1])
-            rhoR_err.append(3*rhoR_err[1])
+            rhoR_err_ran.append(3*rhoR_err_ran[1])
+            rhoR_err_sys.append(3*rhoR_err_sys[1])
 
         # Convert to ndarray:
         theta = np.asarray(theta)
         rhoR = np.asarray(rhoR)
-        rhoR_err = np.asarray(rhoR_err)
+        rhoR_err_ran = np.asarray(rhoR_err_ran)
+        rhoR_err_sys = np.asarray(rhoR_err_sys)
+        Rcm_err_sys = np.asarray(Rcm_err_sys)
 
-        return fit_polar(theta, rhoR, rhoR_err, l, angles=ANGLE_DEG)
+        # Return value depends on which error bar is requested:
+        ret = fit_polar(theta, rhoR, rhoR_err_ran, l, angles=ANGLE_DEG)
+        if error == 'total':
+            # Modify errors to include systematics:
+            r0_unc = np.sqrt(ret[1]**2 + np.mean(Rcm_err_sys)**2)
+            delta_unc = ret[3]
+            rhoR0_unc = np.sqrt(ret[5]**2 + np.mean(rhoR_err_sys)**2)
+            return ret[0], r0_unc, ret[2], delta_unc, ret[4], rhoR0_unc
+        # Default: random errors only
+        return ret
     except Exception as inst:
         print('Cannot fit asymmetry: ' + shot)
         print(inst)
@@ -298,7 +311,7 @@ def fit_azimuthal(theta, phi, rR, rR_err, dP2, dP4, m, mphi, angles=ANGLE_RAD):
 
     return r0, r0_unc, delta, delta_unc, rhoR0, rhoR0_unc
 
-def fit_shot_azimuthal(shot, m, mphi, dP2, dP4):
+def fit_shot_azimuthal(shot, m, mphi, dP2, dP4, error='total'):
     """Fit a m mode asymmetry to a given shot."""
     try:
         # Sanity check that 2 DIMs are available:
@@ -311,20 +324,25 @@ def fit_shot_azimuthal(shot, m, mphi, dP2, dP4):
         theta = []
         phi = []
         rhoR = []
-        rhoR_err = []
+        rhoR_err_ran = []
+        rhoR_err_sys = []
+        Rcm_err_sys = []
         for dim in db.get_dims(shot):
             for pos in db.get_pos(shot, dim):
                 val = db.get_value(shot, dim, pos, 'rhoR')[0]
                 err_ran = db.get_value(shot, dim, pos, 'rhoR_ran_unc')[0]
+                err_sys = db.get_value(shot, dim, pos, 'rhoR_sys_unc')[0]
+                R_sys = db.get_value(shot, dim, pos, 'Rcm_sys_unc')[0]*1e-4  # need to convert to cm
 
                 shotTheta = db_snout.get_theta('Generic', dim, pos)[0]
                 shotPhi = db_snout.get_phi('Generic', dim, pos)[0]
-                err = err_ran
 
                 theta.append(shotTheta)
                 phi.append(shotPhi)
                 rhoR.append(val)
-                rhoR_err.append(err)
+                rhoR_err_ran.append(err_ran)
+                rhoR_err_sys.append(err_sys)
+                Rcm_err_sys.append(R_sys)
 
         if len(theta) < 2:
             raise ValueError
@@ -333,17 +351,30 @@ def fit_shot_azimuthal(shot, m, mphi, dP2, dP4):
         if len(theta) == 2:
             theta.append(theta[0])
             rhoR.append(rhoR[0])
-            rhoR_err.append(3*rhoR_err[0])
+            rhoR_err_ran.append(3*rhoR_err_ran[0])
+            rhoR_err_sys.append(3*rhoR_err_sys[0])
             theta.append(theta[1])
             rhoR.append(rhoR[1])
-            rhoR_err.append(3*rhoR_err[1])
+            rhoR_err_ran.append(3*rhoR_err_ran[1])
+            rhoR_err_sys.append(3*rhoR_err_sys[1])
 
         # Convert to ndarray:
         theta = np.asarray(theta)
         rhoR = np.asarray(rhoR)
-        rhoR_err = np.asarray(rhoR_err)
+        rhoR_err_ran = np.asarray(rhoR_err_ran)
+        rhoR_err_sys = np.asarray(rhoR_err_sys)
+        Rcm_err_sys = np.asarray(Rcm_err_sys)
 
-        return fit_azimuthal(theta, phi, rhoR, rhoR_err,  dP2, dP4, m, mphi, angles=ANGLE_DEG)
+        # Return value depends on which error bar is requested:
+        ret = fit_azimuthal(theta, phi, rhoR, rhoR_err_ran,  dP2, dP4, m, mphi, angles=ANGLE_DEG)
+        if error == 'total':
+            # Modify errors to include systematics:
+            r0_unc = np.sqrt(ret[1]**2 + np.mean(Rcm_err_sys)**2)
+            delta_unc = ret[3]
+            rhoR0_unc = np.sqrt(ret[5]**2 + np.mean(rhoR_err_sys)**2)
+            return ret[0], r0_unc, ret[2], delta_unc, ret[4], rhoR0_unc
+        # Default: random errors only
+        return ret
     except Exception as inst:
         print('Cannot fit asymmetry: ' + shot)
         print(inst)
@@ -454,7 +485,7 @@ def calc_shot_highmode(shot, error='random'):
                 delta_rhoR.append(val1-val2)
                 delta_rhoR_err.append(np.sqrt(err1**2+err2**2))
                 loc.append(dim+' top')
-            if 3 in pos_avail and 3 in pos_avail:
+            if 3 in pos_avail and 4 in pos_avail:
                 val1 = db.get_value(shot, dim, 3, 'rhoR')[0]
                 err_ran1 = db.get_value(shot, dim, 3, 'rhoR_ran_unc')[0]
                 err_sys1 = db.get_value(shot, dim, 3, 'rhoR_sys_unc')[0]

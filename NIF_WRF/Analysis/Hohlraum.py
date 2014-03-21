@@ -213,7 +213,7 @@ class Hohlraum(object):
             # check material:
             if self.layer_mat[2 * i] == 'Au':
                 self.Au += thickness[0] * 1e4  # also convert -> um
-            elif self.layer_mat[2 * i] == 'DU':
+            elif self.layer_mat[2 * i] == 'DU' or self.layer_mat[2 * i] == 'U':
                 self.DU += thickness[0] * 1e4  # also convert -> um
             elif self.layer_mat[2 * i] == 'Al':
                 self.Al += thickness[0] * 1e4  # also convert -> um
@@ -663,7 +663,7 @@ class Hohlraum(object):
             c = 'black'
             if self.layer_mat[2 * i] == 'Au':
                 c = 'orange'
-            if self.layer_mat[2 * i] == 'DU':
+            if self.layer_mat[2 * i] == 'DU' or self.layer_mat[2 * i] == 'U':
                 c = '#555555'
             if self.layer_mat[2 * i] == 'Al':
                 c = '#aaaaaa'

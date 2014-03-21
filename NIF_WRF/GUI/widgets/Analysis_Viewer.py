@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 from NIF_WRF.GUI.widgets.Table_View import *
 from NIF_WRF.DB.Generic_Analysis_DB import *
 
@@ -19,18 +20,19 @@ class Analysis_Viewer(Table_Viewer):
 
         self.db = db
 
+        self.configure(background='#eeeeee')
         self.minsize(300,200)
-        self.maxsize(600,400)
+        #self.maxsize(600,400)
 
         # make a frame for stuff:
         frame = tk.Frame(self)
 
         # Add some UI elements:
-        label1 = tk.Label(frame, text='Shot')
+        label1 = ttk.Label(frame, text='Shot')
         label1.grid(row=0, column=0)
-        label2 = tk.Label(frame, text='DIM')
+        label2 = ttk.Label(frame, text='DIM')
         label2.grid(row=1, column=0)
-        label3 = tk.Label(frame, text='Pos')
+        label3 = ttk.Label(frame, text='Pos')
         label3.grid(row=2, column=0)
 
         shots = self.db.get_shots()
@@ -38,19 +40,19 @@ class Analysis_Viewer(Table_Viewer):
             shots = ['']
 
         self.shot_var = tk.StringVar()
-        self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
+        self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
         self.dim_var = tk.StringVar()
-        self.dim_selector = tk.OptionMenu(frame, self.dim_var, [])
+        self.dim_selector = ttk.OptionMenu(frame, self.dim_var, [])
         self.dim_selector.configure(width=20)
         self.dim_var.trace('w', self.update_dim)
         self.dim_selector.grid(row=1, column=1)
 
         self.pos_var = tk.StringVar()
-        self.pos_selector = tk.OptionMenu(frame, self.pos_var, [])
+        self.pos_selector = ttk.OptionMenu(frame, self.pos_var, [])
         self.pos_selector.configure(width=20)
         self.pos_var.trace('w', self.update_data)
         self.pos_selector.grid(row=2, column=1)

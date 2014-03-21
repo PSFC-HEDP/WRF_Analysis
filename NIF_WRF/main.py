@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-import logging, syslog
-syslog.openlog("Python")
+import logging, platform
+if platform.system() is 'Darwin':
+    import syslog
+    syslog.openlog("Python")
 
 # TODO: Improve error handling, logging, and notifications
 # TODO: Better detection of shot number by splitting _ vs -
@@ -11,6 +13,8 @@ syslog.openlog("Python")
 # TODO: Should close “Add Shot” thing after spawning setup windows
 # TODO: No way to add a shot to the shot DB? “Add Shot” should do this
 # TODO: Need to catch bugs while running analysis and display error message
+# TODO: Edit ShotDB window has a bug with dropdowns after column is added
+
 
 __author__ = 'Alex Zylstra'
 __date__ = '2013-11-08'
@@ -18,7 +22,7 @@ __version__ = '0.1.2'
 
 try:
     import tkinter as tk
-    import ttk
+    import tkinter.ttk as ttk
     from tkinter.filedialog import asksaveasfilename, askdirectory
     from tkinter.messagebox import askyesnocancel, askyesno
 
@@ -48,12 +52,14 @@ try:
     from NIF_WRF.util.scripts import *
     from NIF_WRF.GUI.widgets import Option_Prompt
 except Exception as inst:
-    syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
+    if platform.system() is 'Darwin':
+        syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
     from tkinter.messagebox import showerror
-    showerror("Error!", "Problem loading python modules")
+    showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
 
 class Application(tk.Tk):
     """Analysis and database application for the NIF WRF data"""
+    # Some theming:
     bigFont = ("Arial", "14", "bold")
     Font = ("Arial", "12")
 
@@ -62,7 +68,7 @@ class Application(tk.Tk):
     def __init__(self):
         super(Application, self).__init__(None)
         
-        self.configure(background='lightgray')
+        self.configure(background='#eeeeee')
         self.grid()
         self.createWidgets()
         self.minsize(150,200)
@@ -80,12 +86,12 @@ class Application(tk.Tk):
         row = 0
 
         # database utilities:
-        self.label1 = tk.Label(self, text="Database", font=self.bigFont, background='lightgray')
+        self.label1 = ttk.Label(self, text="Database", font=self.bigFont)
         self.label1.grid(row=row, column=0)
         row += 1
-        self.DBInfoButton = tk.Button(self, text="Info", command=self.DB_Info, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.DBInfoButton = ttk.Button(self, text="Info", command=self.DB_Info)
         self.DBInfoButton.grid(row=row, column=0)
-        self.SQLCommandButton = tk.Button(self, text="SQL", command=self.SQL_Query, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.SQLCommandButton = ttk.Button(self, text="SQL", command=self.SQL_Query)
         self.SQLCommandButton.grid(row=row, column=1)
         row += 1
 
@@ -94,61 +100,61 @@ class Application(tk.Tk):
         row += 1
 
         # options to launch various databases:
-        self.label2 = tk.Label(self, text="View Data", font=self.bigFont, background='lightgray')
+        self.label2 = ttk.Label(self, text="View Data", font=self.bigFont)
         self.label2.grid(row=row, column=0)
         row += 1
 
         # Shot DB controls:
-        self.shotInfo = tk.Label(self, text="Shot DB", font=self.Font, background='lightgray')
+        self.shotInfo = ttk.Label(self, text="Shot DB", font=self.Font)
         self.shotInfo.grid(row=row, column=0)
-        self.shotViewButton = tk.Button(self, text='View', command=self.viewShotDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotViewButton = ttk.Button(self, text='View', command=self.viewShotDB)
         self.shotViewButton.grid(row=row, column=1, sticky=tk.N)
-        self.shotEditButton = tk.Button(self, text='Edit', command=self.editShotDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotEditButton = ttk.Button(self, text='Edit', command=self.editShotDB)
         self.shotEditButton.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
         # Snout DB controls:
-        self.snoutInfo = tk.Label(self, text="Snout DB", font=self.Font, background='lightgray')
+        self.snoutInfo = ttk.Label(self, text="Snout DB", font=self.Font)
         self.snoutInfo.grid(row=row, column=0)
-        self.snoutViewButton = tk.Button(self, text='View', command=self.viewSnoutDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.snoutViewButton = ttk.Button(self, text='View', command=self.viewSnoutDB)
         self.snoutViewButton.grid(row=row, column=1, sticky=tk.N)
-        self.snoutEditButton = tk.Button(self, text='Edit', command=self.editSnoutDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.snoutEditButton = ttk.Button(self, text='Edit', command=self.editSnoutDB)
         self.snoutEditButton.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
         # Hohlraum DB controls
-        self.hohlraum_info = tk.Label(self, text="Hohlraum DB", font=self.Font, bg='lightgray')
+        self.hohlraum_info = ttk.Label(self, text="Hohlraum DB", font=self.Font)
         self.hohlraum_info.grid(row=row, column=0)
-        self.hohlraum_plot_button = tk.Button(self, text='Plot', command=self.plotHohlraum, font=self.Font, bg='lightgray', highlightbackground='lightgray')
+        self.hohlraum_plot_button = ttk.Button(self, text='Plot', command=self.plotHohlraum)
         self.hohlraum_plot_button.grid(row=row, column=1, sticky=tk.N)
-        self.hohlraum_import_button = tk.Button(self, text='Import', command=self.importHohlraum, font=self.Font, bg='lightgray', highlightbackground='lightgray')
+        self.hohlraum_import_button = ttk.Button(self, text='Import', command=self.importHohlraum)
         self.hohlraum_import_button.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
         # Inventory DB controls:
-        self.inventoryInfo = tk.Label(self, text="Inventory DB", font=self.Font, background='lightgray')
+        self.inventoryInfo = ttk.Label(self, text="Inventory DB", font=self.Font)
         self.inventoryInfo.grid(row=row, column=0)
-        self.inventoryViewButton = tk.Button(self, text='View', command=self.viewInventoryDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.inventoryViewButton = ttk.Button(self, text='View', command=self.viewInventoryDB)
         self.inventoryViewButton.grid(row=row, column=1, sticky=tk.N)
-        self.inventoryEditButton = tk.Button(self, text='Edit', command=self.editInventoryDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.inventoryEditButton = ttk.Button(self, text='Edit', command=self.editInventoryDB)
         self.inventoryEditButton.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
         # Setup DB controls:
-        self.setupInfo = tk.Label(self, text="Setup DB", font=self.Font, background='lightgray')
+        self.setupInfo = ttk.Label(self, text="Setup DB", font=self.Font)
         self.setupInfo.grid(row=row, column=0)
-        self.setupViewButton = tk.Button(self, text='View', command=self.viewSetupDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.setupViewButton = ttk.Button(self, text='View', command=self.viewSetupDB)
         self.setupViewButton.grid(row=row, column=1, sticky=tk.N)
-        self.setupEditButton = tk.Button(self, text='Edit', command=self.editSetupDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.setupEditButton = ttk.Button(self, text='Edit', command=self.editSetupDB)
         self.setupEditButton.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
         # Analysis DB controls:
-        self.analysisInfo = tk.Label(self, text="Analysis DB", font=self.Font, background='lightgray')
+        self.analysisInfo = ttk.Label(self, text="Analysis DB", font=self.Font)
         self.analysisInfo.grid(row=row, column=0)
-        self.initialAnalysisViewButton = tk.Button(self, text='Initial', command=self.viewInitialAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.initialAnalysisViewButton = ttk.Button(self, text='Initial', command=self.viewInitialAnalysisDB)
         self.initialAnalysisViewButton.grid(row=row, column=1, sticky=tk.N)
-        self.finalAnalysisViewButton = tk.Button(self, text='Final', command=self.viewFinalAnalysisDB, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.finalAnalysisViewButton = ttk.Button(self, text='Final', command=self.viewFinalAnalysisDB)
         self.finalAnalysisViewButton.grid(row=row, column=2, sticky=tk.N)
         row += 1
 
@@ -157,25 +163,25 @@ class Application(tk.Tk):
         row += 1
 
         # For making plots of various stuff:
-        self.plotInfo = tk.Label(self, text='Plots', font=self.bigFont, background='lightgray')
+        self.plotInfo = ttk.Label(self, text='Plots', font=self.bigFont)
         self.plotInfo.grid(row=row, column=0)
-        self.spectrumPlotButton = tk.Button(self, text='Spectra', command=self.plotSpectrum, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.spectrumPlotButton = ttk.Button(self, text='Spectra', command=self.plotSpectrum)
         self.spectrumPlotButton.grid(row=row, column=1)
-        self.shotPlotButton = tk.Button(self, text='Shot', command=self.plotShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotPlotButton = ttk.Button(self, text='Shot', command=self.plotShot)
         self.shotPlotButton.grid(row=row, column=2)
         row += 1
 
-        self.rhoRPlotButton = tk.Button(self, text='ρR', command=self.plotRhoR, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.rhoRPlotButton = ttk.Button(self, text='ρR', command=self.plotRhoR)
         self.rhoRPlotButton.grid(row=row, column=1)
-        self.YieldPlotButton = tk.Button(self, text='Yield', command=self.plotYield, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.YieldPlotButton = ttk.Button(self, text='Yield', command=self.plotYield)
         self.YieldPlotButton.grid(row=row, column=2)
         row += 1
 
-        self.plotInfo = tk.Label(self, text='Asymmetries', font=self.Font, background='lightgray')
+        self.plotInfo = ttk.Label(self, text='Asymmetries', font=self.Font)
         self.plotInfo.grid(row=row, column=0)
-        self.shotAsymmetryButton = tk.Button(self, text='Shot', command=self.plotShotAsymmetry, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotAsymmetryButton = ttk.Button(self, text='Shot', command=self.plotShotAsymmetry)
         self.shotAsymmetryButton.grid(row=row, column=1)
-        self.asymmetryButton = tk.Button(self, text='All', command=self.plotAsymmetry, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.asymmetryButton = ttk.Button(self, text='All', command=self.plotAsymmetry)
         self.asymmetryButton.grid(row=row, column=2)
         row += 1
 
@@ -184,33 +190,33 @@ class Application(tk.Tk):
         row += 1
 
         # options for adding data, etc
-        self.label3 = tk.Label(self, text="Utilities", font=self.bigFont, background='lightgray')
+        self.label3 = ttk.Label(self, text="Utilities", font=self.bigFont)
         self.label3.grid(row=row, column=0)
         row += 1
 
-        self.addAnalysisButton = tk.Button(self, text='Analyze', command=self.Analyze, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.addAnalysisButton = ttk.Button(self, text='Analyze', command=self.Analyze)
         self.addAnalysisButton.grid(row=row, column=0)
-        self.addWRFButton = tk.Button(self, text='Add WRF', command=self.addWRF, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.addWRFButton = ttk.Button(self, text='Add WRF', command=self.addWRF)
         self.addWRFButton.grid(row=row, column=1)
-        self.addShotButton = tk.Button(self, text='Add Shot', command=self.addShot, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.addShotButton = ttk.Button(self, text='Add Shot', command=self.addShot)
         self.addShotButton.grid(row=row, column=2)
         row += 1
 
-        self.label3a = tk.Label(self, text='Summary CSVs', font=self.Font, background='lightgray')
+        self.label3a = ttk.Label(self, text='Summary CSVs', font=self.Font)
         self.label3a.grid(row=row, column=0)
         row += 1
 
-        self.shotDimSummaryButton = tk.Button(self, text='Shot/DIM', command=self.shotDimSummary, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.shotDimSummaryButton = ttk.Button(self, text='Shot/DIM', command=self.shotDimSummary)
         self.shotDimSummaryButton.grid(row=row, column=0, sticky='NS')
-        self.allShotDimSummaryButton = tk.Button(self, text='All Shot/DIM', command=self.allShotDimSummary, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.allShotDimSummaryButton = ttk.Button(self, text='All Shot/DIM', command=self.allShotDimSummary)
         self.allShotDimSummaryButton.grid(row=row, column=1)
-        self.summaryCSVButton = tk.Button(self, text='Summary', command=self.summaryCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.summaryCSVButton = ttk.Button(self, text='Summary', command=self.summaryCSV)
         self.summaryCSVButton.grid(row=row, column=2)
         row += 1
 
-        self.csvExportButton = tk.Button(self, text='Export DB', command=self.exportCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.csvExportButton = ttk.Button(self, text='Export DB', command=self.exportCSV)
         self.csvExportButton.grid(row=row, column=0)
-        self.csvImportButton = tk.Button(self, text='Import DB', command=self.importCSV, font=self.Font, background='lightgray', highlightbackground='lightgray')
+        self.csvImportButton = ttk.Button(self, text='Import DB', command=self.importCSV)
         self.csvImportButton.grid(row=row, column=1)
         row += 1
 
@@ -218,7 +224,15 @@ class Application(tk.Tk):
         ttk_sep_3.grid(row=row, column=0, columnspan=3, sticky='ew')
         row += 1
 
-        self.quitButton = tk.Button(self, text='Quit', command=self.quit, font=self.Font, bg='lightgray', highlightbackground='lightgray')
+        self.style = ttk.Style()
+        themes = self.style.theme_names()
+        self.style_var = tk.StringVar()
+        self.style_menu = ttk.OptionMenu(self, self.style_var, themes[0], *themes)
+        self.style_var.trace_variable('w', self.update_style)
+        self.style_menu.grid(row=row, column=0, columnspan=3, sticky='NS')
+        row += 1
+
+        self.quitButton = ttk.Button(self, text='Quit', command=self.quit)
         self.quitButton.grid(row=row, column=0, columnspan=3, sticky='S')
         row += 1
 
@@ -414,6 +428,10 @@ class Application(tk.Tk):
             return
 
         generate_allshot_summary(fname=open_fname)
+
+    def update_style(self, *args):
+        """Update the displayed style"""
+        self.style.theme_use(self.style_var.get())
 
 def main():
     import NIF_WRF.GUI.widgets.plastik_theme as plastik_theme

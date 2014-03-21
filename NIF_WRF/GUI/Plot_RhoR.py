@@ -1,7 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 import numpy as np
 import matplotlib
 import matplotlib.pyplot
@@ -30,6 +30,7 @@ class Plot_RhoR(tk.Toplevel):
 
         # make the UI:
         self.__create_widgets__()
+        self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
@@ -41,13 +42,13 @@ class Plot_RhoR(tk.Toplevel):
 
         # Add some UI elements:
         self.pole_var = tk.BooleanVar()
-        self.pole_var_check = tk.Checkbutton(frame, text='0-0', variable=self.pole_var)
+        self.pole_var_check = ttk.Checkbutton(frame, text='0-0', variable=self.pole_var)
         self.pole_var_check.grid(row=0, column=0)
         self.pole_var_check.select()
         self.pole_var.trace('w', self.update_plot)
 
         self.eq_var = tk.BooleanVar()
-        self.eq_var_check = tk.Checkbutton(frame, text='90-78', variable=self.eq_var)
+        self.eq_var_check = ttk.Checkbutton(frame, text='90-78', variable=self.eq_var)
         self.eq_var_check.grid(row=0, column=1)
         self.eq_var_check.select()
         self.eq_var.trace('w', self.update_plot)
@@ -56,13 +57,13 @@ class Plot_RhoR(tk.Toplevel):
         sep.grid(row=1, column=0, columnspan=2, sticky='ew')
 
         self.show_shots_var = tk.BooleanVar()
-        self.show_shots_var_check = tk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
+        self.show_shots_var_check = ttk.Checkbutton(frame, text='Show Shot #s?', variable=self.show_shots_var)
         self.show_shots_var_check.grid(row=2, column=0, columnspan=2)
         self.show_shots_var.trace('w', self.update_plot)
 
         self.err_var = tk.StringVar()
         options = ['Random Error', 'Systematic Error', 'Total Error']
-        self.err_method = tk.OptionMenu(frame, self.err_var, *options)
+        self.err_method = ttk.OptionMenu(frame, self.err_var, *options)
         self.err_method.configure(width=20)
         self.err_method.grid(row=3, column=0, columnspan=2)
         self.err_var.trace('w', self.update_plot)

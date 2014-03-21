@@ -16,15 +16,16 @@ class SetupDB_Viewer(Table_Viewer):
         # make the unique widgets
         self.title('Setup DB')
         self.minsize(500,200)
+        self.configure(background='#eeeeee')
         #self.maxsize(600,400)
 
         # Add some UI elements:
-        #label1 = tk.Label(self, text='Shot')
+        #label1 = ttk.Label(self, text='Shot')
         #self.header_widgets.append(label1)
 
         self.shot_var = tk.StringVar()
         shots = self.db.get_shots()
-        self.shot_selector = tk.OptionMenu(self, self.shot_var, *shots)
+        self.shot_selector = ttk.OptionMenu(self, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update)
         self.header_widgets.append(self.shot_selector)

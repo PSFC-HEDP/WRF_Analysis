@@ -3,9 +3,9 @@ from NIF_WRF.GUI.widgets import Value_Prompt
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import math
+import tkinter.ttk as ttk
 
-import ttk
+import math
 import matplotlib
 
 from NIF_WRF.DB import Database
@@ -58,6 +58,7 @@ class WRF_Analyzer(tk.Toplevel):
 
         # create the unique UI:
         self.__create_widgets__()
+        self.configure(background='#eeeeee')
 
         self.minsize(300,200)
 
@@ -107,10 +108,10 @@ class WRF_Analyzer(tk.Toplevel):
 
         # now make some UI:
         # display shot/dim/pos as labels:
-        label1 = tk.Label(self, text=self.shot + ', ' + self.dim + ' Pos ' + str(self.pos))
+        label1 = ttk.Label(self, text=self.shot + ', ' + self.dim + ' Pos ' + str(self.pos))
         label1.grid(row=0, column=0, columnspan=2, sticky='NS')
         # Button to launch a plot of the raw data in a separate window:
-        plot_button = tk.Button(self, text='Plot', command=self.__plot__)
+        plot_button = ttk.Button(self, text='Plot', command=self.__plot__)
         plot_button.grid(row=1, column=0, columnspan=2, sticky='NS')
 
         sep1 = ttk.Separator(self, orient="vertical")
@@ -118,7 +119,7 @@ class WRF_Analyzer(tk.Toplevel):
 
         # some options via checkbutton:
         self.hohl_var = tk.BooleanVar()
-        check0 = tk.Checkbutton(self, text='Hohlraum correction?', variable=self.hohl_var)
+        check0 = ttk.Checkbutton(self, text='Hohlraum correction?', variable=self.hohl_var)
         check0.grid(row=3, column=0, columnspan=2, sticky='NS')
         # set based on DIM:
         if self.dim == '0-0':
@@ -127,21 +128,21 @@ class WRF_Analyzer(tk.Toplevel):
             check0.select()
 
         self.verbose_var = tk.BooleanVar()
-        check1 = tk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
+        check1 = ttk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
         check1.select()
         check1.grid(row=4, column=0, columnspan=2, sticky='NS')
 
         self.plot_var = tk.BooleanVar()
-        check2 = tk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
+        check2 = ttk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
         check2.select()
         check2.grid(row=5, column=0, columnspan=2, sticky='NS')
 
         self.rhoR_plot_var = tk.BooleanVar()
-        check3 = tk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
+        check3 = ttk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
         check3.grid(row=6, column=0, columnspan=2, sticky='NS')
 
         self.display_results = tk.BooleanVar()
-        check4 = tk.Checkbutton(self, text='Display results?', variable=self.display_results)
+        check4 = ttk.Checkbutton(self, text='Display results?', variable=self.display_results)
         check4.select()
         check4.grid(row=7, column=0, columnspan=2, sticky='NS')
 
@@ -149,13 +150,13 @@ class WRF_Analyzer(tk.Toplevel):
         sep2.grid(row=8, column=0, columnspan=2, sticky='ew')
 
         self.energy_limits = tk.BooleanVar()
-        check5 = tk.Checkbutton(self, text='Energy limits?', variable=self.energy_limits)
+        check5 = ttk.Checkbutton(self, text='Energy limits?', variable=self.energy_limits)
         check5.grid(row=9, column=0, columnspan=2, sticky='NS')
         self.min_energy = tk.StringVar()
         self.max_energy = tk.StringVar()
-        box1 = tk.Entry(self, width=10, textvariable=self.min_energy)
+        box1 = ttk.Entry(self, width=10, textvariable=self.min_energy)
         box1.grid(row=10, column=0)
-        box2 = tk.Entry(self, width=10, textvariable=self.max_energy)
+        box2 = ttk.Entry(self, width=10, textvariable=self.max_energy)
         box2.grid(row=10, column=1)
 
         sep2 = ttk.Separator(self, orient='vertical')
@@ -167,9 +168,9 @@ class WRF_Analyzer(tk.Toplevel):
         sep3.grid(row=14, column=0, columnspan=2, sticky='ew')
 
         # buttons:
-        go_button = tk.Button(self, text='Go', command=self.__run_analysis__)
+        go_button = ttk.Button(self, text='Go', command=self.__run_analysis__)
         go_button.grid(row=15, column=0)
-        cancel_button = tk.Button(self, text='Cancel', command=self.__cancel__)
+        cancel_button = ttk.Button(self, text='Cancel', command=self.__cancel__)
         cancel_button.grid(row=15, column=1)
 
         # a couple key bindings:

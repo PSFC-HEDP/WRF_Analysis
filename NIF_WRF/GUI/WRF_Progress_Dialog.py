@@ -1,7 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 
 class WRF_Progress_Dialog(tk.Toplevel):
     """Implement a generic progress bar dialog.
@@ -14,18 +14,19 @@ class WRF_Progress_Dialog(tk.Toplevel):
         super(WRF_Progress_Dialog, self).__init__(parent)
 
         self.__createUI__()
+        self.configure(background='#eeeeee')
 
     def __createUI__(self):
         """Helper method to create the UI elements"""
         self.grid()
-        self.label = tk.Label(self, text="Importing WRF")
+        self.label = ttk.Label(self, text="Importing WRF")
         self.label.grid(sticky='N', padx=2, pady=2)
 
         self.counter = tk.IntVar()
         self.progress_bar = ttk.Progressbar(self, variable=self.counter)
         self.progress_bar.grid(sticky='N', padx=2, pady=2)
 
-        self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel)
+        self.cancel_button = ttk.Button(self, text="Cancel", command=self.cancel)
         self.cancel_button.grid(stick='S', padx=2, pady=2)
 
     def step(self, amount):

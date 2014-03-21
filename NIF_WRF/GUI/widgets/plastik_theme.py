@@ -28,7 +28,7 @@ try:
 except:
     from tkinter import PhotoImage
 
-import ttk
+import tkinter.ttk as ttk
 
 __all__ = ['install']
 

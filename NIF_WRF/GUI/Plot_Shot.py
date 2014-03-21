@@ -1,7 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 import numpy as np
 import matplotlib
 import matplotlib.pyplot
@@ -30,6 +30,7 @@ class Plot_Shot(tk.Toplevel):
 
         # make the UI:
         self.__create_widgets__(shot)
+        self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
@@ -43,7 +44,7 @@ class Plot_Shot(tk.Toplevel):
         frame = tk.Frame(self)
 
         # Add some control UI:
-        label1 = tk.Label(frame, text='Shot')
+        label1 = ttk.Label(frame, text='Shot')
         label1.grid(row=0, column=0)
 
         # Shot selection:
@@ -51,26 +52,26 @@ class Plot_Shot(tk.Toplevel):
         if len(shots) == 0:
             shots = ['']
         self.shot_var = tk.StringVar(value=shot)
-        self.shot_selector = tk.OptionMenu(frame, self.shot_var, *shots)
+        self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 
         # Plot type selection:
-        label2 = tk.Label(frame, text='Plot Type')
+        label2 = ttk.Label(frame, text='Plot Type')
         label2.grid(row=1, column=0)
         self.plot_var = tk.StringVar(value='ρR')
         options = ['ρR', 'Yield', 'Energy']
-        self.plot_selector = tk.OptionMenu(frame, self.plot_var, *options)
+        self.plot_selector = ttk.OptionMenu(frame, self.plot_var, *options)
         self.plot_selector.configure(width=20)
         self.plot_var.trace('w', self.update_plot)
         self.plot_selector.grid(row=1, column=1, columnspan=2)
 
-        label3 = tk.Label(frame, text='Error bars')
+        label3 = ttk.Label(frame, text='Error bars')
         label3.grid(row=2, column=0)
         self.err_var = tk.StringVar(value='Total Error')
         options = ['Random Error', 'Systematic Error', 'Total Error']
-        self.err_method = tk.OptionMenu(frame, self.err_var, *options)
+        self.err_method = ttk.OptionMenu(frame, self.err_var, *options)
         self.err_method.configure(width=20)
         self.err_method.grid(row=2, column=1)
         self.err_var.trace('w', self.update_plot)

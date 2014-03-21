@@ -1,6 +1,8 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
+
 from NIF_WRF.DB.Shot_DB import *
 
 
@@ -22,19 +24,20 @@ class ShotDB_Editor(tk.Toplevel):
         tk.Grid.columnconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 1, weight=1)
         self.__createUI__()
+        self.configure(background='#eeeeee')
         self.title('Edit ShotDB')
 
     def __createUI__(self):
         """Helper method to create the UI elements"""
 
-        self.addcol_button = tk.Button(self, text='Add Column', command=self.add_column)
+        self.addcol_button = ttk.Button(self, text='Add Column', command=self.add_column)
         self.addcol_button.grid(row=0, column=0, columnspan=2)
 
-        self.label1 = tk.Label(self, text='Shot')
+        self.label1 = ttk.Label(self, text='Shot')
         self.label1.grid(row=1, column=0)
-        self.label2 = tk.Label(self, text='Column')
+        self.label2 = ttk.Label(self, text='Column')
         self.label2.grid(row=2, column=0)
-        self.label2 = tk.Label(self, text='Value')
+        self.label2 = ttk.Label(self, text='Value')
         self.label2.grid(row=3, column=0)
 
         # shot selector
@@ -42,7 +45,7 @@ class ShotDB_Editor(tk.Toplevel):
         shots = self.db.get_shots()
         if len(shots) == 0:
             shots = ['']
-        self.shot_selector = tk.OptionMenu(self, self.shot_selector_var, *shots)
+        self.shot_selector = ttk.OptionMenu(self, self.shot_selector_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_selector.grid(row=1, column=1)
         self.shot_selector_var.trace('w', self.update_data)
@@ -52,20 +55,20 @@ class ShotDB_Editor(tk.Toplevel):
         columns = self.db.get_column_names()
         if len(columns) == 0:
             columns = ['']
-        self.col_selector = tk.OptionMenu(self, self.col_selector_var, *columns)
+        self.col_selector = ttk.OptionMenu(self, self.col_selector_var, *columns)
         self.col_selector.configure(width=20)
         self.col_selector.grid(row=2, column=1)
         self.col_selector_var.trace('w', self.update_data)
 
         # value entry
         self.value_entry_var = tk.StringVar()
-        self.value_entry = tk.Entry(self, textvariable=self.value_entry_var)
+        self.value_entry = ttk.Entry(self, textvariable=self.value_entry_var)
         self.value_entry.grid(row=3, column=1)
 
         # some control buttons
-        self.write_button = tk.Button(self, text='Write', command=self.write)
+        self.write_button = ttk.Button(self, text='Write', command=self.write)
         self.write_button.grid(row=4, column=0, sticky='s')
-        self.close_button = tk.Button(self, text='Close', command=self.close)
+        self.close_button = ttk.Button(self, text='Close', command=self.close)
         self.close_button.grid(row=4, column=1, sticky='s')
 
     def update_data(self, *args):
@@ -123,7 +126,7 @@ class ShotDB_Editor(tk.Toplevel):
         columns = self.db.get_column_names()
         if len(columns) == 0:
             columns = ['']
-        self.col_selector = tk.OptionMenu(self, self.col_selector_var, *columns)
+        self.col_selector = ttk.OptionMenu(self, self.col_selector_var, *columns)
         self.col_selector.grid(row=2, column=1)
 
     def close(self):

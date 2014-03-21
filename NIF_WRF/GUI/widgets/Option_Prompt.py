@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 
 class Option_Prompt(tk.Toplevel):
     """Implement a dialog window to prompt a user to select one of several options."""
@@ -23,6 +24,8 @@ class Option_Prompt(tk.Toplevel):
         self.bind('<Return>', self.ok)
         self.bind('<Escape>', self.cancel)
 
+        self.configure(background='#eeeeee')
+
         self.wait_window(self)
 
     def __create_widgets__(self, title, text, options, width):
@@ -31,12 +34,12 @@ class Option_Prompt(tk.Toplevel):
             self.title(title)
 
         if text is not None:
-            label1 = tk.Label(self, text=text)
+            label1 = ttk.Label(self, text=text)
             label1.pack()
 
         if options is not None:
             self.var = tk.StringVar()
-            menu = tk.OptionMenu(self, self.var, *options)
+            menu = ttk.OptionMenu(self, self.var, *options)
             menu.configure(width=width)
             menu.pack()
             menu.focus_force()
@@ -45,11 +48,11 @@ class Option_Prompt(tk.Toplevel):
 
     def __make_buttons__(self):
         """Add the OK and cancel buttons"""
-        box = tk.Frame(self)
+        box = ttk.Frame(self)
 
-        w = tk.Button(box, text="OK", width=10, command=self.ok)
+        w = ttk.Button(box, text="OK", width=10, command=self.ok)
         w.pack(side=tk.LEFT, padx=5, pady=5)
-        w = tk.Button(box, text="Cancel", width=10, command=self.cancel)
+        w = ttk.Button(box, text="Cancel", width=10, command=self.cancel)
         w.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.bind("<Return>", self.ok)

@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 from NIF_WRF.DB.Shot_DB import *
 
 
@@ -28,21 +29,22 @@ class SQL_Query(tk.Toplevel):
         # a couple key bindings:
         self.bind('<Return>', self.execute)
         self.bind('<Escape>', self.withdraw)
+        self.configure(background='#eeeeee')
 
     def __createUI__(self):
         """Helper method to create the UI elements"""
 
-        self.label1 = tk.Label(self, text='Enter SQL command')
+        self.label1 = ttk.Label(self, text='Enter SQL command')
         self.label1.grid(row=0, column=0, columnspan=2)
 
         self.command_var = tk.StringVar()
-        self.command = tk.Entry(self, textvariable=self.command_var)
+        self.command = ttk.Entry(self, textvariable=self.command_var)
         self.command.grid(row=1, column=0, columnspan=2)
 
-        self.go_button = tk.Button(self, text='Execute', command=self.execute)
+        self.go_button = ttk.Button(self, text='Execute', command=self.execute)
         self.go_button.grid(row=2, column=0)
 
-        self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
+        self.cancel_button = ttk.Button(self, text='Cancel', command=self.withdraw)
         self.cancel_button.grid(row=2, column=1)
 
     def execute(self, *args):

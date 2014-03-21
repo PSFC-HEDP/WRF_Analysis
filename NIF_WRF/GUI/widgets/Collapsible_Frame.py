@@ -2,7 +2,7 @@ __author__ = 'Alex Zylstra'
 # adapted from: http://stackoverflow.com/questions/13141259/expandable-collapsible-frame-in-python-tkinter
 
 import tkinter as tk
-import ttk
+import tkinter.ttk as ttk
 
 class Collapsible_Frame(tk.Frame):
     """Implement a Tkinter frame which can be hidden/shown by the user.
@@ -13,6 +13,9 @@ class Collapsible_Frame(tk.Frame):
 
     def __init__(self, parent, text='',**options):
         tk.Frame.__init__(self, parent, **options)
+
+        self.configure(background='#eeeeee')
+
         self.show=tk.IntVar()
         self.show.set(0)
         self.titleFrame=ttk.Frame(self)

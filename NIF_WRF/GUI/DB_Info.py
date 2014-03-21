@@ -1,6 +1,7 @@
 __author__ = 'Alex Zylstra'
 
 import tkinter as tk
+import tkinter.ttk as ttk
 import os
 import sqlite3
 
@@ -30,17 +31,18 @@ class DB_Info(tk.Toplevel):
         tk.Grid.columnconfigure(self, 1, weight=1)
 
         self.__createUI__()
+        self.configure(background='#eeeeee')
 
     def __createUI__(self):
         """Helper method to create the UI elements"""
         self.grid()
-        self.label = tk.Label(self, text="File")
+        self.label = ttk.Label(self, text="File")
         self.label.grid(row=0, column=0, sticky='NSEW', padx=2, pady=2)
-        self.file_name = tk.Label(self, text=Database.FILE)
+        self.file_name = ttk.Label(self, text=Database.FILE)
         self.file_name.grid(row=0, column=1, sticky='NSEW', padx=2, pady=2)
 
         # display file size:
-        self.label2 = tk.Label(self, text="Size")
+        self.label2 = ttk.Label(self, text="Size")
         self.label2.grid(row=1, column=0, sticky='NSEW', padx=2, pady=2)
         if os.path.exists(Database.FILE):
             size = os.path.getsize(Database.FILE)
@@ -50,37 +52,37 @@ class DB_Info(tk.Toplevel):
                 text = '{:.1f}'.format(size/1024) + ' kB'
             else:
                 text = '{:.1f}'.format(size/1048576) + ' MB'
-            self.size_label = tk.Label(self, text=text)
+            self.size_label = ttk.Label(self, text=text)
             self.size_label.grid(row=1, column=1, sticky='NSEW', padx=2, pady=2)
 
         # add list of tables
-        self.label3 = tk.Label(self, text="Tables")
+        self.label3 = ttk.Label(self, text="Tables")
         self.label3.grid(row=2, column=0, sticky='NSEW', padx=2, pady=2)
         self.spinner_var = tk.StringVar()
-        self.table_spinner = tk.OptionMenu(self, self.spinner_var, *self.__get_tables__())
+        self.table_spinner = ttk.OptionMenu(self, self.spinner_var, *self.__get_tables__())
         self.table_spinner.grid(row=2, column=1, sticky='NSEW', padx=2, pady=2)
         # listen for change events:
         self.spinner_var.trace('w', self.update_rows)
 
         # add a display of rows in the table
-        self.label4 = tk.Label(self, text="Rows")
+        self.label4 = ttk.Label(self, text="Rows")
         self.label4.grid(row=3, column=0, sticky='NSEW', padx=2, pady=2)
-        self.num_rows = tk.Label(self, text="")
+        self.num_rows = ttk.Label(self, text="")
         self.num_rows.grid(row=3, column=1, sticky='NSEW', padx=2, pady=2)
 
 
         # add a button to initialize the database
-        self.init_button= tk.Button(self, text="Initialize", command=self.initialize)
+        self.init_button= ttk.Button(self, text="Initialize", command=self.initialize)
         self.init_button.grid(row=4, column=0, columnspan=2, sticky='S', padx=2, pady=2)
 
         # add a button to switch the database
-        self.switch_button = tk.Button(self, text="Open DB", command=self.open)
+        self.switch_button = ttk.Button(self, text="Open DB", command=self.open)
         self.switch_button.grid(row=5, column=0, sticky='NS', padx=2, pady=2)
-        self.save_as_button = tk.Button(self, text="Save as", command=self.save)
+        self.save_as_button = ttk.Button(self, text="Save as", command=self.save)
         self.save_as_button.grid(row=5, column=1, sticky='NS', padx=2, pady=2)
 
         # a button to close the window:
-        self.close_button = tk.Button(self, text="OK", command=self.close)
+        self.close_button = ttk.Button(self, text="OK", command=self.close)
         self.close_button.grid(row=6, column=0, columnspan=2, sticky='S', padx=2, pady=2)
 
     def close(self):
@@ -137,7 +139,7 @@ class DB_Info(tk.Toplevel):
         self.file_name.configure(text=Database.FILE)
         if os.path.exists(Database.FILE):
             self.size_label.configure(text=str(os.path.getsize(Database.FILE)/1024)+'KB')
-        self.table_spinner = tk.OptionMenu(self, tk.StringVar(), *self.__get_tables__())
+        self.table_spinner = ttk.OptionMenu(self, tk.StringVar(), *self.__get_tables__())
 
     def __get_tables__(self):
         """Get a list of tables present in the database."""
