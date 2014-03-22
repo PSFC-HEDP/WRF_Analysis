@@ -38,35 +38,35 @@ class Model_Frame(Collapsible_Frame):
         # -------------------------
         #    Database Queries
         # -------------------------
-        if self.shot is not None:
-            try:
-                CapsuleOR = float(self.db.query_col(self.shot, 'Capsule OR (um)'))
-            except:
-                CapsuleOR = None
-            try:
-                AblatorThickness = float(self.db.query_col(self.shot, 'Ablator Thickness (um)'))
-            except:
-                AblatorThickness = None
-            try:
-                ShellMat = self.db.query_col(self.shot, 'Ablator')
-            except:
-                ShellMat = None
-            try:
-                ShellDopant = self.db.query_col(self.shot, 'Dopant')
-            except:
-                ShellDopant = None
-            try:
-                GasP = float(self.db.query_col(self.shot, 'Gas Pressure (atm)'))
-            except:
-                GasP = None
-            try:
-                fD = float(self.db.query_col(self.shot, 'fD'))
-            except:
-                fD = None
-            try:
-                f3He = float(self.db.query_col(self.shot, 'f3He'))
-            except:
-                f3He = None
+        #if self.shot is not None:
+        try:
+            CapsuleOR = float(self.db.query_col(self.shot, 'Capsule OR (um)'))
+        except:
+            CapsuleOR = None
+        try:
+            AblatorThickness = float(self.db.query_col(self.shot, 'Ablator Thickness (um)'))
+        except:
+            AblatorThickness = None
+        try:
+            ShellMat = self.db.query_col(self.shot, 'Ablator')
+        except:
+            ShellMat = None
+        try:
+            ShellDopant = self.db.query_col(self.shot, 'Dopant')
+        except:
+            ShellDopant = None
+        try:
+            GasP = float(self.db.query_col(self.shot, 'Gas Pressure (atm)'))
+        except:
+            GasP = None
+        try:
+            fD = float(self.db.query_col(self.shot, 'fD'))
+        except:
+            fD = None
+        try:
+            f3He = float(self.db.query_col(self.shot, 'f3He'))
+        except:
+            f3He = None
 
         # -------------------------
         #    Shell Configuration

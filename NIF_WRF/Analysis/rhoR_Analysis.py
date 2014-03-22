@@ -130,14 +130,23 @@ class rhoR_Analysis(object):
         TotalError = self.__calc_error__("Eout", Rcm, breakout=True)
         return self.model.Eout(Rcm), TotalError
 
-    def Calc_rhoR(self, E1, breakout=False) -> tuple:
+    def Calc_rhoR(self, E1, dE=0, breakout=False) -> tuple:
         """Alternative analysis method: specify measured E and calc rhoR.
 
         :param E1: Measured proton energy [MeV]
+        :param dE: Uncertainty in measured proton energy [MeV]
         :returns: tuple containing (rhoR , Rcm , rhoR error) = modeled areal density to produce modeled E
         """
         rhoR, Rcm = self.model.Calc_rhoR(E1)
-        TotalError = self.__calc_error__("Calc_rhoR", Rcm, E1, breakout=breakout)
+
+        ModelError = self.__calc_error__("Calc_rhoR", Rcm, E1, breakout=breakout)
+        # Two cases: non-zeno user-supplied error bar, or model error only:
+        if dE > 0:
+            rhoR_min = self.model.Calc_rhoR(E1+dE)[0]
+            rhoR_max = self.model.Calc_rhoR(E1-dE)[0]
+            TotalError = numpy.sqrt(0.25*(rhoR_max-rhoR_min)**2 + ModelError**2)
+        else:
+            TotalError = ModelError
         return rhoR, Rcm, TotalError
 
     def rhoR_Total(self, Rcm) -> tuple:
@@ -175,22 +184,21 @@ class rhoR_Analysis(object):
             RcmModelErr = 0
 
         # error due to dE, on low energy side:
-        Rcm_Emin = Rcm
+        Rcm_Emin = numpy.copy(Rcm)
         Emin = E1
         while Emin > (E1 - dE):
             Rcm_Emin -= 1e-4
             Emin = self.Eout(Rcm_Emin)[0]
 
         # error due to dE, on high energy side:
-        Rcm_Emax = Rcm
+        Rcm_Emax = numpy.copy(Rcm)
         Emax = E1
         while Emax < (E1 + dE):
             Rcm_Emax += 1e-4
             Emax = self.Eout(Rcm_Emax)[0]
 
         # Calculate a quadrature sum total error:
-        TotalError = math.sqrt(RcmModelErr ** 2 + ((Rcm_Emax - Rcm_Emin) / 2) ** 2)
-
+        TotalError = math.sqrt(RcmModelErr ** 2 + 0.25*(Rcm_Emax - Rcm_Emin) ** 2)
         return Rcm, TotalError
 
     def __setup_error_models__(self):

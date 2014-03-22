@@ -12,11 +12,13 @@ from NIF_WRF.util.StopPow import StopPow, StopPow_LP, FloatVector
 
 __author__ = 'Alex Zylstra'
 
-def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
     """Plot rhoR model's curve versus energy.
 
     :param analysis: the rhoR analysis model to plot
-    :param filename: where to save the plot
+    :param filename: (optional) where to save the plot
+    :param ax: (optional) existing matplotlib axes to plot into
+    :param backend: (optional) matplotlib backend to use
     :param E0: (optional) The initial proton energy in MeV [default=14.7]
     :param dE: (optional) The energy step size in MeV [default=14.7]
     :param Emin: (optional) minimum energy to plot in MeV [default=5]
@@ -34,8 +36,9 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    if matplotlib.get_backend() != 'agg':
-        matplotlib.pyplot.switch_backend('Agg')
+    #if matplotlib.get_backend() != 'agg':
+    if backend is not None:
+        matplotlib.pyplot.switch_backend(backend)
 
     # lists of things to plot:
     EnergyList = []
@@ -65,10 +68,10 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
         RhoRListPlusErr = 1e3*numpy.asarray(RhoRListPlusErr)
         RhoRListMinusErr = 1e3*numpy.asarray(RhoRListMinusErr)
 
-    # make a plot, and add curves for the rhoR model
-    # and its error bars:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    # make a plot if necessary:
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
     
     # temp:
     ax.axhline(5, c='k', ls='dotted')
@@ -76,6 +79,7 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     ax.text(75, 5.5, 'Pole', ha='center', va='center', fontsize=8)
     ax.text(75, 7.5, 'Equator', ha='center', va='center', fontsize=8)
 
+    # actual plot:
     p0, = ax.plot(RhoRList, EnergyList, color+'-')
     ax.plot(RhoRListPlusErr, EnergyList, color+'--')
     ax.plot(RhoRListMinusErr, EnergyList, color+'--')
@@ -117,14 +121,17 @@ def plot_rhoR_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0
     ax.tick_params(axis='both', labelsize=8)
 
     #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    if filename is not None:
+        matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(3.,2.5), rmin=None, rmax=None):
+def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(3.,2.5), rmin=None, rmax=None):
     """Plot rhoR model's curve of Rcm versus energy.
 
     :param analysis: the rhoR analysis model to plot
-    :param filename: where to save the plot to
+    :param filename: (optional) where to save the plot
+    :param ax: (optional) existing matplotlib axes to plot into
+    :param backend: (optional) matplotlib backend to use
     :param E0: (optional) The initial proton energy in MeV [default=14.7]
     :param dE: (optional) The energy step size in MeV [default=14.7]
     :param Emin: (optional) minimum energy to plot in MeV [default=5]
@@ -141,8 +148,8 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    if matplotlib.get_backend() != 'agg':
-        matplotlib.pyplot.switch_backend('Agg')
+    if backend is not None:
+        matplotlib.pyplot.switch_backend(backend)
 
     # lists of things to plot:
     EnergyList = []
@@ -167,10 +174,11 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
         RcmListMinusErrEnergy.append((temp[0] - temp[1]) * 1e4)
 
 
-    # make a plot, and add curves for the rhoR model
+    # make a plot if necessary, and add curves for the rhoR model
     # and its error bars:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
     ax.plot(RcmList, EnergyList, color+'-')
     ax.plot(RcmListPlusErr, EnergyList, color+'--')
     ax.plot(RcmListMinusErr, EnergyList, color+'--')
@@ -191,15 +199,18 @@ def plot_Rcm_v_Energy(analysis, filename, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0,
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
-    #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    # save if requested
+    if filename is not None:
+        matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
     """Plot rhoR model's curve versus center-of-mass radius.
 
     :param analysis: the rhoR analysis model to plot
-    :param filename: where to save the plot to
+    :param filename: (optional) where to save the plot
+    :param ax: (optional) existing matplotlib axes to plot into
+    :param backend: (optional) matplotlib backend to use
     :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
     :param dr: (optional) step size to use for Rcm in cm [default=0.001]
     :param grid: (optional) whether to show a grid on the plot [default=False]
@@ -214,8 +225,8 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
     if not isinstance(analysis, rhoR_Analysis):
         return
 
-    if matplotlib.get_backend() != 'agg':
-        matplotlib.pyplot.switch_backend('Agg')
+    if backend is not None:
+        matplotlib.pyplot.switch_backend(backend)
 
     # lists of things to plot:
     RcmList = []
@@ -243,8 +254,9 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
     ax.plot(RcmList, RhoRList, color+'-')
     ax.plot(RcmList, RhoRListPlusErr, color+'--')
     ax.plot(RcmList, RhoRListMinusErr, color+'--')
@@ -264,8 +276,9 @@ def plot_rhoR_v_Rcm(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, color
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
-    #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    # save if requested
+    if filename is not None:
+        matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
 def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)):
@@ -332,11 +345,13 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
     #plt.show()
     fig.savefig(filename, bbox_inches='tight')
 
-def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
 
     :param analysis: the rhoR analysis model to plot
-    :param filename: where to save the plot to
+    :param filename: (optional) where to save the plot
+    :param ax: (optional) existing matplotlib axes to plot into
+    :param backend: (optional) matplotlib backend to use
     :param Rmin: (optional) the minimum shell CM radius to plot in cm [default=0.015]
     :param dr: (optional) step size for Rcm in cm [default=0.001]
     :param grid: (optional) whether to show a grid on the plot [default=False]
@@ -353,8 +368,8 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
         return
 
     # import matplotlib
-    if matplotlib.get_backend() != 'agg':
-        matplotlib.pyplot.switch_backend('Agg')
+    if backend is not None:
+        matplotlib.pyplot.switch_backend(backend)
 
     # lists of things to plot:
     RcmList = []
@@ -397,8 +412,9 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
     ax.plot(RcmList, FuelList, 'r-', label='Gas')
     if mix:
         ax.plot(RcmList, MixList, 'r--', label='Mix')
@@ -433,8 +449,9 @@ def plot_rhoR_fractions(analysis, filename, Rmin=150e-4, dr=10e-4, grid=False, t
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
-    #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    # save if requested:
+    if filename is not None:
+        matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
 

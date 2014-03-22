@@ -17,8 +17,8 @@ if platform.system() is 'Darwin':
 
 
 __author__ = 'Alex Zylstra'
-__date__ = '2013-11-08'
-__version__ = '0.1.2'
+__date__ = '2014-03-22'
+__version__ = '0.1.3'
 
 try:
     import tkinter as tk
@@ -49,6 +49,8 @@ try:
     from NIF_WRF.GUI.Plot_Shot import Plot_Shot
     from NIF_WRF.GUI.Plot_ShotAsymmetry import Plot_ShotAsymmetry
     from NIF_WRF.GUI.Plot_Asymmetry import Plot_Asymmetry
+    from NIF_WRF.GUI.ModelCalculator import ModelCalculator
+    from NIF_WRF.GUI.ModelPlotter import ModelPlotter
     from NIF_WRF.util.scripts import *
     from NIF_WRF.GUI.widgets import Option_Prompt
 except Exception as inst:
@@ -218,6 +220,14 @@ class Application(tk.Tk):
         self.csvExportButton.grid(row=row, column=0)
         self.csvImportButton = ttk.Button(self, text='Import DB', command=self.importCSV)
         self.csvImportButton.grid(row=row, column=1)
+        row += 1
+
+        self.label4 = ttk.Label(self, text='ρR Model', font=self.Font)
+        self.label4.grid(row=row, column=0)
+        self.modelCalculatorButton = ttk.Button(self, text='Calculator', command=self.modelCalculator)
+        self.modelCalculatorButton.grid(row=row, column=1)
+        self.modelPlotterButton = ttk.Button(self, text='Plotter', command=self.modelPlotter)
+        self.modelPlotterButton.grid(row=row, column=2)
         row += 1
 
         ttk_sep_3 = ttk.Separator(self, orient="vertical")
@@ -433,12 +443,20 @@ class Application(tk.Tk):
         """Update the displayed style"""
         self.style.theme_use(self.style_var.get())
 
+    def modelCalculator(self, *args):
+        """Display a simple calculator widget for the rhoR model."""
+        ModelCalculator(self)
+
+    def modelPlotter(self, *args):
+        """Display a simple plot widget for the rhoR model."""
+        ModelPlotter(self)
+
 def main():
-    import NIF_WRF.GUI.widgets.plastik_theme as plastik_theme
-    try:
-        plastik_theme.install(os.path.expanduser('~/.tile-themes/plastik/plastik/'))
-    except Exception:
-        logging.warning('plastik theme being used without images')
+    # import NIF_WRF.GUI.widgets.plastik_theme as plastik_theme
+    # try:
+    #     plastik_theme.install(os.path.expanduser('~/.tile-themes/plastik/plastik/'))
+    # except Exception:
+    #     logging.warning('plastik theme being used without images')
 
     app = Application()
     app.mainloop()
