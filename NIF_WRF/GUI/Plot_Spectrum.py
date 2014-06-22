@@ -42,6 +42,7 @@ class Plot_Spectrum(tk.Toplevel):
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
     def __create_widgets__(self, shot, dim, pos):
         """Create the UI elements"""
@@ -56,13 +57,12 @@ class Plot_Spectrum(tk.Toplevel):
         label3 = ttk.Label(frame, text='Pos')
         label3.grid(row=2, column=0)
 
-        shots = self.db.get_shots()
-        if len(shots) == 0:
-            shots = ['']
+        shots = [''] + self.db.get_shots()
 
-        self.shot_var = tk.StringVar(value=shot)
+        self.shot_var = tk.StringVar()
         self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)
         self.shot_selector.configure(width=20)
+        self.shot_var.set(shot)
         self.shot_var.trace('w', self.update_shot)
         self.shot_selector.grid(row=0, column=1)
 

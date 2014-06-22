@@ -25,18 +25,27 @@ class Hohlraum_DB(Generic_DB):
         super(Hohlraum_DB, self).__init__(fname)  # call super constructor
         # name of the table for the hohlraum data
         self.TABLE = Database.HOHLRAUM_TABLE
+        self.TABLE_BUMP = Database.HOHLRAUM_BUMP_TABLE
         self.__init_hohlraum__()
 
     def __init_hohlraum__(self):
         """initialize the hohlraum table."""
-        # check to see if it exists already
-        query = self.c.execute('''SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s';''' % self.TABLE)
 
-        # create new table:
+        # check to see if the main hohlraum table exists already
+        query = self.c.execute('''SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s';''' % self.TABLE)
+        # create new table if necessary:
         if query.fetchone()[0] == 0:  # table does not exist
             self.c.execute('''CREATE TABLE %s
                 (drawing text, name text, layer int, material text, r real, z real)''' % self.TABLE)
             self.c.execute('CREATE INDEX hohlraum_index on %s(drawing)' % self.TABLE)
+
+        # check to see if the hohlraum bump table exists already
+        query = self.c.execute('''SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s';''' % self.TABLE_BUMP)
+        # create new table if necessary:
+        if query.fetchone()[0] == 0:  # table does not exist
+            self.c.execute('''CREATE TABLE %s
+                (drawing text UNIQUE, use_corr boolean, corr real)''' % self.TABLE_BUMP)
+            self.c.execute('CREATE INDEX hohlraum_bump_index on %s(drawing)' % self.TABLE_BUMP)
 
         # finish changes:
         self.db.commit()
@@ -239,3 +248,38 @@ class Hohlraum_DB(Generic_DB):
             query = self.c.execute('SELECT * from %s where drawing=?' % self.TABLE, (drawing,))
 
         return array_convert(query)
+
+    def set_bump(self, drawing, use_corr, corr):
+        """Set the database entry for a hohlraum's bump correction.
+
+        :param use_corr: whether to use a correction factor (boolean)
+        :param corr: the correction in um to the wall thickness (float or int)
+        :param drawing: the drawing number (as str)
+        """
+        # sanity checks for types
+        assert isinstance(drawing, str)
+        assert isinstance(use_corr, bool)
+        assert isinstance(corr, float) or isinstance(corr, int)
+
+        # insert or replace:
+        self.c.execute('INSERT OR REPLACE INTO %s VALUES (?,?,?)'
+                               % self.TABLE_BUMP, (drawing,use_corr,corr))
+        self.db.commit()
+
+    def get_bump(self, drawing):
+        """Get whether a bump correction is required for the given hohlraum drawing.
+
+        :param drawing: the drawing number (as str)
+        :returns: whether the bump correction is required and it's thickness as (use_corr, corr)
+        :rtype: list if one match, list of lists if multiple matches, or None if no match
+        """
+        # sanity check for type
+        assert isinstance(drawing, str)
+
+        query = self.c.execute('SELECT * from %s where drawing=?' % self.TABLE_BUMP, (drawing,))
+        temp = array_convert(query)
+        if len(temp) == 0:
+            return None
+        elif len(temp) == 1:
+            return temp[0]
+        return temp

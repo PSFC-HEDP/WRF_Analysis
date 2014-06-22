@@ -26,6 +26,11 @@ class Option_Prompt(tk.Toplevel):
 
         self.configure(background='#eeeeee')
 
+        # a couple key bindings:
+        self.bind('<Return>', self.ok)
+        self.bind('<Escape>', self.cancel)
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+
         self.wait_window(self)
 
     def __create_widgets__(self, title, text, options, width):
@@ -39,6 +44,7 @@ class Option_Prompt(tk.Toplevel):
 
         if options is not None:
             self.var = tk.StringVar()
+            options = [''] + options
             menu = ttk.OptionMenu(self, self.var, *options)
             menu.configure(width=width)
             menu.pack()
@@ -75,7 +81,8 @@ class Option_Prompt(tk.Toplevel):
     def cancel(self, event=None):
         """Handle cancel button"""
         # put focus back to the parent window
-        self.parent.focus_set()
+        if self.parent is not None:
+            self.parent.focus_set()
         self.destroy()
 
     def validate(self):

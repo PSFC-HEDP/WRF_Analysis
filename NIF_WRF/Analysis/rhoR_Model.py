@@ -8,7 +8,7 @@ import scipy.interpolate
 #    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
 from NIF_WRF.util.Constants import *
-from NIF_WRF.util.StopPow import StopPow_LP, FloatVector
+from NIF_WRF.util.StopPow import StopPow_LP, DoubleVector
 
 __author__ = 'Alex Zylstra'
 
@@ -181,20 +181,20 @@ class rhoR_Model(object):
         # shell material shorthand:
         A = self.__shell_A__[self.shell_mat]
         Z = self.__shell_Z__[self.shell_mat]
-        # Set up FloatVectors for gas plus mix stopping power
-        self.__mfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        # Set up DoubleVectors for gas plus mix stopping power
+        self.__mfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
         self.__mfGasMix__[0] = me / mp
         self.__mfGasMix__[1] = 2
         self.__mfGasMix__[2] = 3
         for i in range(len(A)):
             self.__mfGasMix__[3+i] = A[i]
-        self.__ZfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        self.__ZfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
         self.__ZfGasMix__[0] = -1
         self.__ZfGasMix__[1] = 1
         self.__ZfGasMix__[2] = 2
         for i in range(len(Z)):
             self.__ZfGasMix__[3+i] = Z[i]
-        self.__TfGasMix__ = FloatVector(3+len(A))  # eg e-, D , 3He , H , C
+        self.__TfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
         self.__TfGasMix__[0] = self.Te_Gas
         self.__TfGasMix__[1] = self.Te_Gas
         self.__TfGasMix__[2] = self.Te_Gas
@@ -202,28 +202,28 @@ class rhoR_Model(object):
             self.__TfGasMix__[3+i] = self.Te_Mix
 
         # some field particle info for the shell stopping power:
-        self.__mfShell__ = FloatVector(1+len(A))
+        self.__mfShell__ = DoubleVector(1+len(A))
         self.__mfShell__[0] = me / mp
         for i in range(len(A)):
             self.__mfShell__[1+i] = A[i]
-        self.__ZfShell__ = FloatVector(1+len(Z))
+        self.__ZfShell__ = DoubleVector(1+len(Z))
         self.__ZfShell__[0] = -1
         for i in range(len(Z)):
             self.__ZfShell__[1+i] = Z[i]
-        self.__TfShell__ = FloatVector(1+len(A))
+        self.__TfShell__ = DoubleVector(1+len(A))
         for i in range(1+len(A)):
             self.__TfShell__[i] = Te_Shell
 
         # field particle info for the ablated material stopping power:
-        self.__mfAbl__ = FloatVector(1+len(A))
+        self.__mfAbl__ = DoubleVector(1+len(A))
         self.__mfAbl__[0] = me / mp
         for i in range(len(A)):
             self.__mfAbl__[1+i] = A[i]
-        self.__ZfAbl__ = FloatVector(1+len(Z))
+        self.__ZfAbl__ = DoubleVector(1+len(Z))
         self.__ZfAbl__[0] = -1
         for i in range(len(Z)):
             self.__ZfAbl__[1+i] = Z[i]
-        self.__TfAbl__ = FloatVector(1+len(A))
+        self.__TfAbl__ = DoubleVector(1+len(A))
         for i in range(1+len(A)):
             self.__TfAbl__[i] = self.Te_Abl
 
@@ -525,7 +525,7 @@ class rhoR_Model(object):
 
         ni_gas, ne_gas = self.n_Gas(Rcm)
         ni_mix, ne_mix = self.n_Mix(Rcm)
-        nf = FloatVector(3+len(self.__shell_A__[self.shell_mat]))
+        nf = DoubleVector(3+len(self.__shell_A__[self.shell_mat]))
         nf[0] = ne_gas + ne_mix
         nf[1] = ni_gas * self.fD
         nf[2] = ni_gas * self.f3He
@@ -543,7 +543,6 @@ class rhoR_Model(object):
             model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
-                model.set_dx(x/self.steps)
                 return model.Eout(Ep, x)
 
         return Ep
@@ -557,7 +556,7 @@ class rhoR_Model(object):
         :returns: downshifted energy [MeV]
         """
         ni, ne = self.n_Shell(Rcm)
-        nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
+        nf = DoubleVector(1+len(self.__shell_A__[self.shell_mat]))
         nf[0] = ne
         for i in range(len(self.__shell_F__[self.shell_mat])):
             nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]
@@ -567,7 +566,6 @@ class rhoR_Model(object):
             model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
-                model.set_dx(x/self.steps)
                 return model.Eout(Ep, x)
 
         return Ep
@@ -581,7 +579,7 @@ class rhoR_Model(object):
         :returns: stopping power [MeV/cm]
         """
         ni, ne = self.n_Abl(r, Rcm)
-        nf = FloatVector(1+len(self.__shell_A__[self.shell_mat]))
+        nf = DoubleVector(1+len(self.__shell_A__[self.shell_mat]))
         nf[0] = ne
         for i in range(len(self.__shell_F__[self.shell_mat])):
             nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]

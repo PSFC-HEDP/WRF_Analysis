@@ -15,6 +15,7 @@ from NIF_WRF.DB.WRF_Setup_DB import *
 from NIF_WRF.DB.Hohlraum_DB import *
 from NIF_WRF.DB.Snout_DB import *
 from NIF_WRF.DB.WRF_Analysis_DB import *
+from NIF_WRF.DB.WRF_Analysis_Param_DB import *
 from NIF_WRF.GUI.widgets.Option_Prompt import Option_Prompt
 from NIF_WRF.GUI.widgets.Model_Frame import Model_Frame
 from NIF_WRF.GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
@@ -44,6 +45,7 @@ class WRF_Analyzer(tk.Toplevel):
         self.hohl_db = Hohlraum_DB()
         self.snout_db = Snout_DB()
         self.analysis_db = WRF_Analysis_DB()
+        self.param_db = WRF_Analysis_Param_DB()
 
         # stretch the column to fill all space:
         tk.Grid.columnconfigure(self, 0, weight=1)
@@ -123,55 +125,77 @@ class WRF_Analyzer(tk.Toplevel):
         check0.grid(row=3, column=0, columnspan=2, sticky='NS')
         # set based on DIM:
         if self.dim == '0-0':
-            check0.deselect()
+            self.hohl_var.set(False)
         else:
-            check0.select()
+            self.hohl_var.set(True)
+        self.hohl_var.trace('w', self.__hohl_var_callback__)
+
+        # UI to allow for correction of the 'bump'
+        self.bump_var = tk.BooleanVar()
+        self.bump_check = ttk.Checkbutton(self, text='Bump correction?', variable=self.bump_var)
+        self.bump_check.grid(row=4, column=0, columnspan=2, sticky='NS')
+        self.bump_check.configure(state=tk.DISABLED)
+        self.bump_var.trace('w', self.__bump_var_callback__)
+        bump_label = ttk.Label(self, text='Correction (μm)')
+        bump_label.grid(row=5, column=0)
+        self.bump_dt_var = tk.StringVar()
+        self.bump_entry = ttk.Entry(self, textvariable=self.bump_dt_var)
+        self.bump_entry.configure(width=8)
+        self.bump_entry.grid(row=5, column=1)
+        self.bump_entry.configure(state=tk.DISABLED)
+        self.bump_dt_var.set('-10')
+        self.__init_bump__()
 
         self.verbose_var = tk.BooleanVar()
         check1 = ttk.Checkbutton(self, text='Output CSV?', variable=self.verbose_var)
-        check1.select()
-        check1.grid(row=4, column=0, columnspan=2, sticky='NS')
+        self.verbose_var.set(True)
+        check1.grid(row=6, column=0, columnspan=2, sticky='NS')
 
         self.plot_var = tk.BooleanVar()
         check2 = ttk.Checkbutton(self, text='Make plots?', variable=self.plot_var)
-        check2.select()
-        check2.grid(row=5, column=0, columnspan=2, sticky='NS')
+        self.plot_var.set(True)
+        check2.grid(row=7, column=0, columnspan=2, sticky='NS')
 
         self.rhoR_plot_var = tk.BooleanVar()
         check3 = ttk.Checkbutton(self, text='rhoR model plot?', variable=self.rhoR_plot_var)
-        check3.grid(row=6, column=0, columnspan=2, sticky='NS')
+        check3.grid(row=8, column=0, columnspan=2, sticky='NS')
 
         self.display_results = tk.BooleanVar()
         check4 = ttk.Checkbutton(self, text='Display results?', variable=self.display_results)
-        check4.select()
-        check4.grid(row=7, column=0, columnspan=2, sticky='NS')
+        self.display_results.set(True)
+        check4.grid(row=9, column=0, columnspan=2, sticky='NS')
 
         sep2 = ttk.Separator(self, orient='vertical')
-        sep2.grid(row=8, column=0, columnspan=2, sticky='ew')
+        sep2.grid(row=10, column=0, columnspan=2, sticky='ew')
 
         self.energy_limits = tk.BooleanVar()
         check5 = ttk.Checkbutton(self, text='Energy limits?', variable=self.energy_limits)
-        check5.grid(row=9, column=0, columnspan=2, sticky='NS')
+        check5.grid(row=11, column=0, columnspan=2, sticky='NS')
+        self.energy_limits.set(True)
         self.min_energy = tk.StringVar()
         self.max_energy = tk.StringVar()
         box1 = ttk.Entry(self, width=10, textvariable=self.min_energy)
-        box1.grid(row=10, column=0)
+        box1.grid(row=12, column=0)
         box2 = ttk.Entry(self, width=10, textvariable=self.max_energy)
-        box2.grid(row=10, column=1)
+        box2.grid(row=12, column=1)
+        # Default options for energy limits set via initial analysis info
+        fit_mean = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_mean')[0]
+        self.min_energy.set(fit_mean - 1.5)
+        self.max_energy.set(fit_mean + 1.5)
 
         sep2 = ttk.Separator(self, orient='vertical')
-        sep2.grid(row=11, column=0, columnspan=2, sticky='ew')
+        sep2.grid(row=13, column=0, columnspan=2, sticky='ew')
 
-        self.__generate_adv__(12)
+        self.__generate_adv__(14)
 
         sep3 = ttk.Separator(self, orient='vertical')
-        sep3.grid(row=14, column=0, columnspan=2, sticky='ew')
+        sep3.grid(row=15, column=0, columnspan=2, sticky='ew')
 
         # buttons:
         go_button = ttk.Button(self, text='Go', command=self.__run_analysis__)
-        go_button.grid(row=15, column=0)
+        go_button.grid(row=16, column=0)
         cancel_button = ttk.Button(self, text='Cancel', command=self.__cancel__)
-        cancel_button.grid(row=15, column=1)
+        cancel_button.grid(row=16, column=1)
 
         # a couple key bindings:
         self.bind('<Return>', self.__run_analysis__)
@@ -270,9 +294,15 @@ class WRF_Analyzer(tk.Toplevel):
                     return
                 else:
                     wall = None
+
+            # Stuff for the bump correction:
+            use_bump_corr = self.bump_var.get()
+            bump_corr = float(self.bump_dt_var.get())
         else:
             wall = None
             hohl_thick = None
+            use_bump_corr = False
+            bump_corr = 0
 
         # calculate angles:
         theta = self.snout_db.get_theta(snout, self.dim, self.pos)[0]
@@ -330,12 +360,24 @@ class WRF_Analyzer(tk.Toplevel):
                                   ShowSlide=self.display_results.get(),
                                   model=model,
                                   fit_guess=fit_guess,
-                                  limits=limits)
+                                  limits=limits,
+                                  use_bump_corr=use_bump_corr,
+                                  bump_corr=bump_corr)
 
         # add to DB:
         print(result)
         self.analysis_db.load_results(self.shot, self.dim, self.pos, result)
         self.adv_frame.add_to_db(self.shot, self.dim, self.pos)
+        analysis_param = {'use_hohl_corr': do_hohl_corr,
+                          'name': name,
+                          'summary': summary,
+                          'min_E': limits[0],
+                          'max_E': limits[1],
+                          'use_bump_corr': use_bump_corr,
+                          'bump_corr': bump_corr}
+        self.param_db.load_results(self.shot, self.dim, self.pos, analysis_param)
+
+        # Add hohlraum-corrected spectrum to the database if necessary:
         if corr_spec is not None:
             wrf_id = self.data_db.get_wrf_id(self.shot, self.dim, self.pos)[0]
             cr39_id = self.data_db.get_cr39_id(self.shot, self.dim, self.pos)[0]
@@ -352,3 +394,34 @@ class WRF_Analyzer(tk.Toplevel):
     def __cancel__(self, *args):
         """Cancel, and remove the window."""
         self.withdraw()
+
+    def __hohl_var_callback__(self, *args):
+        """Handle UI changes when the hohlraum correction is enabled or disabled."""
+        if self.hohl_var.get() == True:
+            self.bump_check.configure(state=tk.ACTIVE)
+        else:
+            self.bump_check.configure(state=tk.DISABLED)
+
+    def __bump_var_callback__(self, *args):
+        """Handle UI changes when the hohlraum bump correction is enabled or disabled"""
+        if self.bump_var.get() == True:
+            self.bump_entry.configure(state=tk.ACTIVE)
+        else:
+            self.bump_entry.configure(state=tk.DISABLED)
+
+    def __init_bump__(self):
+        """Get info on the bump from the hohlraum database."""
+        # If the hohlraum correction is initially enabled, the bump correction can be used:
+        if self.hohl_var.get():
+            self.bump_check.configure(state=tk.ACTIVE)
+            self.bump_entry.configure(state=tk.ACTIVE)
+
+        # Try to fetch info on the bump from the database:
+        try:
+            hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
+            bump = self.hohl_db.get_bump(hohl_drawing)
+            if isinstance(bump, list) and isinstance(bump[0],str):
+                self.bump_var.set(bump[1])
+                self.bump_dt_var.set(bump[2])
+        except:
+            pass

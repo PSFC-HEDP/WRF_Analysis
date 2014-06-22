@@ -376,15 +376,38 @@ class Model_Frame(Collapsible_Frame):
         self.__update_param__()
 
         # construct the appropriate dict
-        values = {'shell_mat': self.shell_mat, 'Ri': self.Ri, 'Ro': self.Ro, 'fD': self.fD, 'f3He': self.f3He,
-                  'P0': self.P0, 'Te_Gas': self.Te_Gas, 'Te_Shell': self.Te_Shell, 'Te_Abl': self.Te_Abl, 'Te_Mix': self.Te_Mix,
-                  'rho_Abl_Max': self.rho_Abl_Max, 'rho_Abl_Min': self.rho_Abl_Min, 'rho_Abl_Scale': self.rho_Abl_Scale,
-                  'MixF': self.MixF, 'Tshell': self.Tshell, 'Mrem': self.Mrem, 'E0': self.E0,
-                  'Ri_Err': self.Ri_err, 'Ro_Err': self.Ro_err, 'fD_Err': self.fD_err, 'f3He_Err': self.f3He_err,
-                  'P0_Err': self.P0_err, 'Te_Gas_Err': self.Te_Gas_err, 'Te_Shell_Err': self.Te_Shell_err,
-                  'Te_Abl_Err': self.Te_Abl_err, 'Te_Mix_Err': self.Te_Mix_err,
-                  'rho_Abl_Max_Err': self.rho_Abl_Max_err, 'rho_Abl_Min_Err': self.rho_Abl_Min_err, 'rho_Abl_Scale_Err': self.rho_Abl_Scale_err,
-                  'MixF_Err': self.MixF_err, 'Tshell_Err': self.Tshell_err, 'Mrem_Err': self.Mrem_err}
+        values = {'shell_mat': self.shell_mat,
+                  'Ri': self.Ri,
+                  'Ro': self.Ro,
+                  'fD': self.fD,
+                  'f3He': self.f3He,
+                  'P0': self.P0,
+                  'Te_Gas': self.Te_Gas,
+                  'Te_Shell': self.Te_Shell,
+                  'Te_Abl': self.Te_Abl,
+                  'Te_Mix': self.Te_Mix,
+                  'rho_Abl_Max': self.rho_Abl_Max,
+                  'rho_Abl_Min': self.rho_Abl_Min,
+                  'rho_Abl_Scale': self.rho_Abl_Scale,
+                  'MixF': self.MixF,
+                  'Tshell': self.Tshell,
+                  'Mrem': self.Mrem,
+                  'E0': self.E0,
+                  'Ri_Err': self.Ri_err,
+                  'Ro_Err': self.Ro_err,
+                  'fD_Err': self.fD_err,
+                  'f3He_Err': self.f3He_err,
+                  'P0_Err': self.P0_err,
+                  'Te_Gas_Err': self.Te_Gas_err,
+                  'Te_Shell_Err': self.Te_Shell_err,
+                  'Te_Abl_Err': self.Te_Abl_err,
+                  'Te_Mix_Err': self.Te_Mix_err,
+                  'rho_Abl_Max_Err': self.rho_Abl_Max_err,
+                  'rho_Abl_Min_Err': self.rho_Abl_Min_err,
+                  'rho_Abl_Scale_Err': self.rho_Abl_Scale_err,
+                  'MixF_Err': self.MixF_err,
+                  'Tshell_Err': self.Tshell_err,
+                  'Mrem_Err': self.Mrem_err}
 
         DB = WRF_rhoR_Model_DB()
         DB.load_results(shot, dim, position, values)

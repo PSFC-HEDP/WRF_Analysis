@@ -34,6 +34,7 @@ class Plot_RhoR(tk.Toplevel):
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
     def __create_widgets__(self):
         """Create the UI elements"""
@@ -44,13 +45,13 @@ class Plot_RhoR(tk.Toplevel):
         self.pole_var = tk.BooleanVar()
         self.pole_var_check = ttk.Checkbutton(frame, text='0-0', variable=self.pole_var)
         self.pole_var_check.grid(row=0, column=0)
-        self.pole_var_check.select()
+        self.pole_var.set(True)
         self.pole_var.trace('w', self.update_plot)
 
         self.eq_var = tk.BooleanVar()
         self.eq_var_check = ttk.Checkbutton(frame, text='90-78', variable=self.eq_var)
         self.eq_var_check.grid(row=0, column=1)
-        self.eq_var_check.select()
+        self.eq_var.set(True)
         self.eq_var.trace('w', self.update_plot)
 
         sep = ttk.Separator(frame, orient='vertical')

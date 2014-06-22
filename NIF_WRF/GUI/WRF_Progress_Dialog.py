@@ -13,6 +13,8 @@ class WRF_Progress_Dialog(tk.Toplevel):
         """Initialize the progress dialog"""
         super(WRF_Progress_Dialog, self).__init__(parent)
 
+        self.cancelled = False
+
         self.__createUI__()
         self.configure(background='#eeeeee')
 
@@ -23,7 +25,7 @@ class WRF_Progress_Dialog(tk.Toplevel):
         self.label.grid(sticky='N', padx=2, pady=2)
 
         self.counter = tk.IntVar()
-        self.progress_bar = ttk.Progressbar(self, variable=self.counter)
+        self.progress_bar = ttk.Progressbar(self, variable=self.counter, maximum=100)
         self.progress_bar.grid(sticky='N', padx=2, pady=2)
 
         self.cancel_button = ttk.Button(self, text="Cancel", command=self.cancel)
@@ -35,6 +37,7 @@ class WRF_Progress_Dialog(tk.Toplevel):
 
     def cancel(self):
         """Attempt to cancel the operation."""
+        self.cancelled = True
         self.withdraw()
 
     def set_text(self, new_text):

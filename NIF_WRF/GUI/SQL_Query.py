@@ -23,6 +23,9 @@ class SQL_Query(tk.Toplevel):
             print("Error opening database file.")
 
         self.grid()
+        # stretch the column to fill all space:
+        tk.Grid.columnconfigure(self, 0, weight=1)
+        tk.Grid.columnconfigure(self, 1, weight=1)
         self.__createUI__()
         self.title('Execute command')
 
@@ -39,7 +42,7 @@ class SQL_Query(tk.Toplevel):
 
         self.command_var = tk.StringVar()
         self.command = ttk.Entry(self, textvariable=self.command_var)
-        self.command.grid(row=1, column=0, columnspan=2)
+        self.command.grid(row=1, column=0, columnspan=2, sticky='ew')
 
         self.go_button = ttk.Button(self, text='Execute', command=self.execute)
         self.go_button.grid(row=2, column=0)
@@ -49,7 +52,9 @@ class SQL_Query(tk.Toplevel):
 
     def execute(self, *args):
         """Execute the entered query"""
+        print(self.command_var.get())
         query = self.c.execute(self.command_var.get())
+        print(query.fetchall())
         # display the result:
         result_str = ""
         for row in array_convert(query):

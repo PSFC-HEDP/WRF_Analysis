@@ -158,7 +158,7 @@ class GaussFit(object):
             def gaussian2(x, A, mu, sigma):
                 return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
 
-            result = scipy.optimize.curve_fit(gaussian2, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
+            result = scipy.optimize.curve_fit(gaussian2, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim, absolute_sigma=True, maxfev=2000)
             return result[0], result[1]
 
     def get_fit(self) -> list:
@@ -226,63 +226,6 @@ class GaussFit(object):
         """
         return self.chi2_other(fit) / ( len(self.data_lim) - 3 )
 
-    def delta_chi2_amp(self, dA, sign=1):
-        """Calculate increase in chi2 due to a change in amplitude.
-
-        :param dA: dA change in amplitude (A' = A + dA)
-        :param sign: (optional) whether amplitude should be increased or decreased (default=1 -> increase)
-        :returns: the change in chi2
-        """
-        A = self.fit[0] + sign * dA
-        # calculate a new best fit:
-        def temp_gauss(x, mu, sigma):
-            return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
-        guess = [self.fit[1], self.fit[2]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim, xtol=1e-4)
-        fit = result[0]
-
-        chi2 = self.chi2_other([A, fit[0], fit[1]])
-
-        return chi2 - self.chi2()
-
-    def delta_chi2_mu(self, dmu, sign=1):
-        """Calculate increase in chi2 due to a change in mean.
-
-        :param dmu: change in mean (mu' = mu + dmu)
-        :param sign: (optional) whether mean should be increased or decreased (default=1 -> increase)
-        :returns: change in chi2
-        """
-        mu = self.fit[1] + sign * dmu
-        # calculate a new best fit:
-        def temp_gauss(x, A, sigma):
-            return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
-        guess = [self.fit[0], self.fit[2]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
-        fit = result[0]
-
-        chi2 = self.chi2_other([fit[0], mu, fit[1]])
-
-        return chi2 - self.chi2()
-
-    def delta_chi2_sigma(self, ds, sign=1):
-        """Calculate increase in chi2 due to a change in sigma.
-
-        :param ds: change in sigma (sigma' = sigma + ds)
-        :param sign: (optional) whether sigma should be increased or decreased (default=1 -> increase)
-        :returns: change in chi2
-        """
-        sigma = self.fit[2] + sign * ds
-        # calculate a new best fit:
-        def temp_gauss(x, A, mu):
-            return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
-        guess = [self.fit[0], self.fit[1]]
-        result = scipy.optimize.curve_fit(temp_gauss, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim)
-        fit = result[0]
-
-        chi2 = self.chi2_other([fit[0], fit[1], sigma])
-
-        return chi2 - self.chi2()
-
     def chi2_fit_unc(self):
         """Calculate uncertainty in the fit parameters.
         Routine: each fit parameter is varied to produce an increase of 1 in total chi2
@@ -290,35 +233,10 @@ class GaussFit(object):
         :returns: list containing uncertainties [ [-A,+A] , [-mu,+mu] , [-sigma,+sigma] ]
         """
         # return value: delta unc in each parameter
-        delta = [[], [], []]
+        import numpy as np
+        perr = np.sqrt(np.diag(self.covariance))
 
-        # Calculate uncertainties
-        # need to do for both + and -
-        for sign in [-1, 1]:
-            # calculate uncertainty in the amplitude:
-            dA = scipy.optimize.fminbound(
-                func=(lambda x: math.fabs(self.delta_chi2_amp(x, sign) - 1)), # min @ delta chi2 = 1
-                x1=0, x2=2*math.fabs(self.fit[0]), # min is 0, max is 2x nominal
-                full_output=False) # suppress full output
-
-            # calculate uncertainty in the mean:
-            dmu = scipy.optimize.fminbound(
-                func=(lambda x: math.fabs(self.delta_chi2_mu(x, sign) - 1)), # min @ delta chi2 = 1
-                x1=0, x2=self.fit[2], # min/max change +/- sigma
-                full_output=False) # suppress full output
-
-            # calculate uncertainty in sigma:
-            ds = scipy.optimize.fminbound(
-                func=(lambda x: math.fabs(self.delta_chi2_sigma(x, sign) - 1)), # min @ delta chi2 = 1
-                x1=0, x2=self.fit[2] * 0.99, # min/max change +/- sigma
-                full_output=False) # suppress full output
-
-            # add info to delta:
-            delta[0].append(sign * dA)
-            delta[1].append(sign * dmu)
-            delta[2].append(sign * ds)
-
-        return delta
+        return [[-perr[0],perr[0]], [-perr[1],perr[1]], [-perr[2],perr[2]]]
 
     def plot_file(self, fname):
         """Save a plot to file.

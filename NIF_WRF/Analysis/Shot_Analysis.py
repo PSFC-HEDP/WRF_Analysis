@@ -33,7 +33,7 @@ def avg_rhoR(shot, dim, error=ERR_TOTAL):
 
 
         if len(rhoR) > 0:
-            Avg = numpy.dot(rhoR, ran)/numpy.sum(ran)
+            Avg = numpy.dot(rhoR, 1/numpy.power(ran,2))/numpy.sum(1/numpy.power(ran,2))
             if error == ERR_RANDOM:
                 Avg_err = 1/numpy.sqrt(numpy.sum(1/numpy.power(ran,2)))
             elif error == ERR_SYSTEMATIC:
@@ -72,9 +72,8 @@ def avg_Rcm(shot, dim, error=ERR_TOTAL):
             ran.append(db.get_value(shot, dim, pos, 'Rcm_ran_unc')[0])
             sys.append(db.get_value(shot, dim, pos, 'Rcm_sys_unc')[0])
 
-
         if len(Rcm) > 0:
-            Avg = numpy.dot(Rcm, ran)/numpy.sum(ran)
+            Avg = numpy.dot(Rcm, 1/numpy.power(ran,2))/numpy.sum(1/numpy.power(ran,2))
             if error == ERR_RANDOM:
                 Avg_err = 1/numpy.sqrt(numpy.sum(1/numpy.power(ran,2)))
             elif error == ERR_SYSTEMATIC:
@@ -106,7 +105,7 @@ def avg_Yield(shot, dim):
             err.append(db.get_value(shot, dim, pos, 'Yield_ran_unc')[0])
 
         if len(Yp) > 0:
-            Avg = numpy.dot(Yp, err)/numpy.sum(err)
+            Avg = numpy.dot(Yp, 1/numpy.power(err,2))/numpy.sum(1/numpy.power(err,2))
             Avg_err = 1/numpy.sqrt(numpy.sum(1/numpy.power(err,2)))
             return Avg, Avg_err
         else:

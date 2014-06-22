@@ -25,6 +25,7 @@ try:
     import tkinter.ttk as ttk
     from tkinter.filedialog import asksaveasfilename, askdirectory
     from tkinter.messagebox import askyesnocancel, askyesno
+    import threading
 
     from NIF_WRF.GUI.DB_Info import *
     from NIF_WRF.GUI.ShotDB_Viewer import *
@@ -51,13 +52,18 @@ try:
     from NIF_WRF.GUI.Plot_Asymmetry import Plot_Asymmetry
     from NIF_WRF.GUI.ModelCalculator import ModelCalculator
     from NIF_WRF.GUI.ModelPlotter import ModelPlotter
+    from NIF_WRF.GUI.Bump_Editor import Bump_Editor
     from NIF_WRF.util.scripts import *
     from NIF_WRF.GUI.widgets import Option_Prompt
+    from NIF_WRF.util.rerun import rerun_all
+
 except Exception as inst:
     if platform.system() is 'Darwin':
         syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
     from tkinter.messagebox import showerror
     showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
+    import sys
+    sys.exit(1)
 
 class Application(tk.Tk):
     """Analysis and database application for the NIF WRF data"""
@@ -73,6 +79,7 @@ class Application(tk.Tk):
         self.configure(background='#eeeeee')
         self.grid()
         self.createWidgets()
+        self.__configureMatplotlib__()
         self.minsize(150,200)
         self.title('NIF WRF')
 
@@ -81,8 +88,9 @@ class Application(tk.Tk):
         tk.Grid.columnconfigure(self, 1, weight=1)
         tk.Grid.columnconfigure(self, 2, weight=1)
 
-        # add a key binding to close:
+        # a couple key bindings:
         self.bind('<Escape>', self.quit)
+        self.protocol("WM_DELETE_WINDOW", self.quit)
 
     def createWidgets(self):
         row = 0
@@ -131,6 +139,9 @@ class Application(tk.Tk):
         self.hohlraum_plot_button.grid(row=row, column=1, sticky=tk.N)
         self.hohlraum_import_button = ttk.Button(self, text='Import', command=self.importHohlraum)
         self.hohlraum_import_button.grid(row=row, column=2, sticky=tk.N)
+        row += 1
+        self.hohlraum_bump_button = ttk.Button(self, text="Bump", command=self.bumpControl)
+        self.hohlraum_bump_button.grid(row=row, column=1, sticky=tk.N)
         row += 1
 
         # Inventory DB controls:
@@ -204,6 +215,10 @@ class Application(tk.Tk):
         self.addShotButton.grid(row=row, column=2)
         row += 1
 
+        self.rerunAnalysisButton = ttk.Button(self, text='Rerun Analysis', command=self.rerunAnalysis)
+        self.rerunAnalysisButton.grid(row=row, column=0, columnspan=2)
+        row += 1
+
         self.label3a = ttk.Label(self, text='Summary CSVs', font=self.Font)
         self.label3a.grid(row=row, column=0)
         row += 1
@@ -272,6 +287,9 @@ class Application(tk.Tk):
     def importHohlraum(self):
         HohlraumDB_Import()
 
+    def bumpControl(self):
+        Bump_Editor()
+
     def viewInventoryDB(self):
         InventoryDB_Viewer()
 
@@ -299,14 +317,22 @@ class Application(tk.Tk):
     def addWRF(self):
         WRF_Importer()
 
+    def rerunAnalysis(self):
+        from tkinter.messagebox import askyesnocancel
+        dialog = askyesnocancel('Rerun all analysis?', 'Are you sure? It will take a long time')
+        if dialog == True:
+            thread = threading.Thread(target=rerun_all)
+            thread.start()
+
     def plotSpectrum(self):
+        #thread = threading.Thread(group=None, target=Plot_Spectrum)
+        #thread.start()
         Plot_Spectrum()
 
     def plotShot(self):
         Plot_Shot()
 
     def plotRhoR(self):
-        import threading
         thread = threading.Thread(group=None, target=Plot_RhoR)
         thread.start()
 
@@ -450,6 +476,14 @@ class Application(tk.Tk):
     def modelPlotter(self, *args):
         """Display a simple plot widget for the rhoR model."""
         ModelPlotter(self)
+
+    def __configureMatplotlib__(self):
+        import matplotlib, matplotlib.pyplot
+        # set matplotlib backend
+        if matplotlib.get_backend() != 'tkagg':
+            matplotlib.pyplot.switch_backend('TkAgg')
+        #matplotlib.pyplot.rc('font', **{'size':'8'})
+        #matplotlib.pyplot.rc('text', **{'usetex':False})
 
 def main():
     # import NIF_WRF.GUI.widgets.plastik_theme as plastik_theme

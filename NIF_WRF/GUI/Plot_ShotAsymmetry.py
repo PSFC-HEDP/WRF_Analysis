@@ -35,6 +35,7 @@ class Plot_ShotAsymmetry(tk.Toplevel):
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
         # Set the window title:
         self.title('Asymmetry summary')

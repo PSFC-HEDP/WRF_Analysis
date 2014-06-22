@@ -27,6 +27,11 @@ class ShotDB_Editor(tk.Toplevel):
         self.configure(background='#eeeeee')
         self.title('Edit ShotDB')
 
+        # a couple key bindings:
+        self.bind('<Return>', self.write)
+        self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
     def __createUI__(self):
         """Helper method to create the UI elements"""
 
@@ -42,9 +47,7 @@ class ShotDB_Editor(tk.Toplevel):
 
         # shot selector
         self.shot_selector_var = tk.StringVar()
-        shots = self.db.get_shots()
-        if len(shots) == 0:
-            shots = ['']
+        shots = [''] + self.db.get_shots()
         self.shot_selector = ttk.OptionMenu(self, self.shot_selector_var, *shots)
         self.shot_selector.configure(width=20)
         self.shot_selector.grid(row=1, column=1)
@@ -52,9 +55,7 @@ class ShotDB_Editor(tk.Toplevel):
         
         # column selector
         self.col_selector_var = tk.StringVar()
-        columns = self.db.get_column_names()
-        if len(columns) == 0:
-            columns = ['']
+        columns = [''] + self.db.get_column_names()
         self.col_selector = ttk.OptionMenu(self, self.col_selector_var, *columns)
         self.col_selector.configure(width=20)
         self.col_selector.grid(row=2, column=1)

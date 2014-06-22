@@ -7,7 +7,7 @@ import numpy
 from numpy import arange, zeros
 from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
 from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
-from NIF_WRF.util.StopPow import StopPow, StopPow_LP, FloatVector
+from NIF_WRF.util.StopPow import StopPow, StopPow_LP, DoubleVector
 
 
 __author__ = 'Alex Zylstra'
@@ -136,7 +136,7 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
     :param dE: (optional) The energy step size in MeV [default=14.7]
     :param Emin: (optional) minimum energy to plot in MeV [default=5]
     :param Emax: (optional) maximum energy to plot in MeV [default=14]
-    :param Eerr: (optional) the energy error bar in MeV [default=0.13]
+    :param Eerr: (optional) the energy error bar in MeV [default=0.13]. Set to 0 to disable.
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
@@ -169,9 +169,10 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
         RcmListMinusErr.append((temp[0] - temp[1]) * 1e4)
 
         # recalculate using only energy error bar:
-        temp = analysis.Calc_Rcm(i, Eerr, ModelErr=False)
-        RcmListPlusErrEnergy.append((temp[0] + temp[1]) * 1e4)
-        RcmListMinusErrEnergy.append((temp[0] - temp[1]) * 1e4)
+        if Eerr != 0:
+            temp = analysis.Calc_Rcm(i, Eerr, ModelErr=False)
+            RcmListPlusErrEnergy.append((temp[0] + temp[1]) * 1e4)
+            RcmListMinusErrEnergy.append((temp[0] - temp[1]) * 1e4)
 
 
     # make a plot if necessary, and add curves for the rhoR model
@@ -182,8 +183,9 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
     ax.plot(RcmList, EnergyList, color+'-')
     ax.plot(RcmListPlusErr, EnergyList, color+'--')
     ax.plot(RcmListMinusErr, EnergyList, color+'--')
-    ax.plot(RcmListPlusErrEnergy, EnergyList, color+':')
-    ax.plot(RcmListMinusErrEnergy, EnergyList, color+':')
+    if Eerr != 0:
+        ax.plot(RcmListPlusErrEnergy, EnergyList, color+':')
+        ax.plot(RcmListMinusErrEnergy, EnergyList, color+':')
 
     # set some options:
     ax.set_ylim([0, math.ceil(E0)])
@@ -345,7 +347,7 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
     #plt.show()
     fig.savefig(filename, bbox_inches='tight')
 
-def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, legend=True, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
 
     :param analysis: the rhoR analysis model to plot
@@ -357,6 +359,7 @@ def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param color: (optional) matplotlib color character [default='k']
     :param title: (optional) Title to display over the plot [default=None]
+    :param legend: (optional) Whether to add a legend to the plot [default=True]
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     :param mix: (optional) Whether to plot the mix [default=True]
     :param units: (optional) either 'mg/cm2' or 'g/cm2' [default=mg/cm2]
@@ -429,10 +432,11 @@ def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150
         loc=9
     else:
         loc=1
-    if normalize and not mix:
-        ax.legend(loc=loc, fontsize=8, ncol=3)
-    else:
-        ax.legend(loc=loc, fontsize=8, ncol=2)
+    if legend:
+        if normalize and not mix:
+            ax.legend(loc=loc, fontsize=8, ncol=3)
+        else:
+            ax.legend(loc=loc, fontsize=8, ncol=2)
 
     # set some options:
     ax.grid(grid)
@@ -667,10 +671,10 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     ni_gas, ne_gas = analysis.model.n_Gas(Rcm)
     ni_mix, ne_mix = analysis.model.n_Mix(Rcm)
     if mix:
-        nf = FloatVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-        mf = FloatVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-        Zf = FloatVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-        Tf = FloatVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+        nf = DoubleVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+        mf = DoubleVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+        Zf = DoubleVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+        Tf = DoubleVector(3+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
         nf[0] = ne_gas + ne_mix
         nf[1] = ni_gas * analysis.model.fD
         nf[2] = ni_gas * analysis.model.f3He
@@ -692,10 +696,10 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
         for i in range(len(Tf)-3):
             Tf[3+i] = analysis.model.Te_Mix
     else:
-        nf = FloatVector(3)
-        mf = FloatVector(3)
-        Zf = FloatVector(3)
-        Tf = FloatVector(3)
+        nf = DoubleVector(3)
+        mf = DoubleVector(3)
+        Zf = DoubleVector(3)
+        Tf = DoubleVector(3)
         nf[0] = ne_gas
         nf[1] = ni_gas * analysis.model.fD
         nf[2] = ni_gas * analysis.model.f3He
@@ -717,10 +721,10 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     dEdx_gasmix.set_mode(StopPow.MODE_RHOR)
 
     # Set up stopping power in the shell:
-    nf = FloatVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-    mf = FloatVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-    Zf = FloatVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
-    Tf = FloatVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+    nf = DoubleVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+    mf = DoubleVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+    Zf = DoubleVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
+    Tf = DoubleVector(1+len(analysis.model.__shell_A__[analysis.model.shell_mat]))
     ni, ne = analysis.model.n_Shell(Rcm)
     nf[0] = ne
     for i in range(len(analysis.model.__shell_F__[analysis.model.shell_mat])):

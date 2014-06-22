@@ -26,6 +26,7 @@ class Generic_Editor(tk.Toplevel):
         # a couple key bindings:
         self.bind('<Return>', self.write)
         self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
         self.configure(background='#eeeeee')
 

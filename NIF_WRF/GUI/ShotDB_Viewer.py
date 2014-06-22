@@ -23,9 +23,7 @@ class ShotDB_Viewer(Table_Viewer):
 
         # shot selector
         self.selector_var = tk.StringVar()
-        shots = self.db.get_shots()
-        if len(shots) == 0:
-            shots = ['']
+        shots = [''] + self.db.get_shots()
         selector = ttk.OptionMenu(self, self.selector_var, *shots)
         selector.configure(width=20)
         self.header_widgets.append(selector)

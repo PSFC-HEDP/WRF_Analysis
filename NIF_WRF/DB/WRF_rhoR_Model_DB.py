@@ -1,8 +1,7 @@
-from NIF_WRF.DB import Database
-
 __author__ = 'Alex Zylstra'
 
-from NIF_WRF.DB.Generic_Analysis_DB import *
+from NIF_WRF.DB.Generic_Param_DB import *
+from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
 
 # The table is arranged with columns:
 
@@ -15,12 +14,11 @@ from NIF_WRF.DB.Generic_Analysis_DB import *
 #                  rho_Abl_Max_Err=0.5, rho_Abl_Min_Err=0.05, rho_Abl_Scale_Err=30e-4,
 #                  MixF_Err=0.025, Tshell_Err=10e-4, Mrem_Err=0.05
 
-class WRF_rhoR_Model_DB(Generic_Analysis_DB):
+class WRF_rhoR_Model_DB(Generic_Param_DB):
     """Provide a wrapper for WRF rhoR model options
 
     :param fname: the file location/name for the database
     :author: Alex Zylstra
-    :date: 2013/09/03
     """
 
     def __init__(self, fname=Database.FILE):
@@ -52,33 +50,45 @@ class WRF_rhoR_Model_DB(Generic_Analysis_DB):
         # finish changes:
         self.db.commit()
 
-    def load_results(self, shot, dim, position, results):
-        """Load the results of running the analysis code.
+    def load_from_model(self, shot, dim, pos, model):
+        """Load rhoR model parameters into the database from a `rhoR_Analysis` object.
 
         :param shot: The shot number
         :param dim: the DIM
         :param position: The position
-        :param results: The result of Analysis.Analyze_Spectrum.Analyze_Spectrum, which is a dict
+        :param model: The rhoR analysis object
         """
-        # get the date and time:
-        import datetime
-        now = datetime.datetime.now()
-        analysis_date = now.strftime('%Y-%m-%d %H:%M')
-
-        # get a list of columns to update:
-        columns = self.get_column_names()
-        # remove ones that are not in the dict:
-        columns.remove('shot')
-        columns.remove('dim')
-        columns.remove('position')
-        columns.remove('analysis_date')
-
-        # insert a new row into the table:
-        self.insert(shot, dim, position, analysis_date)
-
-        # set values from the dict:
-        for col in columns:
-            self.set_column(shot, dim, position, col, results[col], analysis_date=analysis_date)
-
-        self.db.commit()
-
+        assert isinstance(model, rhoR_Analysis)
+        values = {'shell_mat': model.shell_mat,
+                  'Ri': model.Ri[1],
+                  'Ro': model.Ro[1],
+                  'fD': model.fD[1],
+                  'f3He': model.f3He[1],
+                  'P0': model.P0[1],
+                  'Te_Gas': model.Te_Gas[1],
+                  'Te_Shell': model.Te_Shell[1],
+                  'Te_Abl': model.Te_Abl[1],
+                  'Te_Mix': model.Te_Mix[1],
+                  'rho_Abl_Max': model.rho_Abl_Max[1],
+                  'rho_Abl_Min': model.rho_Abl_Min[1],
+                  'rho_Abl_Scale': model.rho_Abl_Scale[1],
+                  'MixF': model.MixF[1],
+                  'Tshell': model.Tshell[1],
+                  'Mrem': model.Mrem[1],
+                  'E0': model.E0,
+                  'Ri_Err': model.Ri_Err,
+                  'Ro_Err': model.Ro_Err,
+                  'fD_Err': model.fD_Err,
+                  'f3He_Err': model.f3He_Err,
+                  'P0_Err': model.P0_Err,
+                  'Te_Gas_Err': model.Te_Gas_Err,
+                  'Te_Shell_Err': model.Te_Shell_Err,
+                  'Te_Abl_Err': model.Te_Abl_Err,
+                  'Te_Mix_Err': model.Te_Mix_Err,
+                  'rho_Abl_Max_Err': model.rho_Abl_Max_Err,
+                  'rho_Abl_Min_Err': model.rho_Abl_Min_Err,
+                  'rho_Abl_Scale_Err': model.rho_Abl_Scale_Err,
+                  'MixF_Err': model.MixF_Err,
+                  'Tshell_Err': model.Tshell_Err,
+                  'Mrem_Err': model.Mrem_Err}
+        self.load_results(shot, dim, pos, values)

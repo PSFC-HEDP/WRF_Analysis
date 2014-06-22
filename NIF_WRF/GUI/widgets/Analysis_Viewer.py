@@ -35,9 +35,7 @@ class Analysis_Viewer(Table_Viewer):
         label3 = ttk.Label(frame, text='Pos')
         label3.grid(row=2, column=0)
 
-        shots = self.db.get_shots()
-        if len(shots) == 0:
-            shots = ['']
+        shots = [''] + self.db.get_shots()
 
         self.shot_var = tk.StringVar()
         self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)

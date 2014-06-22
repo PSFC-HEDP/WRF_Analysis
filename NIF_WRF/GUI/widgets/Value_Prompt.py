@@ -62,6 +62,7 @@ class Value_Prompt(tk.Toplevel):
 
         self.bind("<Return>", self.__ok__)
         self.bind("<Escape>", self.__cancel__)
+        self.protocol("WM_DELETE_WINDOW", self.__cancel__)
 
         box.pack()
 
@@ -80,7 +81,8 @@ class Value_Prompt(tk.Toplevel):
     def __cancel__(self, event=None):
         """Handle cancel button"""
         # put focus back to the parent window
-        self.parent.focus_set()
+        if self.parent is not None:
+            self.parent.focus_set()
         self.destroy()
 
     def __validate__(self):

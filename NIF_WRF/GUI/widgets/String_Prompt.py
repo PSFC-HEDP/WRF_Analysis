@@ -65,6 +65,7 @@ class String_Prompt(tk.Toplevel):
 
         self.bind("<Return>", self.__ok__)
         self.bind("<Escape>", self.__cancel__)
+        self.protocol("WM_DELETE_WINDOW", self.__cancel__)
 
         box.pack()
 

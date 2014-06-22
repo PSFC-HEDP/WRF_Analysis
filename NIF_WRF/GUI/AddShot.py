@@ -29,6 +29,10 @@ class AddShot(tk.Toplevel):
         tk.Grid.columnconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 1, weight=1)
 
+        # a couple key bindings:
+        self.bind('<Escape>', self.withdraw)
+        self.protocol("WM_DELETE_WINDOW", self.withdraw)
+
     def __create_widgets__(self):
         """Create the UI elements"""
         # shot number:

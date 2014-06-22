@@ -33,6 +33,10 @@ class DB_Info(tk.Toplevel):
         self.__createUI__()
         self.configure(background='#eeeeee')
 
+        # a couple key bindings:
+        self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
     def __createUI__(self):
         """Helper method to create the UI elements"""
         self.grid()

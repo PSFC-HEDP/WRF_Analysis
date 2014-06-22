@@ -26,6 +26,10 @@ class HohlraumDB_Plot(tk.Toplevel):
         self.__createUI__()
         self.configure(background='#eeeeee')
 
+        # a couple key bindings:
+        self.bind('<Escape>', self.withdraw)
+        self.protocol("WM_DELETE_WINDOW", self.withdraw)
+
     def __createUI__(self):
         """Helper method to create the UI elements"""
         # radiobutton for name vs drawing mode
@@ -41,9 +45,7 @@ class HohlraumDB_Plot(tk.Toplevel):
 
         # selector for name/drawing
         self.selector_var = tk.StringVar()
-        opts = self.db.get_names()
-        if len(opts) == 0:
-            opts = ['']
+        opts = [''] + self.db.get_names()
         self.selector = ttk.OptionMenu(self, self.selector_var, *opts)
         self.selector.configure(width=20)
         self.selector.grid(row=1, column=1)

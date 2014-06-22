@@ -53,7 +53,7 @@ def mytime(time, inc, ProgressBar=None):
 
 def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
-                     model=None, add_fit_unc=False, fit_guess=None, limits=None):
+                     model=None, add_fit_unc=False, fit_guess=None, limits=None, use_bump_corr=False, bump_corr=0):
     """Analyze a NIF WRF spectrum.
 
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
@@ -75,8 +75,9 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param add_fit_unc: (optional) Whether to add a chi^2 fit uncertainty to the error bars, in case it isn't already included [default=False]
     :param fit_guess: (optional) Supplied guess to start the Gaussian fitting, as a list containing Y,E,sigma [default=None]
     :param limits: (optional) Energy limits for fitting to the spectrum. Default (None) uses entire spectrum.
+    :param use_bump_corr: (optional) Boolean flag to use a correction for the hohlraum thickness because of the 'bump' [default=False]
+    :param bump_corr: (optional) The change in thickness for the bump correction, which is added to the t=0 thickness [default=0]
     :author: Alex Zylstra
-    :date: 2013/10/24
     """
     # sanity checking on the inputs:
     assert isinstance(data, list) or isinstance(data, numpy.ndarray)
@@ -118,9 +119,16 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
                             wall=hohl_wall,
                             angles=LOS,
                             fit_guess=fit_guess,
-                            limits=limits)
+                            limits=limits,
+                            use_bump_corr=use_bump_corr,
+                            bump_corr=bump_corr)
         else:
-            hohl = Hohlraum(data, Thickness=hohl_thick, fit_guess=fit_guess, limits=limits)
+            hohl = Hohlraum(data,
+                            Thickness=hohl_thick,
+                            fit_guess=fit_guess,
+                            limits=limits,
+                            use_bump_corr=use_bump_corr,
+                            bump_corr=bump_corr)
 
         # get corrected spectrum:
         corr_data = hohl.get_data_corr()

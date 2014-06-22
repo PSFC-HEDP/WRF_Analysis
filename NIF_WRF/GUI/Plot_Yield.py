@@ -34,6 +34,7 @@ class Plot_Yield(tk.Toplevel):
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
         # Set the window title:
         self.title('Yield summary plot')

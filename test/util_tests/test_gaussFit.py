@@ -85,12 +85,12 @@ class TestGaussFit(TestCase):
         """Test the fit uncertainties for this test data."""
         # compare to known values for this test case:
         unc = self.fit.chi2_fit_unc()
-        self.assertAlmostEqual(unc[0][0], -3.11e6, delta=1e4)
-        self.assertAlmostEqual(unc[0][1], 3.13e6, delta=1e4)
-        self.assertAlmostEqual(unc[1][0], -0.052, delta=1e-3)
-        self.assertAlmostEqual(unc[1][1], 0.051, delta=1e-3)
-        self.assertAlmostEqual(unc[2][0], -0.053, delta=1e-3)
-        self.assertAlmostEqual(unc[2][1], 0.059, delta=1e-3)
+        self.assertAlmostEqual(unc[0][0], -3.06e6, delta=1e4)
+        self.assertAlmostEqual(unc[0][1], 3.06e6, delta=1e4)
+        self.assertAlmostEqual(unc[1][0], -0.049, delta=1e-3)
+        self.assertAlmostEqual(unc[1][1], 0.049, delta=1e-3)
+        self.assertAlmostEqual(unc[2][0], -0.045, delta=1e-3)
+        self.assertAlmostEqual(unc[2][1], 0.045, delta=1e-3)
 
     def test_plot_file(self):
         """Test the generation of a plot and saving it to file."""

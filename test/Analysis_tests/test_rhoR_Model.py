@@ -208,14 +208,14 @@ class TestRhoR_Model(TestCase):
 
         # test one specific case
         Eout = self.model.dEdr_Abl(14.7, self.Ri, self.Ri/4.)
-        self.assertAlmostEqual(Eout, -4.143, places=2)
+        self.assertAlmostEqual(Eout, -4.153, places=2)
 
     def test_model_materials(self):
         """Test the functionality for using different shell materials."""
         # try them all, with a simple Eout test at a CR of 3:
         model1 = rhoR_Model()  # all defaults
-        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 12.2, places=1)
+        self.assertAlmostEqual(model1.Eout(model1.Ri/3.), 12.25, places=1)
         model2 = rhoR_Model(shell_mat='HDC')
-        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 9.55, places=1)
+        self.assertAlmostEqual(model2.Eout(model2.Ri/3.), 9.62, places=1)
         model3 = rhoR_Model(shell_mat='SiO2')
         self.assertAlmostEqual(model3.Eout(model3.Ri/3.), 10.9, places=1)

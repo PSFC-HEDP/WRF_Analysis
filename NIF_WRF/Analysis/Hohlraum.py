@@ -75,9 +75,10 @@ class Hohlraum(object):
     :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
     :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
     :param limits: (optional) Energy limits (of raw spectrum) to use for fitting. Default uses entire spectrum.
+    :param use_bump_corr: (optional) Boolean flag to use a correction for the hohlraum thickness because of the 'bump' [default=False]
+    :param bump_corr: (optional) The change in thickness for the bump correction, which is added to the t=0 thickness [default=0]
 
     :author: Alex Zylstra
-    :date: 2013/10/21
     """
     OutputDir = 'AnalysisOutputs'
 
@@ -92,7 +93,7 @@ class Hohlraum(object):
     DU_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
-    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None):
+    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None, use_bump_corr=False, bump_corr=0):
         """Constructor for the hohlraum. """
         super(Hohlraum, self).__init__() # super constructor
 
@@ -113,6 +114,10 @@ class Hohlraum(object):
         self.d_Au = 0  # Calculated or given uncertainty in thickness of Au
         self.d_DU = 0  # Calculated or given uncertainty in thickness of DU
         self.d_Al = 0  # Calculated or given uncertainty in thickness of Al
+
+        # Bump correction if requested:
+        self.use_bump_corr = use_bump_corr
+        self.bump_corr = bump_corr
 
         #  r and z arrays for all wall layers:
         self.all_r = []
@@ -136,6 +141,10 @@ class Hohlraum(object):
             self.DU = 0
             self.Al = 0
             self.mode = Hohlraum.mode_thick
+
+        # Correct for the bump:
+        if use_bump_corr:
+            self.Au = max(self.Au + bump_corr, 0)  # make sure this stays positive
 
         # set the uncertainties:
         self.d_Au = d_Thickness[0]
