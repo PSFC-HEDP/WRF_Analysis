@@ -93,9 +93,12 @@ class Table_Viewer(Tkinter.Toplevel):
 
             # adjust columns lengths if necessary
             for indx, val in enumerate(item):
-                ilen = tkFont.Font().measure(val)
-                if self.tree.column(self.tree_columns[indx], width=None) < ilen:
-                    self.tree.column(self.tree_columns[indx], width=ilen)
+                try:
+                    ilen = tkFont.Font().measure(val)
+                    if self.tree.column(self.tree_columns[indx], width=None) < ilen:
+                        self.tree.column(self.tree_columns[indx], width=ilen)
+                except:
+                    pass
 
     def refresh(self, *args):
         """Refresh the display"""

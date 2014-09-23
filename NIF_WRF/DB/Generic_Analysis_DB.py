@@ -143,6 +143,26 @@ class Generic_Analysis_DB(Generic_DB):
                                 % self.TABLE, (shot, dim, position,analysis_date,))
         return array_convert(query)
 
+    def get_dates(self, shot, dim, position):
+        """Get all analysis dates for the given shot, DIM, position.
+
+        :param shot: the shot number as a string, e.g. 'N130520-002-999' (as str)
+        :param dim: the DIM as a string, e.g. '0-0' (as str)
+        :param position: the position as an integer or str, e.g. 1
+        """
+        # sanity checks:
+        assert isinstance(shot, str)
+        assert isinstance(dim, str)
+        assert isinstance(position, int) or isinstance(position, str)
+
+        query = self.c.execute('SELECT Distinct analysis_date from %s where shot=? AND dim=? AND position=?'
+                               % self.TABLE,
+                              (shot, dim, position,))
+
+        # array conversion:
+        avail_date = flatten(array_convert(query))
+        return avail_date
+
     def __latest_date__(self, shot, dim, position):
         """Get the latest analysis date for the given shot, DIM, position. Helper function for data retrieval.
 

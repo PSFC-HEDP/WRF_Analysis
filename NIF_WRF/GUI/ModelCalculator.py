@@ -56,19 +56,34 @@ class ModelCalculator(tk.Toplevel):
         self.labelRhoRerr = ttk.Label(frame, text='')
         self.labelRhoRerr.grid(row=1, column=3)
 
+        label2c = ttk.Label(frame, text='Fuel:')
+        label2c.grid(row=2, column=1)
+        self.labelRhoRFuel = ttk.Label(frame, text='')
+        self.labelRhoRFuel.grid(row=2, column=2)
+
+        label2d = ttk.Label(frame, text='Shell:')
+        label2d.grid(row=3, column=1)
+        self.labelRhoRShell = ttk.Label(frame, text='')
+        self.labelRhoRShell.grid(row=3, column=2)
+
+        label2e = ttk.Label(frame, text='Ablated:')
+        label2e.grid(row=4, column=1)
+        self.labelRhoRAbl = ttk.Label(frame, text='')
+        self.labelRhoRAbl.grid(row=4, column=2)
+
         label3 = ttk.Label(frame, text='Rcm (um)')
-        label3.grid(row=2, column=0)
+        label3.grid(row=5, column=0)
         self.labelRcm = ttk.Label(frame, text='')
-        self.labelRcm.grid(row=2, column=1)
+        self.labelRcm.grid(row=5, column=1)
         label3b = ttk.Label(frame, text='±')
-        label3b.grid(row=2, column=2)
+        label3b.grid(row=5, column=2)
         self.labelRcmerr = ttk.Label(frame, text='')
-        self.labelRcmerr.grid(row=2, column=3)
+        self.labelRcmerr.grid(row=5, column=3)
 
         self.updateModelButton = ttk.Button(frame, text='Update Model', command=self.__updateModel__)
-        self.updateModelButton.grid(row=3, column=0, columnspan=2)
+        self.updateModelButton.grid(row=6, column=0, columnspan=2)
         self.updateModelLabel = ttk.Label(frame, text='')
-        self.updateModelLabel.grid(row=3, column=2, columnspan=2)
+        self.updateModelLabel.grid(row=6, column=2, columnspan=2)
 
         frame.pack()
         self.adv_frame = Model_Frame(self, text='Model Parameters', relief=tk.RAISED, borderwidth=1)
@@ -96,11 +111,11 @@ class ModelCalculator(tk.Toplevel):
             # get values:
             rhoR, Rcm, rhoRerr = self.model.Calc_rhoR(energy, energyerr)
             Rcm, Rcmerr = self.model.Calc_Rcm(energy, energyerr, False)
+            rhoR_fuel = self.model.model.rhoR_Gas(Rcm) + self.model.model.rhoR_Mix(Rcm)
+            rhoR_shell = self.model.model.rhoR_Shell(Rcm)
+            rhoR_abl = self.model.model.rhoR_Abl(Rcm)
         except Exception as e:  # handle bad user input
-            self.labelRhoR.configure(text='')
-            self.labelRcm.configure(text='')
-            self.labelRhoRerr.configure(text='')
-            self.labelRcmerr.configure(text='')
+            self.__clear__()
             return
 
         # Set the label:
@@ -109,17 +124,25 @@ class ModelCalculator(tk.Toplevel):
             self.labelRcm.configure(text='{:.0f}'.format(Rcm*1e4))
             self.labelRhoRerr.configure(text='{:.1f}'.format(rhoRerr*1e3))
             self.labelRcmerr.configure(text='{:.0f}'.format(Rcmerr*1e4))
+            self.labelRhoRFuel.configure(text='{:.1f}'.format(rhoR_fuel*1e3))
+            self.labelRhoRShell.configure(text='{:.1f}'.format(rhoR_shell*1e3))
+            self.labelRhoRAbl.configure(text='{:.1f}'.format(rhoR_abl*1e3))
         else:
-            self.labelRhoR.configure(text='')
-            self.labelRcm.configure(text='')
-            self.labelRhoRerr.configure(text='')
-            self.labelRcmerr.configure(text='')
+            self.__clear__()
+
+    def __clear__(self, *args):
+        self.labelRhoR.configure(text='')
+        self.labelRcm.configure(text='')
+        self.labelRhoRerr.configure(text='')
+        self.labelRcmerr.configure(text='')
+        self.labelRhoRFuel.configure(text='')
+        self.labelRhoRShell.configure(text='')
+        self.labelRhoRAbl.configure(text='')
 
     def __updateModel__(self, *args):
         # Clear existing:
         self.model = None
-        self.labelRhoR.configure(text='')
-        self.labelRcm.configure(text='')
+        self.__clear__()
 
         # Notify the user and prevent subsequent press:
         self.updateModelLabel.configure(text='Running...')

@@ -656,10 +656,11 @@ class Hohlraum(object):
 
         matplotlib.pyplot.show()
 
-    def plot_hohlraum(self, ax=None):
+    def plot_hohlraum(self, ax=None, text=True):
         """ Make a plot of the hohlraum wall and LOS into given Axes.
 
         :param ax: matplotlib Axes instance to plot into
+        :param text: show text labels of various things
         """
         # sanity check:
         if ax is None:
@@ -694,38 +695,39 @@ class Hohlraum(object):
 
             ax.plot(z, r, 'b--')
 
-        # add a WRF text annotation for blue lines:
-        text = 'WRF LOS'
-        theta = scipy.stats.tmean(self.angles)
-        ax.text(LOS_z(r_max, theta), r_max,  # where to put it
-                text,  #  text to display
-                color='blue', horizontalalignment='center')
-        #backgroundcolor='blue') # fill background
-        #bbox=dict(ec='black', fc='blue', alpha=1.0)) # add black boundary
+        if text:
+            # add a WRF text annotation for blue lines:
+            text = 'WRF LOS'
+            theta = scipy.stats.tmean(self.angles)
+            ax.text(LOS_z(r_max, theta), r_max,  # where to put it
+                    text,  #  text to display
+                    color='blue', horizontalalignment='center')
+            #backgroundcolor='blue') # fill background
+            #bbox=dict(ec='black', fc='blue', alpha=1.0)) # add black boundary
 
-        # Some coordinates for displaying text
-        z_min = min(flatten(self.all_z))
-        z_max = max(flatten(self.all_z))
-        if math.fabs(z_min) < 1e-3:
-            z_text = (z_max-z_min)/3.
-        else:
-            z_text = 0.
-        dr = (r_max-r_min)/15.
+            # Some coordinates for displaying text
+            z_min = min(flatten(self.all_z))
+            z_max = max(flatten(self.all_z))
+            if math.fabs(z_min) < 1e-3:
+                z_text = (z_max-z_min)/3.
+            else:
+                z_text = 0.
+            dr = (r_max-r_min)/15.
 
-        # add some text annotation with thicknesses:
-        text = '{:.1f}'.format(self.Au) + r' $\mu$m Au'
-        ax.text(z_text, r_min+2*dr, text, horizontalalignment='center')
+            # add some text annotation with thicknesses:
+            text = '{:.1f}'.format(self.Au) + r' $\mu$m Au'
+            ax.text(z_text, r_min+2*dr, text, horizontalalignment='center')
 
-        text = '{:.1f}'.format(self.DU) + r' $\mu$m DU'
-        ax.text(z_text, r_min+dr, text, horizontalalignment='center')
+            text = '{:.1f}'.format(self.DU) + r' $\mu$m DU'
+            ax.text(z_text, r_min+dr, text, horizontalalignment='center')
 
-        text = '{:.1f}'.format(self.Al) + r' $\mu$m Al'
-        ax.text(z_text, r_min, text, horizontalalignment='center')
+            text = '{:.1f}'.format(self.Al) + r' $\mu$m Al'
+            ax.text(z_text, r_min, text, horizontalalignment='center')
 
 
-        # add an indicator showing where N pole is in this plot
-        ax.arrow(z_max, r_min, z_max / 8, 0, fc='k', ec='k', head_width=z_max / 30, head_length=z_max / 30)
-        ax.text(z_max, r_min * 1.02, 'N pole', ha='left', va='bottom')
+            # add an indicator showing where N pole is in this plot
+            ax.arrow(z_max, r_min, z_max / 8, 0, fc='k', ec='k', head_width=z_max / 30, head_length=z_max / 30)
+            ax.text(z_max, r_min * 1.02, 'N pole', ha='left', va='bottom')
 
         ax.set_xlabel('z (cm)')
         ax.set_ylabel('r (cm)')

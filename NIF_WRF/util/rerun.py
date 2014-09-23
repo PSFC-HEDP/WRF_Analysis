@@ -101,6 +101,8 @@ def rerun(shot, dim, pos, OutputDir=None, usePrevParam=False, usePrevModel=True)
     # get the hohlraum wall:
     if do_hohl_corr:
         hohl_drawing = setup_db.query_col(shot, dim, pos, 'hohl_drawing')[0]
+        while ' ' in hohl_drawing:
+            hohl_drawing = hohl_drawing.replace(' ', '')
         wall = hohl_db.get_wall(drawing=hohl_drawing)
         hohl_thick = None
 
@@ -170,8 +172,8 @@ def rerun(shot, dim, pos, OutputDir=None, usePrevParam=False, usePrevModel=True)
 
     # energy limits based on default window
     fit_mean = init_db.get_value(shot, dim, pos, 'fit_mean')[0]
-    min_energy = fit_mean - 1.5
-    max_energy = fit_mean + 1.5
+    min_energy = fit_mean - 2
+    max_energy = fit_mean + 2
     limits = [min_energy, max_energy]
 
     # get the rhoR model
@@ -316,22 +318,23 @@ def rerun_all():
     # Total number that need to be rerun:
     n = 0
     for shot in db.get_shots()[startIndex:]:
-        for dim in db.get_dims(shot):
-            n += len(db.get_pos(shot, dim))
+        #for dim in db.get_dims(shot):
+        n += len(db.get_pos(shot, '90-78'))
 
     prog = WRF_Progress_Dialog()
     prog.set_text('Running...0/'+str(n))
 
     i = 1
     for shot in db.get_shots()[startIndex:]:
-        for dim in db.get_dims(shot):
-            for pos in db.get_pos(shot, dim):
-                prog.set_text('Running...'+str(i)+'/'+str(n))
-                rerun(shot, dim, pos, OutputDir=OutputDir)
-                prog.step(100./float(n))
-                prog.update_idletasks()
-                i += 1
+        dim = '90-78'
+        #for dim in db.get_dims(shot):
+        for pos in db.get_pos(shot, dim):
+            prog.set_text('Running...'+str(i)+'/'+str(n))
+            rerun(shot, dim, pos, OutputDir=OutputDir)
+            prog.step(100./float(n))
+            prog.update_idletasks()
+            i += 1
 
-                if prog.cancelled:
-                    return
+            if prog.cancelled:
+                return
     prog.cancel()

@@ -137,7 +137,7 @@ class Model_Frame(Collapsible_Frame):
         ttk.Label(self.subFrame, text='ρ (g/cc)').grid(row=n, column=0)
         self.entry_shell_rho = tk.StringVar()
         ttk.Entry(self.subFrame, width=8, textvariable=self.entry_shell_rho, state=tk.DISABLED).grid(row=n, column=1)
-        self.entry_shell_rho.set(str(rhoR_Model.__shell_rho__[rhoR_Model.def_shell_mat]))
+        self.entry_shell_rho.set(str(rhoR_Model.__shell_rho__[self.entry_shell_mat.get()]))
 
         # entry for mass remaining
         n+=1

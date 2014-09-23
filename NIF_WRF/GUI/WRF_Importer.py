@@ -19,6 +19,7 @@ class WRF_Importer(tk.Toplevel):
 
     :param parent: (optional) The parent UI element to this window [default=None]
     """
+    last_dir = Database.DIR
 
     def __init__(self, parent=None):
         """Initialize the GUI."""
@@ -66,7 +67,7 @@ class WRF_Importer(tk.Toplevel):
         # option to run analysis
         self.run_analysis_var = tk.BooleanVar()
         self.run_analysis = ttk.Checkbutton(self, text='Run analysis', variable=self.run_analysis_var)
-        self.run_analysis.select()  # start activated
+        self.run_analysis_var.set(True)  # start activated
         self.run_analysis.grid(row=4, column=0, columnspan=2)
 
         # control buttons at the bottom:
@@ -78,12 +79,14 @@ class WRF_Importer(tk.Toplevel):
     def select_csv(self):
         """Select a CSV file containing the wedge analysis."""
         from tkinter.filedialog import askopenfilename
+        print(WRF_Importer.last_dir)
         opts = dict(title='Open WRF Analysis CSV',
-                    initialdir=Database.DIR,
+                    initialdir=WRF_Importer.last_dir,
                     defaultextension='.csv',
                     filetypes=[('CSV','*.csv')],
                     multiple=False)
         self.csv_filename = askopenfilename(**opts)
+        WRF_Importer.last_dir = os.path.split(self.csv_filename)[0]
         # condense for display
         short = os.path.split(self.csv_filename)[-1]
         self.label_csv.configure(text=short)
@@ -91,8 +94,9 @@ class WRF_Importer(tk.Toplevel):
     def select_Nxy(self):
         """Select an image file to use as N(x,y)"""
         from tkinter.filedialog import askopenfilename
+        print(WRF_Importer.last_dir)
         opts = dict(title='Open WRF Analysis N(x,y)',
-                    initialdir=Database.DIR,
+                    initialdir=WRF_Importer.last_dir,
                     defaultextension='.bmp',
                     filetypes=[('Bitmap','*.bmp'),
                                ('GIF','*.gif'),
@@ -100,6 +104,7 @@ class WRF_Importer(tk.Toplevel):
                                ('PNG','*.png')],
                     multiple=False)
         self.image_filename = askopenfilename(**opts)
+        WRF_Importer.last_dir = os.path.split(self.image_filename)[0]
         # condense for display
         short = os.path.split(self.image_filename)[-1]
         self.label_image.configure(text=short)

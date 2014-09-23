@@ -180,8 +180,8 @@ class WRF_Analyzer(tk.Toplevel):
         box2.grid(row=12, column=1)
         # Default options for energy limits set via initial analysis info
         fit_mean = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_mean')[0]
-        self.min_energy.set(fit_mean - 1.5)
-        self.max_energy.set(fit_mean + 1.5)
+        self.min_energy.set(fit_mean - 2)
+        self.max_energy.set(fit_mean + 2)
 
         sep2 = ttk.Separator(self, orient='vertical')
         sep2.grid(row=13, column=0, columnspan=2, sticky='ew')
@@ -261,6 +261,8 @@ class WRF_Analyzer(tk.Toplevel):
         do_hohl_corr = self.hohl_var.get()
         if do_hohl_corr:
             hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
+            while ' ' in hohl_drawing:
+                hohl_drawing = hohl_drawing.replace(' ', '')
             wall = self.hohl_db.get_wall(drawing=hohl_drawing)
             hohl_thick = None
             if wall is None or len(wall) == 0:
@@ -419,6 +421,8 @@ class WRF_Analyzer(tk.Toplevel):
         # Try to fetch info on the bump from the database:
         try:
             hohl_drawing = self.setup_db.query_col(self.shot, self.dim, self.pos, 'hohl_drawing')[0]
+            while ' ' in hohl_drawing:
+                hohl_drawing = hohl_drawing.replace(' ', '')
             bump = self.hohl_db.get_bump(hohl_drawing)
             if isinstance(bump, list) and isinstance(bump[0],str):
                 self.bump_var.set(bump[1])

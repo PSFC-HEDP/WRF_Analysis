@@ -368,7 +368,7 @@ class rhoR_Model(object):
         V = (4 * math.pi / 3) * (Rcm - self.Tshell / 2) ** 3
         return self.Mass_Mix_Total / V
 
-    def rhoR_Mix(self, Rcm,) -> float:
+    def rhoR_Mix(self, Rcm) -> float:
         """Calculate mix areal density.
 
         :param Rcm: shell radius at shock BT [cm]

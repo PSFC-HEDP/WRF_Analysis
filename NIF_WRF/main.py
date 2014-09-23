@@ -14,6 +14,7 @@ if platform.system() is 'Darwin':
 # TODO: No way to add a shot to the shot DB? “Add Shot” should do this
 # TODO: Need to catch bugs while running analysis and display error message
 # TODO: Edit ShotDB window has a bug with dropdowns after column is added
+# TODO: update WRF adding so that it's more robust to strings enerted for dim and position (i.e. have some entries)
 
 
 __author__ = 'Alex Zylstra'

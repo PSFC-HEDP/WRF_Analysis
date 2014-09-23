@@ -166,6 +166,11 @@ class Hohlraum_DB(Generic_DB):
         if len(query.fetchall()) <= 0:  # not found in table:
             newval = (drawing, name, layer, material, r, z,)
             self.c.execute('INSERT INTO %s values (?,?,?,?,?,?)' % self.TABLE, newval)
+        else: # overwrite
+            s = 'DELETE FROM %s WHERE drawing=? AND layer=? AND z=?' % self.TABLE
+            self.c.execute(s, (drawing,layer,z,))
+            newval = (drawing, name, layer, material, r, z,)
+            self.c.execute('INSERT INTO %s values (?,?,?,?,?,?)' % self.TABLE, newval)
 
         # save change:
         self.db.commit()
