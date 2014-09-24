@@ -79,7 +79,6 @@ class WRF_Importer(tk.Toplevel):
     def select_csv(self):
         """Select a CSV file containing the wedge analysis."""
         from tkinter.filedialog import askopenfilename
-        print(WRF_Importer.last_dir)
         opts = dict(title='Open WRF Analysis CSV',
                     initialdir=WRF_Importer.last_dir,
                     defaultextension='.csv',
@@ -94,7 +93,6 @@ class WRF_Importer(tk.Toplevel):
     def select_Nxy(self):
         """Select an image file to use as N(x,y)"""
         from tkinter.filedialog import askopenfilename
-        print(WRF_Importer.last_dir)
         opts = dict(title='Open WRF Analysis N(x,y)',
                     initialdir=WRF_Importer.last_dir,
                     defaultextension='.bmp',

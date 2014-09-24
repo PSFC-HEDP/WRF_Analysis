@@ -33,6 +33,7 @@ class WRF_Analyzer(tk.Toplevel):
     :param dim: (optional) The DIM used, as a str [default prompts user]
     :param pos: (optional) The WRF position used, as a str [default prompts user]
     """
+    last_dir = Database.DIR
 
     def __init__(self, parent=None, shot=None, dim=None, pos=None):
         """Initialize the GUI."""
@@ -203,9 +204,15 @@ class WRF_Analyzer(tk.Toplevel):
 
     def __generate_adv__(self, row):
         """Helper method to generate the GUI for advanced analysis options"""
-        # set up the frame:
-        self.adv_frame = Model_Frame(self, text='Advanced', shot=self.shot, relief=tk.RAISED, borderwidth=1)
-        self.adv_frame.grid(row=row, column=0, columnspan=2, sticky='nsew')
+        try:
+            # set up the frame:
+            self.adv_frame = Model_Frame(self, text='Advanced', shot=self.shot, relief=tk.RAISED, borderwidth=1)
+            self.adv_frame.grid(row=row, column=0, columnspan=2, sticky='nsew')
+        except:
+            from tkinter.messagebox import showerror
+            dialog = showerror('Error', 'Could not load rhoR model info. Did you add this shot to the shot DB?')
+            self.withdraw()
+            return
 
     def __plot__(self):
         """Generate a plot of the raw data"""
@@ -315,12 +322,13 @@ class WRF_Analyzer(tk.Toplevel):
         # ask if we should generate rhoR plots
         from tkinter.filedialog import askdirectory
         opts = dict(mustexist='False',
-                       initialdir=Database.DIR,
+                       initialdir=WRF_Analyzer.last_dir,
                        title='Save files to')
         OutputDir = askdirectory(**opts)
         # sanity check:
         if OutputDir == '':  # user cancelled
             return
+        WRF_Analyzer.last_dir = OutputDir
 
         # Get a guess to help the fitting routine from the numbers in the initial analysis
         guess_Y = self.init_db.get_value(self.shot, self.dim, self.pos, 'fit_yield')

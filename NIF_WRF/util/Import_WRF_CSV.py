@@ -4,6 +4,7 @@ import numpy
 import csv
 import os
 
+
 def float_perc(str_in):
     """Convert a string to float with correction for percent symbols.
         i.e. 10% converts to 0.1.
@@ -11,9 +12,9 @@ def float_perc(str_in):
     :param str_in: The str to convert
     :rtype: float
     """
-    assert isinstance(str_in,str)
+    assert isinstance(str_in, str)
 
-    str_in = str_in.replace('%','e-2')
+    str_in = str_in.replace('%', 'e-2')
 
     return float(str_in)
 
@@ -61,11 +62,11 @@ class WRF_CSV(object):
         # Calibration info:
         self.WRF_Cal = ""
         # Data region limits:
-        self.Data_Limits = (-1,-1,-1,-1)
+        self.Data_Limits = (-1, -1, -1, -1)
         # Background #1 limits:
-        self.BG1_Limits = (-1,-1,-1,-1)
+        self.BG1_Limits = (-1, -1, -1, -1)
         # Background #2 limits:
-        self.BG2_Limits = (-1,-1,-1,-1)
+        self.BG2_Limits = (-1, -1, -1, -1)
         # contrast limit
         self.Contrast_Limit = 0
         # eccentricity limit
@@ -75,11 +76,11 @@ class WRF_CSV(object):
         self.Dmax_Unc = 0
         self.Dscale = 'new'
         # Diameter limits:
-        self.Dia_Limits = (-1,-1)
+        self.Dia_Limits = (-1, -1)
         # Whether diameter limits were chosen automatically
         self.Dia_Auto = False
         # Energy limits corresponding to the diameter limits
-        self.E_Limits = (-1,-1)
+        self.E_Limits = (-1, -1)
         # DvE c parameter
         self.c = 0
         # Uncertainty in c parameter
@@ -87,27 +88,27 @@ class WRF_CSV(object):
         # Chi^2 from fit
         self.chi2 = 0
         # energy limits used for the fit
-        self.Fit_Limits = (-1,-1)
+        self.Fit_Limits = (-1, -1)
         # Fit values (E,sigma,Yield)
-        self.Fit = (-1,-1,-1)
+        self.Fit = (-1, -1, -1)
         # Random uncertainties in the fit values (dE,ds,dY)
-        self.Unc_Random = (-1,-1,-1)
+        self.Unc_Random = (-1, -1, -1)
         # Systematic uncertainties in the fit values (dE,ds,dY)
-        self.Unc_Systematic = (-1,-1,-1)
+        self.Unc_Systematic = (-1, -1, -1)
         # CountingStats uncertainties in the fit values (dE,ds,dY)
-        self.Unc_CountingStats = (-1,-1,-1)
+        self.Unc_CountingStats = (-1, -1, -1)
         # DvE uncertainties in the fit values (dE,ds,dY)
-        self.Unc_DvE = (-1,-1,-1)
+        self.Unc_DvE = (-1, -1, -1)
         # "Fit error scaling" (dE,ds,dY)
-        self.Unc_FitError = (-1,-1,-1)
+        self.Unc_FitError = (-1, -1, -1)
         # Dmax uncertainties in the fit values (dE,ds,dY)
-        self.Unc_Dmax = (-1,-1,-1)
+        self.Unc_Dmax = (-1, -1, -1)
         # EtchScan uncertainties in the fit values (dE,ds,dY)
-        self.Unc_EtchScan = (-1,-1,-1)
+        self.Unc_EtchScan = (-1, -1, -1)
         # Nonlinearity uncertainties in the fit values (dE,ds,dY)
-        self.Unc_Nonlinearity = (-1,-1,-1)
+        self.Unc_Nonlinearity = (-1, -1, -1)
         # CalProc uncertainties in the fit values (dE,ds,dY)
-        self.Unc_CalProc = (-1,-1,-1)
+        self.Unc_CalProc = (-1, -1, -1)
 
         # Spectrum data:
         self.spectrum = []
@@ -126,7 +127,7 @@ class WRF_CSV(object):
                 self.shot = part
 
         # open file:
-        fileReader = csv.reader(open(fname,'r'),delimiter=',')
+        fileReader = csv.reader(open(fname, 'r'), delimiter=',')
 
         # read in the data from file:
         fileData = []
@@ -139,124 +140,124 @@ class WRF_CSV(object):
                 if 'Date & time' in row[0] and len(row) >= 3:
                     self.date = row[1].strip()
                     self.time = row[2].strip()
-                if 'Program version' in row[0] and len(row) >=2:
+                if 'Program version' in row[0] and len(row) >= 2:
                     self.program_date = row[1].strip()
                 if 'Scan file' in row[0] and len(row) >= 2:
                     self.scan_file = row[1].strip()
-                if 'Port & distance' in row[0]  and len(row) >=3:
+                if 'Port & distance' in row[0] and len(row) >= 3:
                     self.port = row[1].strip()
                     self.distance = float(row[2])
-                if 'WRF ID; Al blast(um) & cal' in row[0] and len(row) >=4:
+                if 'WRF ID; Al blast(um) & cal' in row[0] and len(row) >= 4:
                     self.WRF_ID = row[1].strip()
                     self.Al_Blast_Filter = float(row[2])
                     self.WRF_Cal = row[3].strip()
                 # Data region. Handle both 'old' and 'new' style WRF CSV files:
-                if 'Data x0; x1; y0; y1' in row[0] and len(row) >=5:
+                if 'Data x0; x1; y0; y1' in row[0] and len(row) >= 5:
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
-                    self.Data_Limits = (xmin,xmax,ymin,ymax)
-                elif 'Data ixlims; iylims' in row[0] and len(row) >=5:
+                    self.Data_Limits = (xmin, xmax, ymin, ymax)
+                elif 'Data ixlims; iylims' in row[0] and len(row) >= 5:
                     # Remove parens and then split into indices:
-                    xlim = row[1].replace('(','').replace(')','').split('-')
-                    ylim = row[2].replace('(','').replace(')','').split('-')
+                    xlim = row[1].replace('(', '').replace(')', '').split('-')
+                    ylim = row[2].replace('(', '').replace(')', '').split('-')
                     # Set the limits:
                     self.Data_Limits = (float(xlim[0]), float(xlim[1]), float(ylim[0]), float(ylim[1]))
-                if 'Back x0; x1; y0; y1' in row[0] and len(row) >=5 and self.BG1_Limits==(-1,-1,-1,-1):
+                if 'Back x0; x1; y0; y1' in row[0] and len(row) >= 5 and self.BG1_Limits == (-1, -1, -1, -1):
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
-                    self.BG1_Limits = (xmin,xmax,ymin,ymax)
-                elif 'Back x0; x1; y0; y1' in row[0] and len(row) >=5:
+                    self.BG1_Limits = (xmin, xmax, ymin, ymax)
+                elif 'Back x0; x1; y0; y1' in row[0] and len(row) >= 5:
                     xmin = float(row[1])
                     xmax = float(row[2])
                     ymin = float(row[3])
                     ymax = float(row[4])
-                    self.BG2_Limits = (xmin,xmax,ymin,ymax)
+                    self.BG2_Limits = (xmin, xmax, ymin, ymax)
                 if 'C; e; Dmax' in row[0] and len(row) >= 6:
                     self.Contrast_Limit = float(row[1])
                     self.Ecc_Limit = float(row[2])
                     self.Dmax = float(row[3])
                     self.Dmax_Unc = float(row[4])
                     self.Dscale = row[5]
-                if 'Dlow; Dhigh; Dauto; Elims' in row[0] and len(row) >=4:
-                    self.Dia_Limits = (float(row[1]),float(row[2]))
+                if 'Dlow; Dhigh; Dauto; Elims' in row[0] and len(row) >= 4:
+                    self.Dia_Limits = (float(row[1]), float(row[2]))
                     if 'yes' in row[3] or 'Yes' in row[3] or 'true' in row[3] or 'True' in row[3]:
                         self.Dia_Auto = True
                     else:
                         self.Dia_Auto = False
                     if len(row) >= 6:
                         if len(row[4]) > 0 and len(row[5]) > 0:
-                            self.E_Limits = (float(row[4]),float(row[5]))
+                            self.E_Limits = (float(row[4]), float(row[5]))
                 if 'DvE fit: c; dc; red. Chi^2' in row[0] and len(row) >= 4:
                     self.c = float(row[1])
                     self.dc = float(row[2])
                     self.chi2 = float(row[3])
                 if 'Fit limits' in row[0] and len(row) >= 3:
-                    self.Fit_Limits = (float(row[1]),float(row[2]))
+                    self.Fit_Limits = (float(row[1]), float(row[2]))
                 if ('Value:' in row[0] or 'Value (gaussian fit):' in row[0]) and len(row) >= 4:
-                    self.Fit = (float(row[1]),float(row[2]),float(row[3]))
+                    self.Fit = (float(row[1]), float(row[2]), float(row[3]))
                 if '    Random:' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_Random = (dE,ds,dY)
+                    self.Unc_Random = (dE, ds, dY)
                 if '    Systematic calib:' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_Systematic = (dE,ds,dY)
+                    self.Unc_Systematic = (dE, ds, dY)
                 if ('     Counting statistics' in row[0] or '     Counting & fit:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_CountingStats = (dE,ds,dY)
+                    self.Unc_CountingStats = (dE, ds, dY)
                 if ('     DvE fit:' in row[0] or '     DvE:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_DvE = (dE,ds,dY)
+                    self.Unc_DvE = (dE, ds, dY)
                 if '     Fit error scaling:' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_FitError = (dE,ds,dY)
+                    self.Unc_FitError = (dE, ds, dY)
                 if ('     Dmax scaling' in row[0] or '     Dmax:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_Dmax = (dE,ds,dY)
+                    self.Unc_Dmax = (dE, ds, dY)
                 if '     Etch & scan' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_EtchScan = (dE,ds,dY)
+                    self.Unc_EtchScan = (dE, ds, dY)
                 if '     WRF nonlinearity' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_Nonlinearity = (dE,ds,dY)
+                    self.Unc_Nonlinearity = (dE, ds, dY)
                 if ('     Cal. processing' in row[0] or '     Cal. & processing:' in row[0]) and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])
                     # deal with converting %:
                     dY = float_perc(row[3].strip()) * self.Fit[2]
-                    self.Unc_CalProc = (dE,ds,dY)
+                    self.Unc_CalProc = (dE, ds, dY)
 
         # now go back to the filename to extract the CR39 ID #
         for part in fname_components:
             if part.startswith('134') or part.startswith('135'):  # look for CR39 IDs
-                if not(part in self.WRF_ID):  # rule out the wedge ID, which is also in file name
+                if not (part in self.WRF_ID):  # rule out the wedge ID, which is also in file name
                     self.CR39_ID = part
 
         # Extract the DIM and position from the trailer port #:
@@ -264,12 +265,25 @@ class WRF_CSV(object):
             self.dim = '0-0'
             self.pos = 1
         elif self.port.startswith('Pol') or self.port.startswith('pol') \
-            or self.port.startswith('pp') or self.port.startswith('PP'): # polar DIM
+                or self.port.startswith('pp') or self.port.startswith('PP'):  # polar DIM
             self.dim = '0-0'
-            self.pos = (self.port.split('_')[0])[-1]
-        elif self.port.startswith('Pos') or self.port.startswith('pos'): # equatorial DIM
+            if '_' in self.port:
+                self.pos = (self.port.split('_')[0])[-1]
+            elif '-' in self.port:
+                self.pos = (self.port.split('-')[0])[-1]
+            else:
+                self.pos = self.port[-2]
+        elif self.port.startswith('Pos') or self.port.startswith('pos') \
+            or self.port.startswith('p') or self.port.startswith('P'):  # equatorial DIM
             self.dim = '90-78'
-            self.pos = (self.port.split('_')[0])[-1]
+            if '_' in self.port:
+                self.pos = (self.port.split('_')[0])[-1]
+            elif '-' in self.port:
+                self.pos = (self.port.split('-')[0])[-1]
+            else:
+                self.pos = self.port[-2]
+        else:
+            print('Warning: could not identify DIM and port!')
 
         # Parse the spectrum:
         self.spectrum = []
@@ -277,13 +291,13 @@ class WRF_CSV(object):
         for i in range(len(fileData)):
             if 'PROTON SPECTRUM' in fileData[i]:
                 spectrum_index = i
-        spectrum_index += 2 # now this is the first row of spectral data
-        for i in range(spectrum_index,len(fileData)):
+        spectrum_index += 2  # now this is the first row of spectral data
+        for i in range(spectrum_index, len(fileData)):
             if len(fileData[i]) > 0:
                 line = fileData[i][0].split(sep='\t')
-                E = float(line[0]) # Energy
-                Y = float(line[1]) # Yield
-                dY = float(line[2]) # Error
+                E = float(line[0])  # Energy
+                Y = float(line[1])  # Yield
+                dY = float(line[2])  # Error
 
                 # check:
                 if crop:
@@ -343,6 +357,5 @@ class WRF_CSV(object):
         info += "=== Spectrum ===\n"
         for x in self.spectrum:
             info += str(x[0]) + ',' + str(x[1]) + ',' + str(x[2]) + '\n'
-
 
         print(info)
