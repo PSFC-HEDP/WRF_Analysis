@@ -8,7 +8,7 @@ import scipy.interpolate
 #    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
 from NIF_WRF.util.Constants import *
-from NIF_WRF.util.StopPow import StopPow_LP, DoubleVector
+from NIF_WRF.util.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
 
 __author__ = 'Alex Zylstra'
 
@@ -33,8 +33,9 @@ class rhoR_Model(object):
     :param Tshell: (optional) thickness of the shell in-flight [cm] {default = 40e-4}
     :param Mrem: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
     :param E0: (optional) initial proton energy [MeV] {default=14.7}
+    :param dEdx_model: (optional) Stopping model to use, valid choices are 'LP', 'BPS', 'Z' {default='LP'}
     :author: Alex Zylstra
-    :date: 2013/09/04
+    :date: 2014/09/25
     """
 
     # values below are defaults
@@ -141,13 +142,15 @@ class rhoR_Model(object):
     # initial proton energy:
     def_E0 = 14.7
 
+    dEdx_models_avail = ['LP', 'BPS', 'Z']
+
     # options for stop pow calculations:
     steps = 100  # steps in radius per region
 
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
                  rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
-                 Tshell=40e-4, Mrem=0.15, E0=14.7):
+                 Tshell=40e-4, Mrem=0.15, E0=14.7, dEdx_model='LP'):
         """Initialize the rhoR model."""
         self.shell_mat = shell_mat
         self.Ri = Ri
@@ -166,6 +169,7 @@ class rhoR_Model(object):
         self.Tshell = Tshell
         self.Mrem = Mrem
         self.E0 = E0
+        self.dEdx_model = dEdx_model
 
         # calculate initial gas density in g/cc
         self.rho0_Gas = P0 * ((fD / 2) * self.rho_D2_STP + f3He * self.rho_3He_STP)
@@ -176,56 +180,102 @@ class rhoR_Model(object):
         # mix mass in g:
         self.Mass_Mix_Total = self.Mass_Shell_Total * self.MixF
 
-        # set up stopping power definitions
-        # for the downshift calculations
+        # set up stopping power definitions for the downshift calculations
         # shell material shorthand:
         A = self.__shell_A__[self.shell_mat]
         Z = self.__shell_Z__[self.shell_mat]
         # Set up DoubleVectors for gas plus mix stopping power
         self.__mfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
-        self.__mfGasMix__[0] = me / mp
-        self.__mfGasMix__[1] = 2
-        self.__mfGasMix__[2] = 3
+        self.__mfGasMix__[0] = 2
+        self.__mfGasMix__[1] = 3
         for i in range(len(A)):
-            self.__mfGasMix__[3+i] = A[i]
+            self.__mfGasMix__[2+i] = A[i]
+        self.__mfGasMix__[-1] = me / mp
         self.__ZfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
-        self.__ZfGasMix__[0] = -1
-        self.__ZfGasMix__[1] = 1
-        self.__ZfGasMix__[2] = 2
+        self.__ZfGasMix__[0] = 1
+        self.__ZfGasMix__[1] = 2
         for i in range(len(Z)):
-            self.__ZfGasMix__[3+i] = Z[i]
+            self.__ZfGasMix__[2+i] = Z[i]
+        self.__ZfGasMix__[-1] = -1
         self.__TfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
         self.__TfGasMix__[0] = self.Te_Gas
         self.__TfGasMix__[1] = self.Te_Gas
-        self.__TfGasMix__[2] = self.Te_Gas
         for i in range(len(Z)):
-            self.__TfGasMix__[3+i] = self.Te_Mix
+            self.__TfGasMix__[2+i] = self.Te_Mix
+        self.__TfGasMix__[-1] = self.Te_Gas
+        # For partially-ionized models (i.e. Zimmerman)
+        self.__mfGasMix_PI__ = DoubleVector(2+len(A))  # eg e-, D , 3He , H , C
+        self.__mfGasMix_PI__[0] = 2
+        self.__mfGasMix_PI__[1] = 3
+        for i in range(len(A)):
+            self.__mfGasMix_PI__[2+i] = A[i]
+        self.__ZfGasMix_PI__ = DoubleVector(2+len(A))  # eg e-, D , 3He , H , C
+        self.__ZfGasMix_PI__[0] = 1
+        self.__ZfGasMix_PI__[1] = 2
+        for i in range(len(Z)):
+            self.__ZfGasMix_PI__[2+i] = Z[i]
+        self.__ZbarGasMix_PI__ = DoubleVector(2+len(A))  # eg e-, D , 3He , H , C
+        self.__ZbarGasMix_PI__[0] = 1
+        self.__ZbarGasMix_PI__[1] = 2
+        for i in range(len(Z)):
+            self.__ZbarGasMix_PI__[2+i] = Z[i]
+        self.__TfGasMix_PI__ = DoubleVector(2+len(A))  # eg e-, D , 3He , H , C
+        self.__TfGasMix_PI__[0] = self.Te_Gas
+        self.__TfGasMix_PI__[1] = self.Te_Gas
+        for i in range(len(Z)):
+            self.__TfGasMix_PI__[2+i] = self.Te_Mix
 
         # some field particle info for the shell stopping power:
         self.__mfShell__ = DoubleVector(1+len(A))
-        self.__mfShell__[0] = me / mp
         for i in range(len(A)):
-            self.__mfShell__[1+i] = A[i]
+            self.__mfShell__[i] = A[i]
+        self.__mfShell__[-1] = me / mp
         self.__ZfShell__ = DoubleVector(1+len(Z))
-        self.__ZfShell__[0] = -1
         for i in range(len(Z)):
-            self.__ZfShell__[1+i] = Z[i]
+            self.__ZfShell__[i] = Z[i]
+        self.__ZfShell__[-1] = -1
         self.__TfShell__ = DoubleVector(1+len(A))
         for i in range(1+len(A)):
             self.__TfShell__[i] = Te_Shell
+        # And for the partially-ionized models
+        self.__mfShell_PI__ = DoubleVector(len(A))
+        for i in range(len(A)):
+            self.__mfShell_PI__[i] = A[i]
+        self.__ZfShell_PI__ = DoubleVector(len(Z))
+        for i in range(len(Z)):
+            self.__ZfShell_PI__[i] = Z[i]
+        self.__ZbarShell_PI__ = DoubleVector(len(Z))
+        for i in range(len(Z)):
+            self.__ZbarShell_PI__[i] = Z[i]
+        self.__TfShell_PI__ = DoubleVector(len(A))
+        for i in range(len(A)):
+            self.__TfShell_PI__[i] = Te_Shell
 
         # field particle info for the ablated material stopping power:
         self.__mfAbl__ = DoubleVector(1+len(A))
-        self.__mfAbl__[0] = me / mp
         for i in range(len(A)):
-            self.__mfAbl__[1+i] = A[i]
+            self.__mfAbl__[i] = A[i]
+        self.__mfAbl__[-1] = me / mp
         self.__ZfAbl__ = DoubleVector(1+len(Z))
-        self.__ZfAbl__[0] = -1
         for i in range(len(Z)):
-            self.__ZfAbl__[1+i] = Z[i]
+            self.__ZfAbl__[i] = Z[i]
+        self.__ZfAbl__[-1] = -1
         self.__TfAbl__ = DoubleVector(1+len(A))
         for i in range(1+len(A)):
             self.__TfAbl__[i] = self.Te_Abl
+        # And for the partially-ionized models
+        self.__mfAbl_PI__ = DoubleVector(len(A))
+        for i in range(len(A)):
+            self.__mfAbl_PI__[i] = A[i]
+        self.__ZfAbl_PI__ = DoubleVector(len(Z))
+        for i in range(len(Z)):
+            self.__ZfAbl_PI__[i] = Z[i]
+        self.__ZbarAbl_PI__ = DoubleVector(len(Z))
+        for i in range(len(Z)):
+            self.__ZbarAbl_PI__[i] = Z[i]
+        self.__TfAbl_PI__ = DoubleVector(len(A))
+        for i in range(len(A)):
+            self.__TfAbl_PI__[i] = self.Te_Abl
 
         # set up arrays for precomputed data for a few things:
         self.__RcmList__ = []
@@ -525,12 +575,14 @@ class rhoR_Model(object):
 
         ni_gas, ne_gas = self.n_Gas(Rcm)
         ni_mix, ne_mix = self.n_Mix(Rcm)
-        nf = DoubleVector(3+len(self.__shell_A__[self.shell_mat]))
-        nf[0] = ne_gas + ne_mix
-        nf[1] = ni_gas * self.fD
-        nf[2] = ni_gas * self.f3He
+        nf = DoubleVector(2 + len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
+        nf[0] = ni_gas * self.fD
+        nf[1] = ni_gas * self.f3He
         for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[3+i] = ni_mix * self.__shell_F__[self.shell_mat][i]
+            nf[2+i] = ni_mix * self.__shell_F__[self.shell_mat][i]
+        # for plasma models, include electrons:
+        if self.dEdx_model != 'Z':
+            nf[-1] = ne_gas + ne_mix
 
         # if any densities are zero, it is problematic (no mix does this)
         # add 1 particle per cc minimum:
@@ -538,13 +590,20 @@ class rhoR_Model(object):
             if nf[i] <= 0:
                 nf[i] = 1
 
-        # Use Li-Petrasso:
         if nf[0] > 0:  # with sanity check
-            model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
+            # choose the correct model
+            if self.dEdx_model == 'BPS':
+                model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
+            elif self.dEdx_model == 'Z':
+                model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfGasMix_PI__, self.__ZfGasMix_PI__, self.__TfGasMix_PI__, nf, self.__ZbarGasMix_PI__, self.Te_Gas)
+            else: # default to LP
+                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
+
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
                 return model.Eout(Ep, x)
 
+        print('Warning: dE/dx failure in Eout_GasMix')
         return Ep
 
     def Eout_Shell(self, Ep, x, Rcm) -> float:
@@ -556,18 +615,27 @@ class rhoR_Model(object):
         :returns: downshifted energy [MeV]
         """
         ni, ne = self.n_Shell(Rcm)
-        nf = DoubleVector(1+len(self.__shell_A__[self.shell_mat]))
-        nf[0] = ne
+        nf = DoubleVector(len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
         for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]
+            nf[i] = ni * self.__shell_F__[self.shell_mat][i]
+        # for plasma models, include electrons:
+        if self.dEdx_model != 'Z':
+            nf[-1] = ne
 
-        # Use Li-Petrasso:
         if ne > 0:
-            model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
+            # choose the correct model
+            if self.dEdx_model == 'BPS':
+                model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
+            elif self.dEdx_model == 'Z':
+                model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfShell_PI__, self.__ZfShell_PI__, self.__TfShell_PI__, nf, self.__ZbarShell_PI__, self.Te_Shell)
+            else:
+                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
+
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
                 return model.Eout(Ep, x)
 
+        print('Warning: dE/dx failure in Eout_Shell')
         return Ep
 
     def dEdr_Abl(self, Ep, r, Rcm):
@@ -579,16 +647,25 @@ class rhoR_Model(object):
         :returns: stopping power [MeV/cm]
         """
         ni, ne = self.n_Abl(r, Rcm)
-        nf = DoubleVector(1+len(self.__shell_A__[self.shell_mat]))
-        nf[0] = ne
+        nf = DoubleVector(len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
         for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[1+i] = ni * self.__shell_F__[self.shell_mat][i]
+            nf[i] = ni * self.__shell_F__[self.shell_mat][i]
+        # for plasma models, include electrons:
+        if self.dEdx_model != 'Z':
+            nf[-1] = ne
 
-        # Use Li-Petrasso:
         if ne > 0:
-            model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
+            # choose the correct model
+            if self.dEdx_model == 'BPS':
+                model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
+            elif self.dEdx_model == 'Z':
+                model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfAbl_PI__, self.__ZfAbl_PI__, self.__TfAbl_PI__, nf, self.__ZbarAbl_PI__, self.Te_Abl)
+            else:
+                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
+
             # check limits:
             if model.get_Emin() < Ep < model.get_Emax():
                 return 1e4 * model.dEdx(Ep)
 
+        print('Warning: dE/dx failure in dEdr_Abl')
         return Ep

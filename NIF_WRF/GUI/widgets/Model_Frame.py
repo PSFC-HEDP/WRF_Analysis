@@ -27,7 +27,7 @@ class Model_Frame(Collapsible_Frame):
             self.db = Shot_DB()
 
         self.configure(background='#eeeeee')
-
+        self.subFrame.configure(background='#eeeeee')
         self.__create_widgets__()
 
     def __create_widgets__(self):
@@ -67,6 +67,18 @@ class Model_Frame(Collapsible_Frame):
             f3He = float(self.db.query_col(self.shot, 'f3He'))
         except:
             f3He = None
+
+        # -------------------------
+        #    Stopping model
+        # -------------------------
+        ttk.Label(self.subFrame, text='dE/dx').grid(row=n, column=0, columnspan=2)
+        self.entry_dEdx = tk.StringVar()
+        opts = [''] + rhoR_Model.dEdx_models_avail
+        dEdx_box = ttk.OptionMenu(self.subFrame, self.entry_dEdx, *opts)
+        self.entry_dEdx.set(rhoR_Model.dEdx_models_avail[0])
+        dEdx_box.configure(width=10)
+        dEdx_box.grid(row=n, column=2, columnspan=2)
+        n+=1
 
         # -------------------------
         #    Shell Configuration
@@ -343,7 +355,7 @@ class Model_Frame(Collapsible_Frame):
         ret = rhoR_Analysis(self.shell_mat, self.Ri, self.Ro, self.fD, self.f3He, self.P0,
                             self.Te_Gas, self.Te_Shell, self.Te_Abl, self.Te_Mix,
                             self.rho_Abl_Max, self.rho_Abl_Min, self.rho_Abl_Scale,
-                            self.MixF, self.Tshell, self.Mrem, self.E0,
+                            self.MixF, self.Tshell, self.Mrem, self.E0, self.dEdx_model,
                             self.Ri_err, self.Ro_err, self.P0_err, self.fD_err, self.f3He_err,
                             self.Te_Gas_err, self.Te_Shell_err, self.Te_Abl_err, self.Te_Mix_err,
                             self.rho_Abl_Max_err, self.rho_Abl_Min_err, self.rho_Abl_Scale_err,
@@ -362,7 +374,7 @@ class Model_Frame(Collapsible_Frame):
         ret = rhoR_Model(self.shell_mat, self.Ri, self.Ro, self.fD, self.f3He, self.P0,
                             self.Te_Gas, self.Te_Shell, self.Te_Abl, self.Te_Mix,
                             self.rho_Abl_Max, self.rho_Abl_Min, self.rho_Abl_Scale,
-                            self.MixF, self.Tshell, self.Mrem, self.E0)
+                            self.MixF, self.Tshell, self.Mrem, self.E0, self.dEdx_model)
 
         return ret
 
@@ -432,6 +444,7 @@ class Model_Frame(Collapsible_Frame):
         self.Tshell = float(self.entry_Tshell.get()) / 1.e4
         self.Mrem = float(self.entry_Mrem.get())
         self.E0 = float(self.entry_E0.get())
+        self.dEdx_model = self.entry_dEdx.get()
 
         # and their uncertainties:
         self.Ri_err = float(self.entry_Ri_err.get()) / 1.e4  # convert to cm

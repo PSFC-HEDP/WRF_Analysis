@@ -30,9 +30,10 @@ class rhoR_Analysis(object):
     :param Tshell: (optional) shell thickness during the implosion [cm] {default=40e-4}
     :param Mrem: (optional) shell mass remaining during the implosion [fractional] {default=0.175}
     :param E0: (optional) initial proton energy [MeV] {default=14.7}
+    :param dEdx_model: (optional) Stopping model to use, valid choices are 'LP', 'BPS', 'Z' {default='LP'}
 
     :author: Alex Zylstra
-    :date: 2013/09/04
+    :date: 2014/09/25
     """
 
     # set verbosity for console output:
@@ -62,7 +63,7 @@ class rhoR_Analysis(object):
     def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
                  Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=0.5,
                  rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
-                 Tshell=40e-4, Mrem=0.175, E0=14.7,
+                 Tshell=40e-4, Mrem=0.175, E0=14.7, dEdx_model='LP',
                  Ri_Err=5e-4, Ro_Err=5e-4, P0_Err=1, fD_Err=0, f3He_Err=0,
                  Te_Gas_Err=2,Te_Shell_Err=0.1, Te_Abl_Err=0.1, Te_Mix_Err=0.2,
                  rho_Abl_Max_Err=0.5, rho_Abl_Min_Err=0.05, rho_Abl_Scale_Err=30e-4,
@@ -106,10 +107,11 @@ class rhoR_Analysis(object):
         self.Tshell = [Tshell - self.Tshell_Err, Tshell, Tshell + self.Tshell_Err]
         self.Mrem = [Mrem - self.Mrem_Err, Mrem, Mrem + self.Mrem_Err]
         self.E0 = E0
+        self.dEdx_model = dEdx_model
 
         # start the rhoR model itself:
         self.model = rhoR_Model(self.shell_mat, Ri, Ro, fD, f3He, P0, Te_Gas, Te_Shell, Te_Abl, Te_Mix, rho_Abl_Max, rho_Abl_Min,
-                                rho_Abl_Scale, MixF, Tshell, Mrem, E0)
+                                rho_Abl_Scale, MixF, Tshell, Mrem, E0, dEdx_model)
 
         # a list of all parameters
         self.AllParam = []
