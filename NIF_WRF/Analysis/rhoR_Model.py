@@ -346,16 +346,24 @@ class rhoR_Model(object):
 
         #range through ablated mass gradient:
         r1, r2, r3 = self.get_Abl_radii(Rcm)
+        #print('r1,r2,r3 = ', r1, r2, r3)
+        if r3 <= r2:
+            print('Warning: problem in ablated region')
+
+        # first part of the ablated region:
         dr = (r2 - r1) / self.steps
-        # have to do manually b/c of density gradient:
-        for i in range(self.steps):
-            E += dr * self.dEdr_Abl(E, r1 + dr * i, Rcm)
+        if dr > 0:
+            # have to do manually b/c of density gradient:
+            for i in range(self.steps):
+                E += dr * self.dEdr_Abl(E, r1 + dr * i, Rcm)
+
         # for the rest of the ablated mass, stopping power is constant:
         dEdr = self.dEdr_Abl(E, (r2+r3)/2, Rcm)
         dr = (r3 - r2) / self.steps
-        # have to do manually b/c of density gradient:
-        for i in range(self.steps):
-            E += dr * dEdr
+        if dr > 0:
+            # have to do manually b/c of density gradient:
+            for i in range(self.steps):
+                E += dr * dEdr
 
         return max(E, 0)
 
@@ -661,9 +669,11 @@ class rhoR_Model(object):
             elif self.dEdx_model == 'Z':
                 model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfAbl_PI__, self.__ZfAbl_PI__, self.__TfAbl_PI__, nf, self.__ZbarAbl_PI__, self.Te_Abl)
             else:
-                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
+                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__ , self.__ZfAbl__, self.__TfAbl__, nf)
 
             # check limits:
+            if model.get_Emin() > Ep:
+                return 0
             if model.get_Emin() < Ep < model.get_Emax():
                 return 1e4 * model.dEdx(Ep)
 

@@ -112,6 +112,7 @@ def fit_polar(theta, rR, rR_err, l, angles=ANGLE_RAD):
     dof = len(rR) - len(fit)
     perr = np.divide(perr_scaled, np.sqrt((chi2/dof)))
     if np.isnan(perr[0]) or np.isnan(perr[1]):
+        print(fit, pcov)
         raise ValueError
 
     # Fit parameters:

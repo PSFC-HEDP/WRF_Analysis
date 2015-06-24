@@ -146,7 +146,7 @@ class rhoR_Analysis(object):
         if dE > 0:
             rhoR_min = self.model.Calc_rhoR(E1+dE)[0]
             rhoR_max = self.model.Calc_rhoR(E1-dE)[0]
-            TotalError = numpy.sqrt(0.25*(rhoR_max-rhoR_min)**2 + ModelError**2)
+            TotalError = numpy.sqrt(0.25*numpy.power(rhoR_max-rhoR_min,2) + ModelError**2)
         else:
             TotalError = ModelError
         return rhoR, Rcm, TotalError

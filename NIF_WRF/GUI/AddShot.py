@@ -36,28 +36,28 @@ class AddShot(tk.Toplevel):
     def __create_widgets__(self):
         """Create the UI elements"""
         # shot number:
-        self.label1 = ttk.Label(self, text='Shot Num')
+        self.label1 = ttk.Label(self, text='Shot Num', background='#eeeeee')
         self.label1.grid(row=0, column=0)
         self.shot_num_var = tk.StringVar()
-        self.shot_num = ttk.Entry(self, textvariable=self.shot_num_var)
+        self.shot_num = ttk.Entry(self, textvariable=self.shot_num_var, background='#eeeeee')
         self.shot_num.grid(row=0, column=1, columnspan=2)
 
-        self.label0 = ttk.Label(self, text='Shot Name')
+        self.label0 = ttk.Label(self, text='Shot Name', background='#eeeeee')
         self.label0.grid(row=1, column=0)
         self.shot_name_var = tk.StringVar()
-        self.shot_name = ttk.Entry(self, textvariable=self.shot_name_var)
+        self.shot_name = ttk.Entry(self, textvariable=self.shot_name_var, background='#eeeeee')
         self.shot_name.grid(row=1, column=1, columnspan=2)
 
-        self.label0 = ttk.Label(self, text='Hohlraum Drawing')
+        self.label0 = ttk.Label(self, text='Hohlraum Drawing', background='#eeeeee')
         self.label0.grid(row=2, column=0)
         self.hohl_draw_var = tk.StringVar()
-        self.hohl_draw = ttk.Entry(self, textvariable=self.hohl_draw_var)
+        self.hohl_draw = ttk.Entry(self, textvariable=self.hohl_draw_var, background='#eeeeee')
         self.hohl_draw.grid(row=2, column=1, columnspan=2)
 
         ttk_sep_1 = ttk.Separator(self, orient="vertical")
         ttk_sep_1.grid(row=3, column=0, columnspan=3, sticky='ew')
 
-        self.label2 = tk.Label(self, text='WRF Used:')
+        self.label2 = tk.Label(self, text='WRF Used:', background='#eeeeee')
         self.label2.grid(row=4, column=0)
 
         # add drop downs for WRF options:
@@ -68,19 +68,20 @@ class AddShot(tk.Toplevel):
         positions = 4
         for dim in range(len(DIMs)):
             # add a label for the DIM 'column'
-            label = tk.Label(self, text=DIMs[dim])
+            label = tk.Label(self, text=DIMs[dim], background='#eeeeee')
             label.grid(row=4, column=dim+1)
 
             # add the info for each position:
             for pos in range(1,positions+1):
                 # add a label on the first iteration only:
                 if dim == 0:
-                    label2 = tk.Label(self, text='Pos '+str(pos))
+                    label2 = tk.Label(self, text='Pos '+str(pos), background='#eeeeee')
                     label2.grid(row=4+pos, column=0)
 
                 # add a dropdown to select wedge type
                 var = tk.StringVar()
                 menu = tk.OptionMenu(self, var, *opts)
+                menu.configure(background='#eeeeee')
                 menu.configure(width=20)
                 var.set(opts[0])
                 menu.grid(row=4+pos, column=1+dim)
@@ -91,19 +92,20 @@ class AddShot(tk.Toplevel):
             snout_opts = self.snout_db.get_names()
             snout_var = tk.StringVar()
             snout = tk.OptionMenu(self, snout_var, *snout_opts)
+            snout.configure(background='#eeeeee')
             snout.grid(row=9, column=1+dim)
             self.Snout_Info.append([DIMs[dim], snout_var, snout])
 
-        self.label3 = tk.Label(self, text='Snout')
+        self.label3 = tk.Label(self, text='Snout', background='#eeeeee')
         self.label3.grid(row=9, column=0)
 
         ttk_sep_2 = ttk.Separator(self, orient="vertical")
         ttk_sep_2.grid(row=10, column=0, columnspan=3, sticky='ew')
 
         # add buttons to both cancel and go
-        self.cancel_button = tk.Button(self, text='Cancel', command=self.withdraw)
+        self.cancel_button = ttk.Button(self, text='Cancel', command=self.withdraw, style='TButton')
         self.cancel_button.grid(row=11, column=0)
-        self.go_button = tk.Button(self, text='Submit', command=self.add_shot)
+        self.go_button = ttk.Button(self, text='Submit', command=self.add_shot, style='TButton')
         self.go_button.grid(row=11, column=1, columnspan=2, sticky='s')
 
     def add_shot(self):
@@ -193,3 +195,5 @@ class AddShot(tk.Toplevel):
                     if label == 'poly_2':  # 100um poly for this drawing
                         dialog.vars[i].set('100')
                         dialog.entries[i].configure(state='disabled')
+
+        self.withdraw()

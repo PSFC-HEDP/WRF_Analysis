@@ -15,7 +15,12 @@ if platform.system() is 'Darwin':
 # TODO: Need to catch bugs while running analysis and display error message
 # TODO: Edit ShotDB window has a bug with dropdowns after column is added
 # TODO: update WRF adding so that it's more robust to strings enerted for dim and position (i.e. have some entries)
-
+# TODO: Add shot dialog (for ShotDB)
+# TODO: Fix backgrounds on Add a WRF shot dialog
+# TODO: Close WRF 'Add Shot' dialog after submit
+# TODO: Close add WRF dialog after submit, get rip of popup
+# TODO: Adding WRF data with user-specified thickness should add corr spectra to DB
+# TODO: Spectra plot window needs check/error handle for corrected spectra (if they don't exist)
 
 __author__ = 'Alex Zylstra'
 __date__ = '2014-03-22'
@@ -76,8 +81,12 @@ class Application(tk.Tk):
 
     def __init__(self):
         super(Application, self).__init__(None)
-        
+
+        from tkinter.ttk import Style
+        Style().configure('bg', background='#eeeeee')
+
         self.configure(background='#eeeeee')
+        #self.configure(style='bg')
         self.grid()
         self.createWidgets()
         self.__configureMatplotlib__()

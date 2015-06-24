@@ -91,6 +91,7 @@ class WRF_CSV(object):
         self.Fit_Limits = (-1, -1)
         # Fit values (E,sigma,Yield)
         self.Fit = (-1, -1, -1)
+        self.Fit_Raw = None
         # Random uncertainties in the fit values (dE,ds,dY)
         self.Unc_Random = (-1, -1, -1)
         # Systematic uncertainties in the fit values (dE,ds,dY)
@@ -198,7 +199,15 @@ class WRF_CSV(object):
                 if 'Fit limits' in row[0] and len(row) >= 3:
                     self.Fit_Limits = (float(row[1]), float(row[2]))
                 if ('Value:' in row[0] or 'Value (gaussian fit):' in row[0]) and len(row) >= 4:
-                    self.Fit = (float(row[1]), float(row[2]), float(row[3]))
+                    try:
+                        self.Fit = (float(row[1]), float(row[2]), float(row[3]))
+                    except:
+                        self.Fit = None
+                if 'Value (raw stats):' in row[0] and len(row) >= 4:
+                    self.Fit_Raw = (float(row[1]), float(row[2]), float(row[3]))
+                    # Use raw fit if Gauss is not available:
+                    if self.Fit is None:
+                        self.Fit = self.Fit_Raw
                 if '    Random:' in row[0] and len(row) >= 4:
                     dE = float(row[1])
                     ds = float(row[2])

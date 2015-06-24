@@ -331,6 +331,9 @@ class Hohlraum(object):
         :param Au: (optional) the gold thickness in um
         :returns: the energy out in MeV
         """
+        if E <= 0:
+            return 0
+
         # if no thicknesses are input, use default class variables:
         if Al is None:
             Al = self.Al

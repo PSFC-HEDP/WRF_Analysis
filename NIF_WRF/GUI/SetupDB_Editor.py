@@ -29,4 +29,6 @@ class SetupDB_Editor(Generic_Editor):
 
         self.db.insert(*values)
 
-        showinfo('', 'Data saved', parent=self)
+        #showinfo('', 'Data saved', parent=self)
+
+        self.withdraw()

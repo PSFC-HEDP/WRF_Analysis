@@ -12,7 +12,7 @@ from NIF_WRF.util.StopPow import StopPow, StopPow_LP, DoubleVector
 
 __author__ = 'Alex Zylstra'
 
-def plot_rhoR_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, color='k', title=None, old_models=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None, fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's curve versus energy.
 
     :param analysis: the rhoR analysis model to plot
@@ -76,8 +76,8 @@ def plot_rhoR_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, 
     # temp:
     ax.axhline(5, c='k', ls='dotted')
     ax.axhline(7, c='k', ls='dotted')
-    ax.text(75, 5.5, 'Pole', ha='center', va='center', fontsize=8)
-    ax.text(75, 7.5, 'Equator', ha='center', va='center', fontsize=8)
+    ax.text(75, 5.5, 'Pole', ha='center', va='center', fontsize=fontsize_sm)
+    ax.text(75, 7.5, 'Equator', ha='center', va='center', fontsize=fontsize_sm)
 
     # actual plot:
     p0, = ax.plot(RhoRList, EnergyList, color+'-')
@@ -104,28 +104,28 @@ def plot_rhoR_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, 
             names.append( name )
 
         # make the legend:
-        ax.legend(plots, names, fontsize=10, loc=3, ncol=2)
+        ax.legend(plots, names, fontsize=fontsize_lg, loc=3, ncol=2)
 
     # set some options:
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
     if units == 'g/cm2':
-        ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=10)
+        ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=fontsize_lg)
     else:
-        ax.set_xlabel(r'$\rho$R (mg/cm$^2$)', fontsize=10)
-    ax.set_ylabel(r'Energy (MeV)', fontsize=10)
+        ax.set_xlabel(r'$\rho$R (mg/cm$^2$)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(r'$\rho$R Model', fontsize=10)
+        ax.set_title(r'$\rho$R Model', fontsize=fontsize_lg)
 
-    ax.tick_params(axis='both', labelsize=8)
+    ax.tick_params(axis='both', labelsize=fontsize_sm)
 
     #plt.show()
     if filename is not None:
         matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(3.,2.5), rmin=None, rmax=None):
+def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, Eerr=0.13, grid=False, color='k', title=None, figsize=(3.,2.5), rmin=None, rmax=None, fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's curve of Rcm versus energy.
 
     :param analysis: the rhoR analysis model to plot
@@ -143,6 +143,8 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     :param rmin: (optional) Minimum radius to plot [cm]
     :param rmax: (optional) Maximum radius to plot [cm]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -191,13 +193,13 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=10)
-    ax.set_ylabel(r'Energy (MeV)', fontsize=10)
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=fontsize_lg)
     ax.set_xlim(100,900)
     if title is not None:
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=fontsize_lg)
 
-    ax.tick_params(axis='both', labelsize=8)
+    ax.tick_params(axis='both', labelsize=fontsize_sm)
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
@@ -206,7 +208,7 @@ def plot_Rcm_v_Energy(analysis, filename=None, ax=None, backend=None, E0=14.7, d
         matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, color='k', title=None, figsize=(3.,2.5), units='mg/cm2', rmin=None, rmax=None, fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's curve versus center-of-mass radius.
 
     :param analysis: the rhoR analysis model to plot
@@ -222,6 +224,8 @@ def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4,
     :param units: (optional) either 'mg/cm2' or 'g/cm2'
     :param rmin: (optional) Minimum radius to plot [cm]
     :param rmax: (optional) Maximum radius to plot [cm]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -266,15 +270,15 @@ def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4,
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=10)
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=fontsize_lg)
     if units == 'g/cm2':
-        ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=10)
+        ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=fontsize_lg)
     else:
-        ax.set_ylabel(r'$\rho$R (mg/cm$^2$)', fontsize=10)
+        ax.set_ylabel(r'$\rho$R (mg/cm$^2$)', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=fontsize_lg)
 
-    ax.tick_params(axis='both', labelsize=8)
+    ax.tick_params(axis='both', labelsize=fontsize_sm)
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
@@ -283,7 +287,7 @@ def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4,
         matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)):
+def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
     """Plot the mass profile for a given center-of-mass radius
 
     :param analysis: the rhoR analysis model to plot
@@ -293,6 +297,8 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
     :param xlim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     :param ylim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
 
     #sanity check:
@@ -339,15 +345,15 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
         ax.set_xlim(xlim)
     if ylim is not None:
         ax.set_ylim(ylim)
-    ax.set_xlabel(r'Radius ($\mu$m)', fontsize=10)
-    ax.set_ylabel(r'$\rho$ (g/cm$^3$)', fontsize=10)
-    ax.tick_params(axis='both', labelsize=8)
+    ax.set_xlabel(r'Radius ($\mu$m)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'$\rho$ (g/cm$^3$)', fontsize=fontsize_lg)
+    ax.tick_params(axis='both', labelsize=fontsize_sm)
 
     #show the plot:
     #plt.show()
     fig.savefig(filename, bbox_inches='tight')
 
-def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, legend=True, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None):
+def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, legend=True, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None, fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
 
     :param analysis: the rhoR analysis model to plot
@@ -365,6 +371,8 @@ def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150
     :param units: (optional) either 'mg/cm2' or 'g/cm2' [default=mg/cm2]
     :param rmin: (optional) Minimum radius to plot [cm]
     :param rmax: (optional) Maximum radius to plot [cm]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -434,22 +442,22 @@ def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150
         loc=1
     if legend:
         if normalize and not mix:
-            ax.legend(loc=loc, fontsize=8, ncol=3)
+            ax.legend(loc=loc, fontsize=fontsize_sm, ncol=3)
         else:
-            ax.legend(loc=loc, fontsize=8, ncol=2)
+            ax.legend(loc=loc, fontsize=fontsize_sm, ncol=2)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=10)
+    ax.set_xlabel(r'$R_{cm}$ ($\mu$m)', fontsize=fontsize_lg)
     if units == 'g/cm2':
-        ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=10)
+        ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=fontsize_lg)
     else:
-        ax.set_ylabel(r'$\rho$R (mg/cm$^2$)', fontsize=10)
+        ax.set_ylabel(r'$\rho$R (mg/cm$^2$)', fontsize=fontsize_lg)
     if normalize:
-        ax.set_ylabel(r'Fractional $\rho$R', fontsize=10)
+        ax.set_ylabel(r'Fractional $\rho$R', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=fontsize_lg)
     if rmin is not None and rmax is not None:
         ax.set_xlim(rmin*1e4, rmax*1e4)
 
@@ -459,7 +467,7 @@ def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150
 
 
 
-def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(3.,2.5)):
+def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
     """Compare several rhoR models by plotting rhoR vs energy for them.
 
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
@@ -473,6 +481,8 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param title: (optional) Title to display over the plot [default=None]
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -511,21 +521,21 @@ def compare_rhoR_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, 
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names, fontsize=10)
+        ax.legend(names, fontsize=fontsize_lg)
 
     # set some options:
     ax.set_ylim([0, math.ceil(E0)])
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
-    ax.set_ylabel(r'Energy (MeV)', fontsize=12)
+    ax.set_xlabel(r'$\rho$R (g/cm$^2$)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'Energy (MeV)', fontsize=fontsize_lg)
     if title is not None:
         ax.set_title(title)
 
     fig.savefig(filename, bbox_inches='tight')
 
 
-def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, figsize=(3.,2.5)):
+def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
     """Compare several rhoR models by plotting Rcm vs rhoR for them.
 
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
@@ -537,6 +547,8 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
     :param grid: (optional) whether to show a grid on the plot [default=False]
     :param title: (optional) Title to display over the plot [default=None]
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -575,26 +587,28 @@ def compare_Rcm_v_rhoR(analyses, filename, names=None, styles=None, Rmin=150e-4,
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names, fontsize=10)
+        ax.legend(names, fontsize=fontsize_lg)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=12)
-    ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=12)
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'$\rho$R (g/cm$^2$)', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(title, fontsize=12)
+        ax.set_title(title, fontsize=fontsize_lg)
 
     fig.savefig(filename, bbox_inches='tight')
 
 
-def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(3.,2.5)):
+def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, dE=0.25, Emin=5.0, Emax=14.0, grid=False, title=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
     """Compare several rhoR models by plotting Rcm vs energy for them.
 
     :param analysis: the rhoR model to plot, several rhoR_Model objects in a list
     :param filename: where to save the plot
     :param names: Labels for the models, legend is only generated if names is not None
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     assert isinstance(analyses, list)
@@ -633,20 +647,20 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
             opts.append(styles[i])
         ax.plot(plot_x[i], plot_y[i], *opts)
     if names is not None:
-        ax.legend(names, loc=4, fontsize=10)
+        ax.legend(names, loc=4, fontsize=fontsize_lg)
 
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=12)
-    ax.set_ylabel(r'E (MeV)', fontsize=12)
+    ax.set_xlabel(r'R$_{cm}$ ($\mu$m)', fontsize=fontsize_lg)
+    ax.set_ylabel(r'E (MeV)', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(title, fontsize=12)
+        ax.set_title(title, fontsize=fontsize_lg)
 
     fig.savefig(filename, bbox_inches='tight')
 
 
-def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, figsize=(3.,2.5), mix=True, units='mg/cm2'):
+def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, figsize=(3.,2.5), mix=True, units='mg/cm2', fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's stopping power in the various components vs proton energy for a given Rcm
 
     :param analysis: the rhoR model to plot
@@ -658,6 +672,8 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
     :param mix: (optional) Whether to plot the mix [default=True]
     :param units: (optional) either 'mg/cm2' or 'g/cm2' [default=mg/cm2]
+    :param fontsize_sm: (optional) font size for small text [default=8]
+    :param fontsize_lg: (optional) font size for large text [default=10]
     """
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
@@ -775,15 +791,15 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     # set some options:
     ax.grid(grid)
     # add labels:
-    ax.set_xlabel(r'$E_{p}$ (MeV)', fontsize=10)
+    ax.set_xlabel(r'$E_{p}$ (MeV)', fontsize=fontsize_lg)
     if units == 'g/cm2':
-        ax.set_ylabel(r'$dE/d\rho$R [MeV/(g/cm$^2$)]', fontsize=10)
+        ax.set_ylabel(r'$dE/d\rho$R [MeV/(g/cm$^2$)]', fontsize=fontsize_lg)
     else:
-        ax.set_ylabel(r'$dE/d\rho$R [MeV/(mg/cm$^2$)]', fontsize=10)
+        ax.set_ylabel(r'$dE/d\rho$R [MeV/(mg/cm$^2$)]', fontsize=fontsize_lg)
     if title is not None:
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=fontsize_lg)
     if legend:
-        ax.legend(loc=4, fontsize=8)
+        ax.legend(loc=4, fontsize=fontsize_sm)
     # Set limits for plot:
     minY = numpy.min([numpy.min(ShellList), numpy.min(AblList)])
     ax.set_ylim(minY*1.05, 0)
