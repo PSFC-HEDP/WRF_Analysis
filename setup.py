@@ -12,20 +12,17 @@ if sys.platform == "win32":
     
 # Dependencies are automatically detected, but it might need fine tuning.
 if platform.system() == 'Darwin':
-    build_exe_options = {"packages": ["os","scipy","scipy.interpolate","NIF_WRF","NIF_WRF.DB","NIF_WRF.Analysis","NIF_WRF.util","NIF_WRF.GUI","NIF_WRF.GUI.widgets"], 
-                                            "includes": ["numpy","scipy","scipy.interpolate","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
+    build_exe_options = {"packages": ["os","scipy","scipy.interpolate","scipy.linalg","NIF_WRF","NIF_WRF.DB","NIF_WRF.Analysis","NIF_WRF.util","NIF_WRF.GUI","NIF_WRF.GUI.widgets"], 
+                                            "includes": ["numpy","scipy","scipy.interpolate","scipy.linalg","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
                                             "excludes": [],
-                                            "include_files": [('NIF_WRF/util/_StopPow.so','_StopPow.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_csr.so','_csr.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_csc.so','_csc.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_coo.so','_coo.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_dia.so','_dia.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_bsr.so','_bsr.so'),
-                                                                                    ('/usr/local/lib/python3.3/site-packages/scipy/sparse/sparsetools/_csgraph.so','_csgraph.so')],
+                                            "include_files": [('NIF_WRF/util/_StopPow.so','_StopPow.so')],
                                             "optimize": 2
                                             }
     scripts = []
-    
+# 
+                                                                                    # ('/usr/local/lib/python3.4/site-packages/scipy/sparse/_csparsetools.so','_csparsetools.so'),
+                                                                                    # ('/usr/local/lib/python3.4/site-packages/scipy/sparse/_sparsetools.so','_sparsetools.so'),
+                                                                                    # ('/usr/local/lib/python3.4/site-packages/scipy/linalg/_fblas.so','_fblas.so')
 if platform.system() == 'Windows':
     build_exe_options = {"packages": ["os","scipy","scipy.interpolate","NIF_WRF","NIF_WRF.DB","NIF_WRF.Analysis","NIF_WRF.util","NIF_WRF.GUI","NIF_WRF.GUI.widgets"], 
                                             "includes": ["numpy","scipy","scipy.interpolate","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
@@ -70,7 +67,7 @@ msi_options = {'data': msi_data}
 
 
 setup(  name = "NIF_WRF",
-        version = "0.1.2",
+        version = "0.2.1",
         description = "NIF WRF database and analysis code",
     	packages=['NIF_WRF', 'NIF_WRF.DB', 'NIF_WRF.GUI', 'NIF_WRF.GUI.widgets', 'NIF_WRF.util', 'NIF_WRF.Analysis'],
         options = {"build_exe": build_exe_options, "bdist_mac": mac_options, "bdist_msi": msi_options},
