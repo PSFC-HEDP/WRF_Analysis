@@ -5,8 +5,4 @@
 StopPow.py
 test/runAnalysis/AnalysisOutputs
 
-*.pyc
-
-*.pyc
-
-*.pyc
+build

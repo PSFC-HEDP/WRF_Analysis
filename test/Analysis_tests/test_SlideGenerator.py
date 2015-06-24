@@ -1,9 +1,12 @@
 from unittest import TestCase
-from util.GaussFit import *
-from util.CSV import *
-from Analysis.Hohlraum import *
-import Analysis.SlideGenerator as SlideGenerator
-import sys, imp
+import sys
+import imp
+
+from NIF_WRF.util.GaussFit import *
+from NIF_WRF.util.CSV import *
+from NIF_WRF.Analysis.Hohlraum import *
+import NIF_WRF.Analysis.SlideGenerator as SlideGenerator
+
 
 __author__ = 'Alex Zylstra'
 

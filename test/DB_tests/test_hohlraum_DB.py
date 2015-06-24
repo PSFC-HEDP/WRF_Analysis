@@ -1,9 +1,9 @@
 from unittest import TestCase
-from DB.Hohlraum_DB import *
-import DB.Database as Database
-import string
-import random
 import os
+
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.Hohlraum_DB import *
+
 
 __author__ = 'Alex Zylstra'
 
@@ -149,3 +149,12 @@ class TestHohlraum_DB(TestCase):
         wall = self.h.get_wall(drawing='AAA12-119365_AA')
         self.assertEqual(len(wall), 1120)
         self.assertEqual(len(wall[0]), 6)
+
+    def test_bump(self):
+        """Test the bump database"""
+        self.h.set_bump('jkl', True, 10)
+        self.h.set_bump('jkl', True, 10)
+        temp = self.h.get_bump('jkl')
+        self.assertEqual(temp[0], 'jkl')
+        self.assertEqual(temp[1], True)
+        self.assertEqual(temp[2], 10)

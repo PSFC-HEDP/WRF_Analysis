@@ -1,8 +1,7 @@
 import sqlite3
 from unittest import TestCase
-from DB.Shot_DB import *
-import DB.Database as Database
-from DB.util import *
+from NIF_WRF.DB import Database
+from NIF_WRF.DB.Shot_DB import *
 
 __author__ = 'Alex Zylstra'
 
@@ -76,7 +75,7 @@ class TestShot_DB(TestCase):
         # should now have one more row:
         testPass = self.shot.num_rows() == 2
         # also should contain the new name:
-        testPass = testPass and ( "N123456" in flatten(self.shot.get_shots()) )
+        testPass = testPass and ( "N123456" in self.shot.get_shots() )
 
         self.assertTrue(testPass,"Failed DB.Shot_DB.insert")
 

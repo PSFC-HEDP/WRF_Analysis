@@ -1,6 +1,8 @@
 from unittest import TestCase
-from util.Import_Nxy import load_image
 import os
+
+from NIF_WRF.util.Import_Nxy import load_image
+
 
 __author__ = 'Alex Zylstra'
 

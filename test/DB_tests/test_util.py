@@ -1,8 +1,10 @@
 from unittest import TestCase
-from DB.util import *
 import random
 import sqlite3
 import string
+
+from NIF_WRF.DB.util import *
+
 
 __author__ = 'Alex Zylstra'
 
