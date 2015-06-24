@@ -3,11 +3,9 @@ __author__ = 'Alex Zylstra'
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from NIF_WRF.GUI.widgets.Collapsible_Frame import *
-from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
-from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
-from NIF_WRF.DB.WRF_rhoR_Model_DB import *
-from NIF_WRF.DB.Shot_DB import *
+from WRF_Analysis.GUI.widgets.Collapsible_Frame import *
+from WRF_Analysis.Analysis.rhoR_Model import rhoR_Model
+from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
 class Model_Frame(Collapsible_Frame):
@@ -22,9 +20,7 @@ class Model_Frame(Collapsible_Frame):
         Collapsible_Frame.__init__(self, parent, text, **options)
 
         # for getting info from the database:
-        self.shot = shot
-        if shot is not None:
-            self.db = Shot_DB()
+        self.shot = None
 
         self.configure(background='#eeeeee')
         self.subFrame.configure(background='#eeeeee')
@@ -420,9 +416,6 @@ class Model_Frame(Collapsible_Frame):
                   'MixF_Err': self.MixF_err,
                   'Tshell_Err': self.Tshell_err,
                   'Mrem_Err': self.Mrem_err}
-
-        DB = WRF_rhoR_Model_DB()
-        DB.load_results(shot, dim, position, values)
 
     def __update_param__(self):
         """Update the parameter values as entered into the GUI"""

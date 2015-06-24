@@ -4,8 +4,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import matplotlib
 import matplotlib.pyplot
-from NIF_WRF.Analysis import rhoR_model_plots
-from NIF_WRF.GUI.widgets.Model_Frame import Model_Frame
+from WRF_Analysis.Analysis import rhoR_model_plots
+from WRF_Analysis.GUI.widgets.Model_Frame import Model_Frame
 from threading import Thread
 
 

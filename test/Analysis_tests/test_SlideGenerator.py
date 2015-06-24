@@ -2,10 +2,10 @@ from unittest import TestCase
 import sys
 import imp
 
-from NIF_WRF.util.GaussFit import *
-from NIF_WRF.util.CSV import *
-from NIF_WRF.Analysis.Hohlraum import *
-import NIF_WRF.Analysis.SlideGenerator as SlideGenerator
+from WRF_Analysis.util.GaussFit import *
+from WRF_Analysis.util.CSV import *
+from WRF_Analysis.Analysis.Hohlraum import *
+import WRF_Analysis.Analysis.SlideGenerator as SlideGenerator
 
 
 __author__ = 'Alex Zylstra'

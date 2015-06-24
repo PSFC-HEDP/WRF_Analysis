@@ -5,9 +5,9 @@ import matplotlib
 import matplotlib.pyplot
 import numpy
 from numpy import arange, zeros
-from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
-from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
-from NIF_WRF.util.StopPow import StopPow, StopPow_LP, DoubleVector
+from WRF_Analysis.Analysis.rhoR_Model import rhoR_Model
+from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
+from WRF_Analysis.util.StopPow import StopPow, StopPow_LP, DoubleVector
 
 
 __author__ = 'Alex Zylstra'

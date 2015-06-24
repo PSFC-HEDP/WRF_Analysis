@@ -6,12 +6,12 @@ from datetime import *
 import csv
 import math
 import numpy
-from NIF_WRF.Analysis.rhoR_Analysis import rhoR_Analysis
-from NIF_WRF.Analysis.rhoR_model_plots import plot_rhoR_v_Energy, plot_Rcm_v_Energy, plot_rhoR_v_Rcm
-from NIF_WRF.GUI import WRF_Progress_Dialog
-from NIF_WRF.util.GaussFit import GaussFit
-from NIF_WRF.Analysis.Hohlraum import Hohlraum
-from NIF_WRF.Analysis.SlideGenerator import show_slide, save_slide
+from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
+from WRF_Analysis.Analysis.rhoR_model_plots import plot_rhoR_v_Energy, plot_Rcm_v_Energy, plot_rhoR_v_Rcm
+from WRF_Analysis.GUI import WRF_Progress_Dialog
+from WRF_Analysis.util.GaussFit import GaussFit
+from WRF_Analysis.Analysis.Hohlraum import Hohlraum
+from WRF_Analysis.Analysis.SlideGenerator import show_slide, save_slide
 
 __author__ = 'Alex Zylstra'
 

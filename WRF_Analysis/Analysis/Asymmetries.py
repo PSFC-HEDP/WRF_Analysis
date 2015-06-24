@@ -2,9 +2,7 @@ __author__ = 'Alex Zylstra'
 
 import scipy
 import numpy as np
-from NIF_WRF.Analysis.rhoR_Model import rhoR_Model
-from NIF_WRF.DB.WRF_Analysis_DB import WRF_Analysis_DB
-from NIF_WRF.DB.Snout_DB import Snout_DB
+from WRF_Analysis.Analysis.rhoR_Model import rhoR_Model
 
 ANGLE_DEG = 'degrees'
 ANGLE_RAD = 'radians'

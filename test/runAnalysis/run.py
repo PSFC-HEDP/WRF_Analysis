@@ -3,9 +3,9 @@
 #if cmd_subfolder not in sys.path:
 #    sys.path.insert(0, cmd_subfolder)
 
-from NIF_WRF.util.CSV import *
-from NIF_WRF.Analysis.Analyze_Spectrum import *
-from NIF_WRF.util.Import_Nxy import *
+from WRF_Analysis.util.CSV import *
+from WRF_Analysis.Analysis.Analyze_Spectrum import *
+from WRF_Analysis.util.Import_Nxy import *
 
 # read in the raw data:
 data = read_csv('TestData.csv',3)

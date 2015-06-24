@@ -16,8 +16,8 @@ import scipy.stats
 #    import syslog
 #    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import matplotlib
-from NIF_WRF.util.GaussFit import GaussFit
-import NIF_WRF.util.StopPow
+from WRF_Analysis.util.GaussFit import GaussFit
+import WRF_Analysis.util.StopPow
 
 
 __author__ = 'Alex Zylstra'
@@ -86,11 +86,11 @@ class Hohlraum(object):
     mode_thick = 'Thick'
 
     # set up SRIM calculators:
-    Al_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
+    Al_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Aluminum.txt"))  # SRIM stopping power for Al
-    Au_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
+    Au_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Gold.txt"))  # SRIM stopping power for Au
-    DU_SRIM = NIF_WRF.util.StopPow.StopPow_SRIM(
+    DU_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
         os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
 
     def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None, use_bump_corr=False, bump_corr=0):

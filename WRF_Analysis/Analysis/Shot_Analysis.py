@@ -1,7 +1,6 @@
 # This file contains several functions aiding in the analysis of entire shots' worth of data
 __author__ = 'Alex Zylstra'
 
-from NIF_WRF.DB.WRF_Analysis_DB import WRF_Analysis_DB
 import numpy
 
 ERR_TOTAL = 'total'

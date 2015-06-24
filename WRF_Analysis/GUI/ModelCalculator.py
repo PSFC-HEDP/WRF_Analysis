@@ -3,7 +3,7 @@ __author__ = 'Alex Zylstra'
 import tkinter as tk
 import tkinter.ttk as ttk
 import numpy as np
-from NIF_WRF.GUI.widgets.Model_Frame import Model_Frame
+from WRF_Analysis.GUI.widgets.Model_Frame import Model_Frame
 from threading import Thread
 
 

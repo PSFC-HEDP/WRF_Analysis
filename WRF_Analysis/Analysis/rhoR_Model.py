@@ -7,8 +7,8 @@ import scipy.interpolate
 #    import syslog
 #    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
-from NIF_WRF.util.Constants import *
-from NIF_WRF.util.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
+from WRF_Analysis.util.Constants import *
+from WRF_Analysis.util.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
 
 __author__ = 'Alex Zylstra'
 

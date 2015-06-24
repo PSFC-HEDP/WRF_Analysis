@@ -1,8 +1,8 @@
 from unittest import TestCase
 import math
 
-from NIF_WRF.util.CSV import *
-import NIF_WRF.Analysis.Hohlraum as Hohlraum
+from WRF_Analysis.util.CSV import *
+import WRF_Analysis.Analysis.Hohlraum as Hohlraum
 
 
 __author__ = 'Alex Zylstra'

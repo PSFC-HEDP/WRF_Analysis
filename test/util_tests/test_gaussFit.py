@@ -5,8 +5,8 @@ import os
 
 import numpy
 
-from NIF_WRF.util.GaussFit import *
-from NIF_WRF.util.CSV import *
+from WRF_Analysis.util.GaussFit import *
+from WRF_Analysis.util.CSV import *
 
 
 __author__ = 'Alex Zylstra'
@@ -34,7 +34,7 @@ class TestGaussFit(TestCase):
         self.assertAlmostEqual(Gaussian(11., 5e7, 9.5, 0.5), 4.432e5, delta=1e3)
 
         # speed test
-        t = timeit.timeit(stmt="Gaussian(0,1,1,1)",  setup="from NIF_WRF.util.GaussFit import Gaussian", number=int(1e3))
+        t = timeit.timeit(stmt="Gaussian(0,1,1,1)",  setup="from WRF_Analysis.util.GaussFit import Gaussian", number=int(1e3))
 
         if self.verbose:
             print("Evaluating Gaussian: " + '{:.2f}'.format(1e3*t) + " us per call")
