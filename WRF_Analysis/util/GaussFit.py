@@ -1,5 +1,5 @@
 import math
-import numpy
+import numpy as np
 import scipy
 try:
     import scipy.interpolate
@@ -24,7 +24,7 @@ def Gaussian(x, A, mu, sigma):
     """
     # 2.50663 = sqrt(2*Pi) evaluated for speed in python (interpreted lang)
     # evaluated a sqrt 2 in exp to speed things up
-    return A * math.exp(-math.pow( (x - mu)/(1.41421 * sigma), 2)) / (2.50663 * sigma)
+    return A * np.exp(-np.power( (x - mu)/(1.41421 * sigma), 2)) / (2.50663 * sigma)
 
 
 class GaussFit(object):
@@ -62,7 +62,7 @@ class GaussFit(object):
         name = ""
 
         # copy data
-        self.data = numpy.copy(data)
+        self.data = np.copy(data)
 
         # set guess parameters:
         self.GUESS = guess
@@ -74,9 +74,9 @@ class GaussFit(object):
         self.OPT_RESTRICT_CHI2 = restrict_chi2
 
         # split data into components:
-        self.data_x = numpy.ndarray(len(data))
-        self.data_y = numpy.ndarray(len(data))
-        self.data_err = numpy.ndarray(len(data))
+        self.data_x = np.ndarray(len(data))
+        self.data_y = np.ndarray(len(data))
+        self.data_err = np.ndarray(len(data))
         for i in range(len(data)):
             self.data_x[i] = data[i][0]
             self.data_y[i] = data[i][1]
@@ -95,10 +95,10 @@ class GaussFit(object):
                 maxI -= 1
 
             # set up the arrays:
-            self.data_lim = numpy.copy(self.data[minI:maxI+1])
-            self.data_x_lim = numpy.copy(self.data_x[minI:maxI+1])
-            self.data_y_lim = numpy.copy(self.data_y[minI:maxI+1])
-            self.data_err_lim = numpy.copy(self.data_err[minI:maxI+1])
+            self.data_lim = np.copy(self.data[minI:maxI+1])
+            self.data_x_lim = np.copy(self.data_x[minI:maxI+1])
+            self.data_y_lim = np.copy(self.data_y[minI:maxI+1])
+            self.data_err_lim = np.copy(self.data_err[minI:maxI+1])
         else:
             # 'limited' arrays are equivalent to regular arrays:
             self.data_lim = self.data
@@ -143,7 +143,7 @@ class GaussFit(object):
         # least squares minimization in scipy
         if method == 'leastsq':
             def gaussian(B,x):
-                return B[0]/(B[2]*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-B[1])**2/(2*B[2]**2)))
+                return B[0]/(B[2]*np.sqrt(2*np.pi))*np.exp(-((x-B[1])**2/(2*B[2]**2)))
             def func(p, x, y):
                 return y-gaussian(p, x)
 
@@ -156,7 +156,7 @@ class GaussFit(object):
         # curve fit routine in scipy
         else:
             def gaussian2(x, A, mu, sigma):
-                return A/(sigma*numpy.sqrt(2*numpy.pi))*numpy.exp(-((x-mu)**2/(2*sigma**2)))
+                return A/(sigma*np.sqrt(2*np.pi))*np.exp(-((x-mu)**2/(2*sigma**2)))
 
             result = scipy.optimize.curve_fit(gaussian2, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim, absolute_sigma=True, maxfev=2000)
             return result[0], result[1]
@@ -317,7 +317,7 @@ class GaussFit(object):
         # add text with fit parameters
         # location for the text: (based on line position)
         x = self.fit[1] + 4 * self.fit[2]
-        y = numpy.max(self.data_y) * 6 / 8
+        y = np.max(self.data_y) * 6 / 8
         # construct a text string to display:
         text = r'$Y_p$ = ' + '{:.2e}'.format(self.fit[0])
         ax.text(x, y, # data

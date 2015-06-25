@@ -5,49 +5,37 @@ if platform.system() is 'Darwin':
     import syslog
     syslog.openlog("Python")
 
-# TODO: Improve error handling, logging, and notifications
 # TODO: Better detection of shot number by splitting _ vs -
-# TODO: Add drop ability to hohlraum import
-# TODO: Remember last directory? For various opening/saving modules
-# TODO: cr39_2_id not grayed out for -10 setups
-# TODO: Should close “Add Shot” thing after spawning setup windows
-# TODO: No way to add a shot to the shot DB? “Add Shot” should do this
 # TODO: Need to catch bugs while running analysis and display error message
-# TODO: Edit ShotDB window has a bug with dropdowns after column is added
-# TODO: update WRF adding so that it's more robust to strings enerted for dim and position (i.e. have some entries)
-# TODO: Add shot dialog (for ShotDB)
-# TODO: Fix backgrounds on Add a WRF shot dialog
-# TODO: Close WRF 'Add Shot' dialog after submit
-# TODO: Close add WRF dialog after submit, get rip of popup
-# TODO: Adding WRF data with user-specified thickness should add corr spectra to DB
-# TODO: Spectra plot window needs check/error handle for corrected spectra (if they don't exist)
+# TODO: Don't auto-run model calculator and plotter
 
 __author__ = 'Alex Zylstra'
 __date__ = '2015-06-24'
 __version__ = '0.1'
 
-#try:
-import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter.filedialog import asksaveasfilename, askdirectory
-from tkinter.messagebox import askyesnocancel, askyesno
-import threading
+try:
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    from tkinter.filedialog import asksaveasfilename, askdirectory
+    from tkinter.messagebox import askyesnocancel, askyesno
+    import threading
+    import matplotlib
+    matplotlib.use('tkagg')
 
-# from WRF_Analysis.GUI.WRF_Importer import *
-# from WRF_Analysis.GUI.Plot_Spectrum import Plot_Spectrum
-# from WRF_Analysis.GUI.WRF_Analyzer import WRF_Analyzer
-from WRF_Analysis.GUI.ModelCalculator import ModelCalculator
-from WRF_Analysis.GUI.ModelPlotter import ModelPlotter
-# from WRF_Analysis.util.scripts import *
-# from WRF_Analysis.GUI.widgets import Option_Prompt
-#
-# except Exception as inst:
-#     if platform.system() is 'Darwin':
-#         syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
-#     from tkinter.messagebox import showerror
-#     showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
-#     import sys
-#     sys.exit(1)
+    from WRF_Analysis.GUI.WRF_Importer import *
+    from WRF_Analysis.GUI.Plot_Spectrum import Plot_Spectrum
+    from WRF_Analysis.GUI.ModelCalculator import ModelCalculator
+    from WRF_Analysis.GUI.ModelPlotter import ModelPlotter
+    from WRF_Analysis.GUI.widgets import Option_Prompt
+    from WRF_Analysis.GUI.HohlraumUI import HohlraumUI
+
+except Exception as inst:
+    if platform.system() is 'Darwin':
+        syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
+    from tkinter.messagebox import showerror
+    showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
+    import sys
+    sys.exit(1)
 
 class Application(tk.Tk):
     """Analysis and database application for the NIF WRF data"""
@@ -80,20 +68,51 @@ class Application(tk.Tk):
         self.bind('<Escape>', self.quit)
         self.protocol("WM_DELETE_WINDOW", self.quit)
 
+        # Some instance variables:
+        self.plotSpectrum_last_dir = None
+
     def createWidgets(self):
         row = 0
+
+        self.infoLabel = ttk.Label(self, text="WRF Analysis Utility")
+        self.infoLabel.grid(row=row, column=0, columnspan=3)
+        row += 1
+        self.authLabel = ttk.Label(self, text="Alex Zylstra")
+        self.authLabel.grid(row=row, column=0, columnspan=3)
+        row += 1
+        self.dateLabel = ttk.Label(self, text="2015-06-24")
+        self.dateLabel.grid(row=row, column=0, columnspan=3)
+        row += 1
+
+        ttk_sep_1 = ttk.Separator(self, orient="vertical")
+        ttk_sep_1.grid(row=row, column=0, columnspan=3, sticky='ew')
+        row += 1
 
         # For making plots of various stuff:
         self.plotInfo = ttk.Label(self, text='Analysis', font=self.bigFont)
         self.plotInfo.grid(row=row, column=0)
         row += 1
-        self.spectrumPlotButton = ttk.Button(self, text='Plot Spectrum', command=self.plotSpectrum)
-        self.spectrumPlotButton.grid(row=row, column=0)
+
+        self.label1 = ttk.Label(self, text="Spectrum:")
+        self.label1.grid(row=row, column=0)
+        self.spectrumPlotButton = ttk.Button(self, text='Plot', command=self.plotSpectrum)
+        self.spectrumPlotButton.grid(row=row, column=1)
+        self.analyzeSpectrumButton = ttk.Button(self, text='Analyze', command=self.Analyze)
+        self.analyzeSpectrumButton.grid(row=row, column=2)
         row += 1
 
-        #TODO: IMPLEMENT SPECTRUM ANALYSIS
-        self.analyzeSpectrumButton = ttk.Button(self, text='Analyze Spectrum')
-        self.analyzeSpectrumButton.grid(row=row, column=0)
+        self.label2 = ttk.Label(self, text='Asymmetries:')
+        self.label2.grid(row=row, column=0)
+        self.asymPlotButton = ttk.Button(self, text='Plot', command=self.plotAsymmetry)
+        self.asymPlotButton.grid(row=row, column=1)
+        self.asymFitButton = ttk.Button(self, text='Fit', command=self.fitAsymmetry)
+        self.asymFitButton.grid(row=row, column=2)
+        row += 1
+
+        self.label3 = ttk.Label(self, text='Hohlraum:')
+        self.label3.grid(row=row, column=0)
+        self.hohlraumButton = ttk.Button(self, text='Correct Spectrum', command=self.hohlCorr)
+        self.hohlraumButton.grid(row=row, column=1, columnspan=2)
         row += 1
 
         ttk_sep_4 = ttk.Separator(self, orient="vertical")
@@ -101,18 +120,8 @@ class Application(tk.Tk):
         row += 1
 
         # options for adding data, etc
-        self.label3 = ttk.Label(self, text="Utilities", font=self.bigFont)
+        self.label3 = ttk.Label(self, text="ρR Model", font=self.bigFont)
         self.label3.grid(row=row, column=0)
-        row += 1
-
-        self.addAnalysisButton = ttk.Button(self, text='Analyze', command=self.Analyze)
-        self.addAnalysisButton.grid(row=row, column=0)
-        self.addWRFButton = ttk.Button(self, text='Add WRF', command=self.addWRF)
-        self.addWRFButton.grid(row=row, column=1)
-        row += 1
-
-        self.label4 = ttk.Label(self, text='ρR Model', font=self.Font)
-        self.label4.grid(row=row, column=0)
         self.modelCalculatorButton = ttk.Button(self, text='Calculator', command=self.modelCalculator)
         self.modelCalculatorButton.grid(row=row, column=1)
         self.modelPlotterButton = ttk.Button(self, text='Plotter', command=self.modelPlotter)
@@ -123,35 +132,26 @@ class Application(tk.Tk):
         ttk_sep_3.grid(row=row, column=0, columnspan=3, sticky='ew')
         row += 1
 
-        self.style = ttk.Style()
-        themes = self.style.theme_names()
-        self.style_var = tk.StringVar()
-        self.style_menu = ttk.OptionMenu(self, self.style_var, themes[0], *themes)
-        self.style_var.trace_variable('w', self.update_style)
-        self.style_menu.grid(row=row, column=0, columnspan=3, sticky='NS')
-        row += 1
-
         self.quitButton = ttk.Button(self, text='Quit', command=self.quit)
         self.quitButton.grid(row=row, column=0, columnspan=3, sticky='S')
         row += 1
 
     def Analyze(self):
-        # WRF_Analyzer()
-        pass
-
-    def addWRF(self):
-        # WRF_Importer()
-        pass
+        WRF_Importer()
 
     def plotSpectrum(self):
-        #thread = threading.Thread(group=None, target=Plot_Spectrum)
-        #thread.start()
-        # Plot_Spectrum()
-        pass
-
-    def update_style(self, *args):
-        """Update the displayed style"""
-        self.style.theme_use(self.style_var.get())
+        from tkinter.filedialog import askopenfilename
+        opts = dict(title='Open WRF Analysis CSV',
+                    initialdir=self.plotSpectrum_last_dir,
+                    defaultextension='.csv',
+                    filetypes=[('CSV','*.csv')],
+                    multiple=False)
+        csv_filename = askopenfilename(**opts)
+        if csv_filename is None or len(csv_filename) == 0:
+            return
+        self.plotSpectrum_last_dir = os.path.split(csv_filename)[0]
+        spectrum = WRF_CSV(csv_filename)
+        Plot_Spectrum(spectrum)
 
     def modelCalculator(self, *args):
         """Display a simple calculator widget for the rhoR model."""
@@ -161,21 +161,21 @@ class Application(tk.Tk):
         """Display a simple plot widget for the rhoR model."""
         ModelPlotter(self)
 
+    def hohlCorr(self, *args):
+        """Perform a hohlraum correction on a spectrum."""
+        HohlraumUI(self)
+
+    def plotAsymmetry(self, *args):
+        pass
+
+    def fitAsymmetry(self, *args):
+        pass
+
     def __configureMatplotlib__(self):
-        import matplotlib, matplotlib.pyplot
-        # set matplotlib backend
-        if matplotlib.get_backend() != 'tkagg':
-            matplotlib.pyplot.switch_backend('TkAgg')
-        #matplotlib.pyplot.rc('font', **{'size':'8'})
-        #matplotlib.pyplot.rc('text', **{'usetex':False})
+        """Configure options for matplotlib"""
+        matplotlib.pyplot.rc('text', **{'usetex':False})
 
 def main():
-    # import NIF_WRF.GUI.widgets.plastik_theme as plastik_theme
-    # try:
-    #     plastik_theme.install(os.path.expanduser('~/.tile-themes/plastik/plastik/'))
-    # except Exception:
-    #     logging.warning('plastik theme being used without images')
-
     app = Application()
     app.mainloop()
 

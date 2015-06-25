@@ -4,14 +4,9 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import os
 
-from NIF_WRF.DB import Database
-from NIF_WRF.DB.WRF_Data_DB import *
-from NIF_WRF.DB.WRF_InitAnalysis_DB import *
-from NIF_WRF.DB.WRF_Inventory_DB import *
-from NIF_WRF.GUI.WRF_Progress_Dialog import *
-from NIF_WRF.GUI.WRF_Analyzer import *
-from NIF_WRF.util.Import_WRF_CSV import WRF_CSV
-from NIF_WRF.util.Import_Nxy import load_image
+from WRF_Analysis.GUI.WRF_Analyzer import *
+from WRF_Analysis.util.Import_WRF_CSV import WRF_CSV
+from WRF_Analysis.util.Import_Nxy import load_image
 
 
 class WRF_Importer(tk.Toplevel):
@@ -19,7 +14,7 @@ class WRF_Importer(tk.Toplevel):
 
     :param parent: (optional) The parent UI element to this window [default=None]
     """
-    last_dir = Database.DIR
+    WRF_Importer_last_dir = None
 
     def __init__(self, parent=None):
         """Initialize the GUI."""
@@ -64,12 +59,6 @@ class WRF_Importer(tk.Toplevel):
         self.image_button = ttk.Button(self, text='Open N(x,y)', command=self.select_Nxy)
         self.image_button.grid(row=2, column=1)
 
-        # option to run analysis
-        self.run_analysis_var = tk.BooleanVar()
-        self.run_analysis = ttk.Checkbutton(self, text='Run analysis', variable=self.run_analysis_var)
-        self.run_analysis_var.set(True)  # start activated
-        self.run_analysis.grid(row=4, column=0, columnspan=2)
-
         # control buttons at the bottom:
         self.cancel_button = ttk.Button(self, text='Cancel', command=self.withdraw)
         self.cancel_button.grid(row=5, column=0)
@@ -80,12 +69,12 @@ class WRF_Importer(tk.Toplevel):
         """Select a CSV file containing the wedge analysis."""
         from tkinter.filedialog import askopenfilename
         opts = dict(title='Open WRF Analysis CSV',
-                    initialdir=WRF_Importer.last_dir,
+                    initialdir=WRF_Importer.WRF_Importer_last_dir,
                     defaultextension='.csv',
                     filetypes=[('CSV','*.csv')],
                     multiple=False)
         self.csv_filename = askopenfilename(**opts)
-        WRF_Importer.last_dir = os.path.split(self.csv_filename)[0]
+        WRF_Importer.WRF_Importer_last_dir = os.path.split(self.csv_filename)[0]
         # condense for display
         short = os.path.split(self.csv_filename)[-1]
         self.label_csv.configure(text=short)
@@ -94,7 +83,7 @@ class WRF_Importer(tk.Toplevel):
         """Select an image file to use as N(x,y)"""
         from tkinter.filedialog import askopenfilename
         opts = dict(title='Open WRF Analysis N(x,y)',
-                    initialdir=WRF_Importer.last_dir,
+                    initialdir=WRF_Importer.WRF_Importer_last_dir,
                     defaultextension='.bmp',
                     filetypes=[('Bitmap','*.bmp'),
                                ('GIF','*.gif'),
@@ -102,7 +91,7 @@ class WRF_Importer(tk.Toplevel):
                                ('PNG','*.png')],
                     multiple=False)
         self.image_filename = askopenfilename(**opts)
-        WRF_Importer.last_dir = os.path.split(self.image_filename)[0]
+        WRF_Importer.WRF_Importer_last_dir = os.path.split(self.image_filename)[0]
         # condense for display
         short = os.path.split(self.image_filename)[-1]
         self.label_image.configure(text=short)
@@ -113,26 +102,13 @@ class WRF_Importer(tk.Toplevel):
         if not os.path.exists(self.csv_filename):
             return
 
-        # make a progress bar, since this can be lengthy:
-        #self.iconify()
-
-        # use the DB's method to load the data
-        db = WRF_Data_DB()
-        raw = WRF_CSV(self.csv_filename)
+        file = WRF_CSV(self.csv_filename)
         if os.path.exists(self.image_filename):
             image = load_image(self.image_filename)
         else:
             image = None
-        db.add_data(raw, image)
 
-        # also now call function to add to the initial analysis DB
-        db = WRF_InitAnalysis_DB()
-        db.import_csv(raw)
+        WRF_Analyzer(file, image)
 
-        if self.run_analysis_var.get():
-            WRF_Analyzer(shot=raw.shot, dim=raw.dim, pos=raw.pos)
-
-        db = WRF_Inventory_DB()
-        db.refresh_from_setup()
 
         self.withdraw()

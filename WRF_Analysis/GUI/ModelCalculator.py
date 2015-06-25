@@ -39,12 +39,14 @@ class ModelCalculator(tk.Toplevel):
         self.entryEvar = tk.StringVar()
         self.entryEvar.trace('w', self.__update__)
         self.entryE = ttk.Entry(frame, textvariable=self.entryEvar, width=10)
+        self.entryE.configure(state=tk.DISABLED)
         self.entryE.grid(row=0, column=1)
         label1b = ttk.Label(frame, text='±')
         label1b.grid(row=0, column=2)
         self.entryEerrvar = tk.StringVar()
         self.entryEerrvar.trace('w', self.__update__)
         self.entryEerr = ttk.Entry(frame, textvariable=self.entryEerrvar, width=8)
+        self.entryEerr.configure(state=tk.DISABLED)
         self.entryEerr.grid(row=0, column=3)
 
         label2 = ttk.Label(frame, text='ρR (mg/cm2)')
@@ -80,7 +82,7 @@ class ModelCalculator(tk.Toplevel):
         self.labelRcmerr = ttk.Label(frame, text='')
         self.labelRcmerr.grid(row=5, column=3)
 
-        self.updateModelButton = ttk.Button(frame, text='Update Model', command=self.__updateModel__)
+        self.updateModelButton = ttk.Button(frame, text='Run Model', command=self.__updateModel__)
         self.updateModelButton.grid(row=6, column=0, columnspan=2)
         self.updateModelLabel = ttk.Label(frame, text='')
         self.updateModelLabel.grid(row=6, column=2, columnspan=2)
@@ -88,8 +90,6 @@ class ModelCalculator(tk.Toplevel):
         frame.pack()
         self.adv_frame = Model_Frame(self, text='Model Parameters', relief=tk.RAISED, borderwidth=1)
         self.adv_frame.pack()
-
-        self.__updateModel__()
 
     def __update__(self, *args):
         """Event handler called to update the calculation"""
@@ -161,6 +161,8 @@ class ModelCalculator(tk.Toplevel):
                 # Re-enable:
                 self.updateModelLabel.configure(text='')
                 self.updateModelButton.configure(state=tk.ACTIVE)
+                self.entryE.configure(state=tk.ACTIVE)
+                self.entryEerr.configure(state=tk.ACTIVE)
                 self.__update__()
             else:
                 self.after(50, callback)

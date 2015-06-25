@@ -45,9 +45,10 @@ class ModelPlotter(tk.Toplevel):
         self.plotType.grid(row=0, column=0, columnspan=2)
 
         self.plotButton = ttk.Button(frame, text='Plot', command=self.__plot__)
+        self.plotButton.configure(state=tk.DISABLED)
         self.plotButton.grid(row=1, column=0, columnspan=2)
 
-        self.updateModelButton = ttk.Button(frame, text='Update Model', command=self.__updateModel__)
+        self.updateModelButton = ttk.Button(frame, text='Run Model', command=self.__updateModel__)
         self.updateModelButton.grid(row=3, column=0)
         self.updateModelLabel = ttk.Label(frame, text='')
         self.updateModelLabel.grid(row=3, column=1)
@@ -55,8 +56,6 @@ class ModelPlotter(tk.Toplevel):
         frame.pack()
         self.adv_frame = Model_Frame(self, text='Model Parameters', relief=tk.RAISED, borderwidth=1)
         self.adv_frame.pack()
-
-        self.__updateModel__()
 
     def __plot__(self, *args):
         """Event handler called to update the calculation"""
@@ -101,6 +100,7 @@ class ModelPlotter(tk.Toplevel):
                 # Re-enable:
                 self.updateModelLabel.configure(text='')
                 self.updateModelButton.configure(state=tk.ACTIVE)
+                self.plotButton.configure(state=tk.ACTIVE)
             else:
                 self.after(50, callback)
         self.after(50, callback)

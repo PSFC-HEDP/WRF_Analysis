@@ -6,82 +6,42 @@ import tkinter.ttk as ttk
 import numpy
 import matplotlib
 import matplotlib.pyplot
-from NIF_WRF.util.GaussFit import Gaussian
-from NIF_WRF.DB.WRF_Data_DB import *
-from NIF_WRF.DB.WRF_Analysis_DB import *
-from NIF_WRF.DB.WRF_InitAnalysis_DB import *
+from WRF_Analysis.util.GaussFit import Gaussian
 
 
 class Plot_Spectrum(tk.Toplevel):
     """Generic viewer for spectrum plots
 
+    :param file: The WRF CSV object to plot
     :param parent: (optional) The parent UI window to this one [default=None]
-    :param shot: (optional) The shot number to use [default=None]
-    :param dim: (optional) The DIM to use [default=None]
-    :param pos: (optional) The position to use [default=None]
     """
 
-    def __init__(self, parent=None, shot=None, dim=None, pos=None):
+    def __init__(self, file, parent=None):
         """Initialize the viewer window."""
         super(Plot_Spectrum, self).__init__()
 
         # initializations
-        self.db = WRF_Data_DB()
-        self.analysis_db = WRF_Analysis_DB()
-        self.initanalysis_db = WRF_InitAnalysis_DB()
         self.canvas = None
         self.ax = None
+        self.file = file
+        self.spectrum = file.spectrum
 
         # size limits
         #self.minsize(600,400)
         #self.maxsize(900,600)
 
         # make the UI:
-        self.__create_widgets__(shot, dim, pos)
+        self.__create_widgets__()
         self.configure(background='#eeeeee')
 
         # a couple key bindings:
         self.bind('<Escape>', self.close)
         self.protocol("WM_DELETE_WINDOW", self.close)
 
-    def __create_widgets__(self, shot, dim, pos):
+    def __create_widgets__(self):
         """Create the UI elements"""
         # make a frame for stuff:
         frame = tk.Frame(self)
-
-        # Add some UI elements:
-        label1 = ttk.Label(frame, text='Shot')
-        label1.grid(row=0, column=0)
-        label2 = ttk.Label(frame, text='DIM')
-        label2.grid(row=1, column=0)
-        label3 = ttk.Label(frame, text='Pos')
-        label3.grid(row=2, column=0)
-
-        shots = [''] + self.db.get_shots()
-
-        self.shot_var = tk.StringVar()
-        self.shot_selector = ttk.OptionMenu(frame, self.shot_var, *shots)
-        self.shot_selector.configure(width=20)
-        self.shot_var.set(shot)
-        self.shot_var.trace('w', self.update_shot)
-        self.shot_selector.grid(row=0, column=1)
-
-        self.dim_var = tk.StringVar(value=dim)
-        self.dim_selector = ttk.OptionMenu(frame, self.dim_var, [])
-        self.dim_selector.configure(width=20)
-        self.dim_var.trace('w', self.update_dim)
-        self.dim_selector.grid(row=1, column=1)
-
-        self.pos_var = tk.StringVar(value=pos)
-        self.pos_selector = ttk.OptionMenu(frame, self.pos_var, [])
-        self.pos_selector.configure(width=20)
-        self.pos_var.trace('w', self.update_plot)
-        self.pos_selector.grid(row=2, column=1)
-
-        self.corr_var = tk.BooleanVar()
-        self.corr_var_check = ttk.Checkbutton(frame, text='Hohlraum corrected?', variable=self.corr_var)
-        self.corr_var_check.grid(row=3, column=0, columnspan=2)
-        self.corr_var.trace('w', self.update_plot)
 
         self.fit_var = tk.BooleanVar()
         self.fit_var_check = ttk.Checkbutton(frame, text='Show fit?', variable=self.fit_var)
@@ -101,87 +61,27 @@ class Plot_Spectrum(tk.Toplevel):
         # Try to display data (if shot, dim, pos are supplied):
         self.update_plot()
 
-
-    def update_shot(self, *args):
-        """Called to update displayed info when the shot selection is updated."""
-        shot = self.shot_var.get()  # selected shot
-        selected_dim = self.dim_var.get()  # currently selected value
-        # get available DIMs:
-        DIMs = self.db.get_dims(shot)
-
-        # update DIM menu:
-        self.dim_selector['menu'].delete(0, "end")
-        if len(DIMs) == 0:
-            DIMs = ['']
-        for val in DIMs:
-            self.dim_selector['menu'].add_command(label=val,
-                             command=lambda value=val:
-                                  self.dim_var.set(value))
-
-        # check to see if we should save the selection:
-        if selected_dim in DIMs:
-            self.dim_var.set(selected_dim)
-
-        # also update the position:
-        self.update_dim()
-        # and the displayed data
-        self.update_plot()
-
-    def update_dim(self, *args):
-        """Called to update displayed info when the DIM selection is changed."""
-        shot = self.shot_var.get()  # selected shot
-        dim = self.dim_var.get()  # selected DIM
-
-        # get available positions:
-        positions = self.db.get_positions(shot, dim)
-
-        # update position menu:
-        self.pos_selector['menu'].delete(0, "end")
-        if len(positions) == 0:
-            positions = ['']
-        for val in positions:
-            self.pos_selector['menu'].add_command(label=val,
-                             command=lambda value=val:
-                                  self.pos_var.set(value))
-
-        # also update the displayed plot:
-        self.update_plot()
-
     def update_plot(self, *args):
         """Update the displayed plot"""
-
-        # get info:
-        shot = self.shot_var.get()  # selected shot
-        dim = self.dim_var.get()  # selected DIM
-        pos = self.pos_var.get()  # selected position
-        corr = bool(self.corr_var.get())  # if the hohlraum is corrected
-
         # generate axes if necessary:
         if self.ax is None:
             #self.fig = plt.Figure(figsize=(4,3))
-            self.fig = matplotlib.pyplot.Figure()
+            self.fig = matplotlib.figure.Figure()
             self.ax = self.fig.add_subplot(111)
         else:  # if ax exists, clear it:
             self.ax.clear()
         if self.canvas is not None:  # update the drawing if necessary
             self.canvas.draw()
 
-        # sanity check:
-        if shot == '' or dim == '' or pos == '':
-            return
-
-        # get the data:
-        spectrum = self.db.get_spectrum(shot, dim, pos, corr)
-
         # sanity:
-        if spectrum is None or len(spectrum) == 0:
+        if self.spectrum is None or len(self.spectrum) == 0:
             return
 
         # split up the data:
         data_x = []
         data_y = []
         data_err = []
-        for row in spectrum:
+        for row in self.spectrum:
             data_x.append(row[0])
             data_y.append(row[1])
             data_err.append(row[2])
@@ -210,18 +110,10 @@ class Plot_Spectrum(tk.Toplevel):
             try:
                 dx = 0.1 * (max(data_x)-min(data_x))/len(data_x)
                 fit_x = numpy.arange(min(data_x), max(data_x), dx)
-                if self.corr_var.get():
-                    fit_Y = self.analysis_db.get_value(shot, dim, pos, 'Yield')[0]
-                    fit_E = self.analysis_db.get_value(shot, dim, pos, 'Energy')[0]
-                    fit_s = self.analysis_db.get_value(shot, dim, pos, 'Sigma')[0]
-                else:
-                    fit_Y = self.initanalysis_db.get_value(shot, dim, pos, 'fit_yield')[0]
-                    fit_E = self.initanalysis_db.get_value(shot, dim, pos, 'fit_mean')[0]
-                    fit_s = self.initanalysis_db.get_value(shot, dim, pos, 'fit_sigma')[0]
-                fit_y = numpy.zeros_like(fit_x)
-                for i in range(len(fit_x)):
-                    fit_y[i] = Gaussian(fit_x[i], fit_Y, fit_E, fit_s)
-
+                fit_Y = self.file.Fit[2]
+                fit_E = self.file.Fit[0]
+                fit_s = self.file.Fit[1]
+                fit_y = Gaussian(fit_x, fit_Y, fit_E, fit_s)
                 self.ax.plot(fit_x, fit_y, 'r--')
             except Exception as inst:
                 print('Could not show fit')
