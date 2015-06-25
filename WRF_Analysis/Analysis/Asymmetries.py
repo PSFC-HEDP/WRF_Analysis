@@ -72,7 +72,7 @@ def rhoR(theta, phi, r0, dr, l, m, model=None, angles=ANGLE_RAD):
         ret[i] = model.rhoR_Total(r[i])
     return np.multiply(ret, 1e3)
 
-def fit_polar(theta, rR, rR_err, l, angles=ANGLE_RAD):
+def fit_polar(theta, rR, rR_err, l, model=None, angles=ANGLE_RAD):
     """Fit a polar (m=0) asymmetry mode to data.
 
     :param theta: Polar angle in radians or degrees. By default uses radians, specify with `angles`.
@@ -83,7 +83,9 @@ def fit_polar(theta, rR, rR_err, l, angles=ANGLE_RAD):
     :param l: Spherical harmonic mode number l
     :param angles: (optional) Type of angle supplied, use Asymmetries.ANGLE_DEG or Asymmetries.ANGLE_RAD
     """
-    model = rhoR_Model()
+    if model is None:
+        model = rhoR_Model()
+
     # Convert angles if necessary:
     if angles is ANGLE_DEG:
         theta = np.multiply(theta , np.pi / 180.)

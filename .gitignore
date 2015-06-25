@@ -1,8 +1,5 @@
 *.pyc
 *.eps
 .idea
-*.so
-StopPow.py
 test/runAnalysis/AnalysisOutputs
-
 build

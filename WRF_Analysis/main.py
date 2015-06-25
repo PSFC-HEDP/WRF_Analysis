@@ -5,12 +5,8 @@ if platform.system() is 'Darwin':
     import syslog
     syslog.openlog("Python")
 
-# TODO: Better detection of shot number by splitting _ vs -
-# TODO: Need to catch bugs while running analysis and display error message
-# TODO: Don't auto-run model calculator and plotter
-
 __author__ = 'Alex Zylstra'
-__date__ = '2015-06-24'
+__date__ = '2015-06-25'
 __version__ = '0.1'
 
 try:
@@ -28,6 +24,8 @@ try:
     from WRF_Analysis.GUI.ModelPlotter import ModelPlotter
     from WRF_Analysis.GUI.widgets import Option_Prompt
     from WRF_Analysis.GUI.HohlraumUI import HohlraumUI
+    from WRF_Analysis.GUI.AsymmetryFit import AsymmetryFit
+    from WRF_Analysis.GUI.AsymmetryPlot import AsymmetryPlot
 
 except Exception as inst:
     if platform.system() is 'Darwin':
@@ -77,10 +75,10 @@ class Application(tk.Tk):
         self.infoLabel = ttk.Label(self, text="WRF Analysis Utility")
         self.infoLabel.grid(row=row, column=0, columnspan=3)
         row += 1
-        self.authLabel = ttk.Label(self, text="Alex Zylstra")
+        self.authLabel = ttk.Label(self, text=__author__)
         self.authLabel.grid(row=row, column=0, columnspan=3)
         row += 1
-        self.dateLabel = ttk.Label(self, text="2015-06-24")
+        self.dateLabel = ttk.Label(self, text=__date__)
         self.dateLabel.grid(row=row, column=0, columnspan=3)
         row += 1
 
@@ -166,10 +164,10 @@ class Application(tk.Tk):
         HohlraumUI(self)
 
     def plotAsymmetry(self, *args):
-        pass
+        AsymmetryPlot()
 
     def fitAsymmetry(self, *args):
-        pass
+        AsymmetryFit()
 
     def __configureMatplotlib__(self):
         """Configure options for matplotlib"""
