@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import logging, platform
+import platform
 if platform.system() is 'Darwin':
     import syslog
     syslog.openlog("Python")
@@ -164,9 +164,11 @@ class Application(tk.Tk):
         HohlraumUI(self)
 
     def plotAsymmetry(self, *args):
+        """Open a UI window to plot asymmetries"""
         AsymmetryPlot()
 
     def fitAsymmetry(self, *args):
+        """Open a UI window with functionality for fitting asymmetries to data"""
         AsymmetryFit()
 
     def __configureMatplotlib__(self):

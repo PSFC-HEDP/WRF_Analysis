@@ -1,18 +1,18 @@
 import os
 import sys
 import shutil
-import NIF_WRF
+import WRF_Analysis
 
 DESKTOP_FOLDER = get_special_folder_path("CSIDL_DESKTOPDIRECTORY")
-APP_FOLDER = os.path.join(sys.prefix,'Program Files','NIF_WRF')
+APP_FOLDER = os.path.join(sys.prefix,'Program Files','WRF_Analysis')
 NAME = 'NIF WRF.lnk'
 
 if sys.argv[1] == '-install':
     create_shortcut(
         os.path.join(APP_FOLDER, 'main.exe'), # program
-        'Implosion post-processor', # description
+        'WRF Analysis', # description
         NAME, # filename
-        NIF_WRF.__file__, # parameters
+        WRF_Analysis.__file__, # parameters
         APP_FOLDER, # workdir
         os.path.join(APP_FOLDER, 'favicon.ico'), # iconpath
     )

@@ -1,7 +1,6 @@
 import sys
 from cx_Freeze import setup, Executable
 import scipy
-import scipy.interpolate
 import platform
 
 # GUI applications require a different base on Windows (the default is for a
@@ -12,10 +11,10 @@ if sys.platform == "win32":
     
 # Dependencies are automatically detected, but it might need fine tuning.
 if platform.system() == 'Darwin':
-    build_exe_options = {"packages": ["os","scipy","scipy.interpolate","scipy.linalg","NIF_WRF","NIF_WRF.DB","NIF_WRF.Analysis","NIF_WRF.util","NIF_WRF.GUI","NIF_WRF.GUI.widgets"], 
+    build_exe_options = {"packages": ["os","scipy","WRF_Analysis","WRF_Analysis.Analysis","WRF_Analysis.util","WRF_Analysis.GUI","WRF_Analysis.GUI.widgets"],
                                             "includes": ["numpy","scipy","scipy.interpolate","scipy.linalg","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
                                             "excludes": [],
-                                            "include_files": [('NIF_WRF/util/_StopPow.so','_StopPow.so')],
+                                            "include_files": [('WRF_Analysis/util/_StopPow.so','_StopPow.so')],
                                             "optimize": 2
                                             }
     scripts = []
@@ -24,10 +23,10 @@ if platform.system() == 'Darwin':
                                                                                     # ('/usr/local/lib/python3.4/site-packages/scipy/sparse/_sparsetools.so','_sparsetools.so'),
                                                                                     # ('/usr/local/lib/python3.4/site-packages/scipy/linalg/_fblas.so','_fblas.so')
 if platform.system() == 'Windows':
-    build_exe_options = {"packages": ["os","scipy","scipy.interpolate","NIF_WRF","NIF_WRF.DB","NIF_WRF.Analysis","NIF_WRF.util","NIF_WRF.GUI","NIF_WRF.GUI.widgets"], 
+    build_exe_options = {"packages": ["os","scipy","scipy.interpolate","WRF_Analysis","WRF_Analysis.Analysis","WRF_Analysis.util","WRF_Analysis.GUI","WRF_Analysis.GUI.widgets"],
                                             "includes": ["numpy","scipy","scipy.interpolate","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
                                             "excludes": [],
-                                            "include_files": [('NIF_WRF/util/_StopPow.pyd','_StopPow.pyd'),
+                                            "include_files": [('WRF_Analysis/util/_StopPow.pyd','_StopPow.pyd'),
                                                               ('logo/WRF_logo.ico','favicon.ico'),
                                                                                     ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_csr.pyd','_csr.pyd'),
                                                                                     ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_csc.pyd','_csc.pyd'),
@@ -46,7 +45,7 @@ mac_options = {"iconfile": "logo/WRF_logo.icns"}
 shortcut_table = [
     ("DesktopShortcut",        # Shortcut
      "DesktopFolder",          # Directory_
-     "NIF WRF",                # Name
+     "WRF Analysis",                # Name
      "TARGETDIR",              # Component_
      "[TARGETDIR]main.exe",    # Target
      None,                     # Arguments
@@ -66,10 +65,10 @@ msi_data = {"Shortcut": shortcut_table}
 msi_options = {'data': msi_data}
 
 
-setup(  name = "NIF_WRF",
-        version = "0.2.1",
-        description = "NIF WRF database and analysis code",
-    	packages=['NIF_WRF', 'NIF_WRF.DB', 'NIF_WRF.GUI', 'NIF_WRF.GUI.widgets', 'NIF_WRF.util', 'NIF_WRF.Analysis'],
+setup(  name = "WRF_Analysis",
+        version = "0.1",
+        description = "WRF analysis utilities",
+    	packages=['WRF_Analysis', 'WRF_Analysis.GUI', 'WRF_Analysis.GUI.widgets', 'WRF_Analysis.util', 'WRF_Analysis.Analysis'],
         options = {"build_exe": build_exe_options, "bdist_mac": mac_options, "bdist_msi": msi_options},
         scripts = scripts,
-        executables = [Executable("NIF_WRF/main.py", base=base, copyDependentFiles=True, compress=True)])
+        executables = [Executable("WRF_Analysis/main.py", base=base, copyDependentFiles=True, compress=True)])

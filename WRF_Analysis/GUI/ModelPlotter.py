@@ -6,6 +6,7 @@ import matplotlib
 import matplotlib.pyplot
 from WRF_Analysis.Analysis import rhoR_model_plots
 from WRF_Analysis.GUI.widgets.Model_Frame import Model_Frame
+from WRF_Analysis.GUI.widgets.Value_Prompt import Value_Prompt
 from threading import Thread
 
 
@@ -18,6 +19,10 @@ class ModelPlotter(tk.Toplevel):
     def __init__(self, parent=None):
         """Initialize the viewer window."""
         super(ModelPlotter, self).__init__()
+
+        self.ax = None
+        self.fig = None
+        self.canvas = None
 
         # make the UI:
         self.__create_widgets__()
@@ -39,7 +44,9 @@ class ModelPlotter(tk.Toplevel):
         self.plotTypes = {'rhoR vs energy': rhoR_model_plots.plot_rhoR_v_Energy,
                           'Rcm vs energy': rhoR_model_plots.plot_Rcm_v_Energy,
                           'rhoR vs Rcm': rhoR_model_plots.plot_rhoR_v_Rcm,
-                          'rhoR fractions': rhoR_model_plots.plot_rhoR_fractions}
+                          'rhoR fractions': rhoR_model_plots.plot_rhoR_fractions,
+                          'Profile': rhoR_model_plots.plot_profile,
+                          'Stopping Power': rhoR_model_plots.plot_stoppow}
         self.plotTypeVar = tk.StringVar()
         self.plotType = ttk.OptionMenu(frame, self.plotTypeVar, '', *self.plotTypes.keys())
         self.plotType.grid(row=0, column=0, columnspan=2)
@@ -57,27 +64,47 @@ class ModelPlotter(tk.Toplevel):
         self.adv_frame = Model_Frame(self, text='Model Parameters', relief=tk.RAISED, borderwidth=1)
         self.adv_frame.pack()
 
+        self.plot_frame = tk.Frame(self)
+        self.plot_frame.pack()
+
     def __plot__(self, *args):
         """Event handler called to update the calculation"""
         # Some sanity checks:
         if self.model == None:
-            self.after(100, self.__plot__)
             return
+
+        # Configure matplotlib
+        if self.ax is None:
+            self.fig = matplotlib.figure.Figure()
+            self.ax = self.fig.add_subplot(111)
+        else:  # if ax exists, clear it:
+            self.ax.clear()
+        if self.canvas is not None:  # update the drawing if necessary
+            self.canvas.draw()
 
         # Get type of plot to generate:
         plotType = self.plotTypeVar.get()
 
-        # Generate a new plot window:
-        fig = matplotlib.pyplot.figure(figsize=(4,3))
-        fig.canvas.set_window_title(plotType)
-        ax = fig.add_subplot(111)
-        self.plotTypes[plotType](self.model, ax=ax)
+        args = {}
+        if plotType == 'Profile' or plotType == 'Stopping Power':
+            prompt = Value_Prompt(self, title='Plot Option', text='Choose Rcm (um)', default=250)
+            Rcm = prompt.result
+            args = {Rcm*1e-4}
 
-        # display:
-        matplotlib.pyplot.ion()
-        fig.show()
-        fig.canvas.draw()
-        matplotlib.pyplot.tight_layout()
+        # Do the plot
+        self.plotTypes[plotType](self.model, *args, ax=self.ax)
+
+        # check to see if we need to create the canvas:
+        if self.canvas is None:
+            self.canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(self.fig, master=self)
+            self.canvas.show()
+            self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+            toolbar = matplotlib.backends.backend_tkagg.NavigationToolbar2TkAgg(self.canvas, self.plot_frame)
+            toolbar.update()
+            self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.canvas.draw()
 
     def __updateModel__(self, *args):
         # Clear existing:

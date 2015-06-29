@@ -54,6 +54,7 @@ class Value_Prompt(tk.Toplevel):
     def __make_buttons__(self):
         """Add the OK and cancel buttons"""
         box = tk.Frame(self)
+        box.configure(background='#eeeeee')
 
         w = ttk.Button(box, text="OK", width=10, command=self.__ok__)
         w.pack(side=tk.LEFT, padx=5, pady=5)

@@ -287,13 +287,13 @@ def plot_rhoR_v_Rcm(analysis, filename=None, ax=None, backend=None, Rmin=150e-4,
         matplotlib.pyplot.savefig(filename, bbox_inches='tight')
 
 
-def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
+def plot_profile(analysis, Rcm, filename=None, ax=None, xlim=None, ylim=None, figsize=(3.,2.5), fontsize_sm=8, fontsize_lg=10):
     """Plot the mass profile for a given center-of-mass radius
 
     :param analysis: the rhoR analysis model to plot
     :param Rcm: the center of mass radius to use for the plot [cm]
-    :param dr: (optional) step size for Rcm in cm [default=0.001]
-    :param filename: where to save the plot to
+    :param filename: (optional) where to save the plot to
+    :param ax: (optional) Axes instance to plot into
     :param xlim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     :param ylim: (optional) Tuple or list with x limits, passed directly to matplotlib [default=None]
     :param figsize: (optional) figsize parameter to pass to matplotlib [default=(4,3)]
@@ -331,8 +331,9 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
         Abl_x.append(x * 1e4)
 
     # make a plot window:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
     # add plots for three regions:
     ax.plot(Gas_x, Gas_y, 'r-')
     ax.fill_between(Gas_x, Gas_y, [0, 0], color='r')
@@ -349,9 +350,8 @@ def plot_profile(analysis, Rcm, filename, xlim=None, ylim=None, figsize=(3.,2.5)
     ax.set_ylabel(r'$\rho$ (g/cm$^3$)', fontsize=fontsize_lg)
     ax.tick_params(axis='both', labelsize=fontsize_sm)
 
-    #show the plot:
-    #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    if filename is not None:
+        fig.savefig(filename, bbox_inches='tight')
 
 def plot_rhoR_fractions(analysis, filename=None, ax=None, backend=None, Rmin=150e-4, dr=10e-4, grid=False, title=None, legend=True, normalize=False, figsize=(3.,2.5), mix=True, units='mg/cm2', rmin=None, rmax=None, fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's fractional composition (fuel, shell, abl mass) vs Rcm
@@ -660,7 +660,7 @@ def compare_Rcm_v_Energy(analyses, filename, names=None, styles=None, E0=14.7, d
     fig.savefig(filename, bbox_inches='tight')
 
 
-def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, figsize=(3.,2.5), mix=True, units='mg/cm2', fontsize_sm=8, fontsize_lg=10):
+def plot_stoppow(analysis, Rcm, filename=None, ax=None, grid=False, legend=True, title=None, figsize=(3.,2.5), mix=True, units='mg/cm2', fontsize_sm=8, fontsize_lg=10):
     """Plot rhoR model's stopping power in the various components vs proton energy for a given Rcm
 
     :param analysis: the rhoR model to plot
@@ -678,10 +678,6 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     #sanity check:
     if not isinstance(analysis, rhoR_Analysis):
         return
-
-    # import matplotlib
-    if matplotlib.get_backend() != 'agg':
-        matplotlib.pyplot.switch_backend('Agg')
 
     # Set up gas/mix stopping power:
     ni_gas, ne_gas = analysis.model.n_Gas(Rcm)
@@ -781,8 +777,9 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
 
     # make a plot, and add curves for the rhoR model
     # and its error bars:
-    fig = matplotlib.pyplot.figure(figsize=figsize)
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = matplotlib.pyplot.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
 
     ax.plot(EList, FuelMixList, 'r-', label='Fuel')
     ax.plot(EList, ShellList, 'b-', label='Shell')
@@ -804,5 +801,5 @@ def plot_stoppow(analysis, Rcm, filename, grid=False, legend=True, title=None, f
     minY = numpy.min([numpy.min(ShellList), numpy.min(AblList)])
     ax.set_ylim(minY*1.05, 0)
 
-    #plt.show()
-    fig.savefig(filename, bbox_inches='tight')
+    if filename is not None:
+        fig.savefig(filename, bbox_inches='tight')
