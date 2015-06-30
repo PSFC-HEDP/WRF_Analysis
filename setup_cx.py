@@ -24,16 +24,10 @@ if platform.system() == 'Darwin':
                                                                                     # ('/usr/local/lib/python3.4/site-packages/scipy/linalg/_fblas.so','_fblas.so')
 if platform.system() == 'Windows':
     build_exe_options = {"packages": ["os","scipy","scipy.interpolate","WRF_Analysis","WRF_Analysis.Analysis","WRF_Analysis.util","WRF_Analysis.GUI","WRF_Analysis.GUI.widgets"],
-                                            "includes": ["numpy","scipy","scipy.interpolate","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_macosx","matplotlib.backends.backend_tkagg"],
+                                            "includes": ["numpy","scipy","scipy.interpolate","scipy.optimize","scipy.stats","matplotlib","matplotlib.pyplot","matplotlib.backends.backend_ps","matplotlib.backends.backend_pdf","matplotlib.backends.backend_tkagg"],
                                             "excludes": [],
                                             "include_files": [('WRF_Analysis/util/_StopPow.pyd','_StopPow.pyd'),
-                                                              ('logo/WRF_logo.ico','favicon.ico'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_csr.pyd','_csr.pyd'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_csc.pyd','_csc.pyd'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_coo.pyd','_coo.pyd'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_dia.pyd','_dia.pyd'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_bsr.pyd','_bsr.pyd'),
-                                                                                    ('C:\Python33\Lib\site-packages\scipy\sparse\sparsetools\_csgraph.pyd','_csgraph.pyd')],
+                                                              ('logo/WRF_logo.ico','favicon.ico')],
                                             "optimize": 2,
                                              "include_msvcr": True,
                                              "icon": "logo/WRF_logo.ico"

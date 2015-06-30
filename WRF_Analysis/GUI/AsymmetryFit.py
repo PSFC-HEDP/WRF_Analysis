@@ -11,7 +11,7 @@ from WRF_Analysis.Analysis.Asymmetries import *
 
 
 class AsymmetryFit(tk.Toplevel):
-    """Implement a GUI dialog for plotting rhoR asymmetries.
+    """Implement a GUI dialog for fitting rhoR asymmetries.
 
     :param parent: (optional) The parent UI element to this window [default=None]
     """
@@ -150,6 +150,7 @@ class AsymmetryFit(tk.Toplevel):
         self.plot_frame.pack()
 
     def _create_data_frame(self, *args):
+        """Create a subframe containing `tk.Entry` fields for entry of data to fit."""
         if self.data_frame is not None:
             self.data_frame.destroy()
         self.data_frame = tk.Frame(self.frame)

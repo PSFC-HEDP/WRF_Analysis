@@ -4,7 +4,7 @@ util Package
 :mod:`util` Package
 -------------------
 
-.. automodule:: NIF_WRF.util
+.. automodule:: WRF_Analysis.util
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ util Package
 :mod:`CSV` Module
 -----------------
 
-.. automodule:: NIF_WRF.util.CSV
+.. automodule:: WRF_Analysis.util.CSV
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ util Package
 :mod:`Constants` Module
 -----------------------
 
-.. automodule:: NIF_WRF.util.Constants
+.. automodule:: WRF_Analysis.util.Constants
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ util Package
 :mod:`GaussFit` Module
 ----------------------
 
-.. automodule:: NIF_WRF.util.GaussFit
+.. automodule:: WRF_Analysis.util.GaussFit
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ util Package
 :mod:`Import_Nxy` Module
 ------------------------
 
-.. automodule:: NIF_WRF.util.Import_Nxy
+.. automodule:: WRF_Analysis.util.Import_Nxy
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ util Package
 :mod:`Import_WRF_CSV` Module
 ----------------------------
 
-.. automodule:: NIF_WRF.util.Import_WRF_CSV
+.. automodule:: WRF_Analysis.util.Import_WRF_CSV
     :members:
     :undoc-members:
     :show-inheritance:

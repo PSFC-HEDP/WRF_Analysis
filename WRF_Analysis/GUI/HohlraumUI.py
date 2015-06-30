@@ -221,6 +221,7 @@ class HohlraumUI(tk.Toplevel):
             file.close()
 
     def _genText(self):
+        """Generate a text summary for copying or saving"""
         text = ''
 
         if self.file is not None and self.h is not None:

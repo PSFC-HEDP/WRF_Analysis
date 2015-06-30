@@ -131,6 +131,7 @@ class ModelCalculator(tk.Toplevel):
             self.__clear__()
 
     def __clear__(self, *args):
+        """Clear the displayed results"""
         self.labelRhoR.configure(text='')
         self.labelRcm.configure(text='')
         self.labelRhoRerr.configure(text='')
@@ -140,6 +141,7 @@ class ModelCalculator(tk.Toplevel):
         self.labelRhoRAbl.configure(text='')
 
     def __updateModel__(self, *args):
+        """Update the rhoR model being used"""
         # Clear existing:
         self.model = None
         self.__clear__()

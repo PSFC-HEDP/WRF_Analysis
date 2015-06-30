@@ -4,15 +4,7 @@ widgets Package
 :mod:`widgets` Package
 ----------------------
 
-.. automodule:: NIF_WRF.GUI.widgets
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`Analysis_Viewer` Module
------------------------------
-
-.. automodule:: NIF_WRF.GUI.widgets.Analysis_Viewer
+.. automodule:: WRF_Analysis.GUI.widgets
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +12,7 @@ widgets Package
 :mod:`Collapsible_Frame` Module
 -------------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Collapsible_Frame
+.. automodule:: WRF_Analysis.GUI.widgets.Collapsible_Frame
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +20,7 @@ widgets Package
 :mod:`Generic_Editor` Module
 ----------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Generic_Editor
+.. automodule:: WRF_Analysis.GUI.widgets.Generic_Editor
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +28,7 @@ widgets Package
 :mod:`Model_Frame` Module
 -------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Model_Frame
+.. automodule:: WRF_Analysis.GUI.widgets.Model_Frame
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +36,7 @@ widgets Package
 :mod:`Option_Prompt` Module
 ---------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Option_Prompt
+.. automodule:: WRF_Analysis.GUI.widgets.Option_Prompt
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +44,7 @@ widgets Package
 :mod:`Simple_Table` Module
 --------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Simple_Table
+.. automodule:: WRF_Analysis.GUI.widgets.Simple_Table
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +52,7 @@ widgets Package
 :mod:`String_Prompt` Module
 ---------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.String_Prompt
+.. automodule:: WRF_Analysis.GUI.widgets.String_Prompt
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +60,7 @@ widgets Package
 :mod:`Table_View` Module
 ------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Table_View
+.. automodule:: WRF_Analysis.GUI.widgets.Table_View
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +68,7 @@ widgets Package
 :mod:`Value_Prompt` Module
 --------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.Value_Prompt
+.. automodule:: WRF_Analysis.GUI.widgets.Value_Prompt
     :members:
     :undoc-members:
     :show-inheritance:
@@ -84,7 +76,7 @@ widgets Package
 :mod:`plastik_theme` Module
 ---------------------------
 
-.. automodule:: NIF_WRF.GUI.widgets.plastik_theme
+.. automodule:: WRF_Analysis.GUI.widgets.plastik_theme
     :members:
     :undoc-members:
     :show-inheritance:

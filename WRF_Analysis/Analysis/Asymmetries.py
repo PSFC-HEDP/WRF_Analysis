@@ -128,81 +128,21 @@ def fit_polar(theta, rR, rR_err, l, model=None, angles=ANGLE_RAD):
 
     return r0, r0_unc, delta, delta_unc, rhoR0, rhoR0_unc
 
-def fit_shot(shot, l, error='random'):
-    """Fit a l mode asymmetry to a given shot.
-
-    :param shot: The shot number to fit (given as a str)
-    :param l: The polar Legendre mode number to fit
-    :param error: (optional) type of error bar to use: 'total' or 'random'
-    """
-    try:
-        db = WRF_Analysis_DB()
-        db_snout = Snout_DB()
-
-        # Sanity check that 2 DIMs are available:
-        if len(db.get_dims(shot)) < 2:
-            raise ValueError
-
-        # Retrieve data from the DB
-        theta = []
-        rhoR = []
-        rhoR_err_ran = []
-        rhoR_err_sys = []
-        Rcm_err_sys = []
-        for dim in db.get_dims(shot):
-            for pos in db.get_pos(shot, dim):
-                val = db.get_value(shot, dim, pos, 'rhoR')[0]
-                err_ran = db.get_value(shot, dim, pos, 'rhoR_ran_unc')[0]
-                err_sys = db.get_value(shot, dim, pos, 'rhoR_sys_unc')[0]
-                R_sys = db.get_value(shot, dim, pos, 'Rcm_sys_unc')[0]*1e-4  # need to convert to cm
-                angle = db_snout.get_theta('Generic', dim, pos)[0]
-
-                theta.append(angle)
-                rhoR.append(val)
-                rhoR_err_ran.append(err_ran)
-                rhoR_err_sys.append(err_sys)
-                Rcm_err_sys.append(R_sys)
-
-        if len(theta) < 2:
-            raise ValueError("Not enough DIMs to fit!")
-        # if there are only 2 points scipy is silly and refuses to give pcov
-        # fix by adding a third point with giant error bar so it doesn't affect fit
-        if len(theta) == 2:
-            theta.append(theta[0])
-            rhoR.append(rhoR[0])
-            rhoR_err_ran.append(3*rhoR_err_ran[0])
-            rhoR_err_sys.append(3*rhoR_err_sys[0])
-            theta.append(theta[1])
-            rhoR.append(rhoR[1])
-            rhoR_err_ran.append(3*rhoR_err_ran[1])
-            rhoR_err_sys.append(3*rhoR_err_sys[1])
-
-        # Convert to ndarray:
-        theta = np.asarray(theta)
-        rhoR = np.asarray(rhoR)
-        rhoR_err_ran = np.asarray(rhoR_err_ran)
-        rhoR_err_sys = np.asarray(rhoR_err_sys)
-        Rcm_err_sys = np.asarray(Rcm_err_sys)
-
-        # Return value depends on which error bar is requested:
-        ret = fit_polar(theta, rhoR, rhoR_err_ran, l, angles=ANGLE_DEG)
-        if error == 'total':
-            # Modify errors to include systematics:
-            r0_unc = np.sqrt(ret[1]**2 + np.mean(Rcm_err_sys)**2)
-            delta_unc = ret[3]
-            rhoR0_unc = np.sqrt(ret[5]**2 + np.mean(rhoR_err_sys)**2)
-            return ret[0], r0_unc, ret[2], delta_unc, ret[4], rhoR0_unc
-        # Default: random errors only
-        return ret
-    except Exception as inst:
-        print('Cannot fit asymmetry: ' + shot)
-        print(inst)
-        ret = np.empty(6)
-        ret.fill(np.nan)
-        return ret
-
 def Rcm_azi(theta, phi, r0, dr, dP2, dP4, m, mphi, angles=ANGLE_RAD):
-    """Define the radius of an asymmetry mode, as function of polar/azimuthal angle."""
+    """Define the radius of an asymmetry mode, as function of polar/azimuthal angle.
+
+    :param theta: Polar angle in radians or degrees. By default uses radians, specify with `angles`.
+        Can be supplied as either a single number, list, or as np.ndarray
+    :param phi: Azimuthal angle in radians or degrees. By default uses radians, specify with `angles.
+        Can be supplied as either a single number, list, or as np.ndarray
+    :param r0: Unperturbed radius
+    :param dr: Fractional perturbation amplitude
+    :param dP2: P2 mode amplitude
+    :param dP4: P4 mode amplitude
+    :param m: Azimuthal mode number
+    :param mph: Azimuthal mode phase
+    :param angles: (optional) Type of angle supplied, use Asymmetries.ANGLE_DEG or Asymmetries.ANGLE_RAD
+    """
     # Convert theta and phi if necessary:
     if not isinstance(theta, np.ndarray):
         theta = np.asarray(theta)
@@ -242,7 +182,21 @@ def Rcm_azi(theta, phi, r0, dr, dP2, dP4, m, mphi, angles=ANGLE_RAD):
     return ret
 
 def rhoR_azi(theta, phi, r0, dr, dP2, dP4, m, mphi, model=None, angles=ANGLE_RAD):
-    """Define the rhoR of an azimuthal asymmetry mode, as function of polar/azimuthal angle."""
+    """Define the rhoR of an azimuthal asymmetry mode, as function of polar/azimuthal angle.
+
+    :param theta: Polar angle in radians or degrees. By default uses radians, specify with `angles`.
+        Can be supplied as either a single number, list, or as np.ndarray
+    :param phi: Azimuthal angle in radians or degrees. By default uses radians, specify with `angles.
+        Can be supplied as either a single number, list, or as np.ndarray
+    :param r0: Unperturbed radius
+    :param dr: Fractional perturbation amplitude
+    :param dP2: P2 mode amplitude
+    :param dP4: P4 mode amplitude
+    :param m: Azimuthal mode number
+    :param mph: Azimuthal mode phase
+    :param mode: rhoR model to use (optional, default)
+    :param angles: (optional) Type of angle supplied, use Asymmetries.ANGLE_DEG or Asymmetries.ANGLE_RAD
+    """
     # Set up rhoR model:
     if model is None:
         model = rhoR_Model()
@@ -311,74 +265,3 @@ def fit_azimuthal(theta, phi, rR, rR_err, dP2, dP4, m, mphi, angles=ANGLE_RAD):
     rhoR0_unc = (rhoR0_max-rhoR0_min)/2.
 
     return r0, r0_unc, delta, delta_unc, rhoR0, rhoR0_unc
-
-def fit_shot_azimuthal(shot, m, mphi, dP2, dP4, error='total'):
-    """Fit a m mode asymmetry to a given shot."""
-    try:
-        # Sanity check that 2 DIMs are available:
-        db = WRF_Analysis_DB()
-        db_snout = Snout_DB()
-        if len(db.get_dims(shot)) < 2:
-            raise ValueError
-
-        # Retrieve data from the DB
-        theta = []
-        phi = []
-        rhoR = []
-        rhoR_err_ran = []
-        rhoR_err_sys = []
-        Rcm_err_sys = []
-        for dim in db.get_dims(shot):
-            for pos in db.get_pos(shot, dim):
-                val = db.get_value(shot, dim, pos, 'rhoR')[0]
-                err_ran = db.get_value(shot, dim, pos, 'rhoR_ran_unc')[0]
-                err_sys = db.get_value(shot, dim, pos, 'rhoR_sys_unc')[0]
-                R_sys = db.get_value(shot, dim, pos, 'Rcm_sys_unc')[0]*1e-4  # need to convert to cm
-
-                shotTheta = db_snout.get_theta('Generic', dim, pos)[0]
-                shotPhi = db_snout.get_phi('Generic', dim, pos)[0]
-
-                theta.append(shotTheta)
-                phi.append(shotPhi)
-                rhoR.append(val)
-                rhoR_err_ran.append(err_ran)
-                rhoR_err_sys.append(err_sys)
-                Rcm_err_sys.append(R_sys)
-
-        if len(theta) < 2:
-            raise ValueError
-        # if there are only 2 points scipy is silly and refuses to give pcov
-        # fix by adding a third point with giant error bar so it doesn't affect fit
-        if len(theta) == 2:
-            theta.append(theta[0])
-            rhoR.append(rhoR[0])
-            rhoR_err_ran.append(3*rhoR_err_ran[0])
-            rhoR_err_sys.append(3*rhoR_err_sys[0])
-            theta.append(theta[1])
-            rhoR.append(rhoR[1])
-            rhoR_err_ran.append(3*rhoR_err_ran[1])
-            rhoR_err_sys.append(3*rhoR_err_sys[1])
-
-        # Convert to ndarray:
-        theta = np.asarray(theta)
-        rhoR = np.asarray(rhoR)
-        rhoR_err_ran = np.asarray(rhoR_err_ran)
-        rhoR_err_sys = np.asarray(rhoR_err_sys)
-        Rcm_err_sys = np.asarray(Rcm_err_sys)
-
-        # Return value depends on which error bar is requested:
-        ret = fit_azimuthal(theta, phi, rhoR, rhoR_err_ran,  dP2, dP4, m, mphi, angles=ANGLE_DEG)
-        if error == 'total':
-            # Modify errors to include systematics:
-            r0_unc = np.sqrt(ret[1]**2 + np.mean(Rcm_err_sys)**2)
-            delta_unc = ret[3]
-            rhoR0_unc = np.sqrt(ret[5]**2 + np.mean(rhoR_err_sys)**2)
-            return ret[0], r0_unc, ret[2], delta_unc, ret[4], rhoR0_unc
-        # Default: random errors only
-        return ret
-    except Exception as inst:
-        print('Cannot fit asymmetry: ' + shot)
-        print(inst)
-        ret = np.empty(6)
-        ret.fill(np.nan)
-        return ret

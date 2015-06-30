@@ -1,10 +1,10 @@
-NIF_WRF Package
+WRF_Analysis Package
 ===============
 
-:mod:`NIF_WRF` Package
+:mod:`WRF_Analysis` Package
 ----------------------
 
-.. automodule:: NIF_WRF.__init__
+.. automodule:: WRF_Analysis.__init__
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ NIF_WRF Package
 :mod:`main` Module
 ------------------
 
-.. automodule:: NIF_WRF.main
+.. automodule:: WRF_Analysis.main
     :members:
     :undoc-members:
     :show-inheritance:
@@ -22,8 +22,7 @@ Subpackages
 
 .. toctree::
 
-    NIF_WRF.Analysis
-    NIF_WRF.DB
-    NIF_WRF.GUI
-    NIF_WRF.util
+    WRF_Analysis.Analysis
+    WRF_Analysis.GUI
+    WRF_Analysis.util
 

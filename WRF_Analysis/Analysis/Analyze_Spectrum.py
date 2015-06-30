@@ -2,6 +2,7 @@
 # to get rhoR, yield, and so on with error bars.
 
 import os
+import sys
 from datetime import *
 import csv
 import math
@@ -400,7 +401,10 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
                 + r'$_{(ran)}$ $\pm$ '
                 + '{:.0f}'.format(float(Rcm_systematic)) + r'$_{(sys)}$']
 
-    fname = os.path.join(OutputDir, name + '_Summary.eps')
+    if sys.platform.startswith('win'):
+        fname = os.path.join(OutputDir, name + '_Summary.pdf')
+    else:
+        fname = os.path.join(OutputDir, name + '_Summary.eps')
     save_slide(fname, Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy)
     if ShowSlide:
         show_slide(Fit=FitObj, Hohl=hohl, name=name, summary=summary, results=result_text, Nxy=Nxy, interactive=True)

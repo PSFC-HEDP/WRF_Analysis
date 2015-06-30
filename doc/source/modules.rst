@@ -1,7 +1,7 @@
-NIF_WRF
+WRF_Analysis
 =======
 
 .. toctree::
    :maxdepth: 4
 
-   NIF_WRF
+   WRF_Analysis

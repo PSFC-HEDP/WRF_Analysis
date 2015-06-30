@@ -6,7 +6,7 @@ if platform.system() is 'Darwin':
     syslog.openlog("Python")
 
 __author__ = 'Alex Zylstra'
-__date__ = '2015-06-25'
+__date__ = '2015-06-29'
 __version__ = '0.1'
 
 try:
@@ -15,6 +15,7 @@ try:
     from tkinter.filedialog import asksaveasfilename, askdirectory
     from tkinter.messagebox import askyesnocancel, askyesno
     import threading
+    import PIL.Image
     import matplotlib
     matplotlib.use('tkagg')
 
@@ -28,15 +29,18 @@ try:
     from WRF_Analysis.GUI.AsymmetryPlot import AsymmetryPlot
 
 except Exception as inst:
-    if platform.system() is 'Darwin':
-        syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
-    from tkinter.messagebox import showerror
-    showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
-    import sys
-    sys.exit(1)
+   if platform.system() is 'Darwin':
+       syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
+   from tkinter.messagebox import showerror
+   showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
+   import sys
+   sys.exit(1)
 
 class Application(tk.Tk):
-    """Analysis and database application for the NIF WRF data"""
+    """Analysis and rhoR modeling for WRF data
+
+    :author: Alex Zylstra
+    """
     # Some theming:
     bigFont = ("Arial", "14", "bold")
     Font = ("Arial", "12")
@@ -70,6 +74,7 @@ class Application(tk.Tk):
         self.plotSpectrum_last_dir = None
 
     def createWidgets(self):
+        """Generate UI elements for the main window"""
         row = 0
 
         self.infoLabel = ttk.Label(self, text="WRF Analysis Utility")
@@ -135,9 +140,11 @@ class Application(tk.Tk):
         row += 1
 
     def Analyze(self):
+        """WRF spectrum analysis"""
         WRF_Importer()
 
     def plotSpectrum(self):
+        """Plot spectrum from a WRF CSV file"""
         from tkinter.filedialog import askopenfilename
         opts = dict(title='Open WRF Analysis CSV',
                     initialdir=self.plotSpectrum_last_dir,

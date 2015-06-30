@@ -102,13 +102,17 @@ class WRF_Importer(tk.Toplevel):
         if not os.path.exists(self.csv_filename):
             return
 
-        file = WRF_CSV(self.csv_filename)
-        if os.path.exists(self.image_filename):
-            image = load_image(self.image_filename)
-        else:
-            image = None
+        try:
+            file = WRF_CSV(self.csv_filename)
+            if os.path.exists(self.image_filename):
+                image = load_image(self.image_filename)
+            else:
+                image = None
 
-        WRF_Analyzer(file, image)
+            WRF_Analyzer(file, image)
+        except Exception as inst:
+            from tkinter.messagebox import showerror
+            showerror("Error!", "Problem starting analysis" + "\n" + str(inst))
 
 
         self.withdraw()

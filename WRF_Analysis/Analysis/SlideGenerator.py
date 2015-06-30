@@ -25,6 +25,8 @@ def show_slide(Fit=None, Hohl=None, Nxy=None, name='', summary='', results='', i
     elif sys.platform.startswith('darwin'):  # Mac OS X
         if matplotlib.get_backend() != 'MacOSX':
             matplotlib.pyplot.switch_backend('MacOSX')
+    else:
+        matplotlib.pyplot.switch_backend('TkAgg')
     # use interactive mode if requested:
     matplotlib.pyplot.interactive(interactive)
 

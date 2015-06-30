@@ -5,7 +5,7 @@ Analysis Package
 :mod:`Analysis` Package
 -----------------------
 
-.. automodule:: NIF_WRF.Analysis
+.. automodule:: WRF_Analysis.Analysis
     :members:
     :undoc-members:
     :show-inheritance:
@@ -13,7 +13,15 @@ Analysis Package
 :mod:`Analyze_Spectrum` Module
 ------------------------------
 
-.. automodule:: NIF_WRF.Analysis.Analyze_Spectrum
+.. automodule:: WRF_Analysis.Analysis.Analyze_Spectrum
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`Asymmetries` Module
+------------------------------
+
+.. automodule:: WRF_Analysis.Analysis.Asymmetries
     :members:
     :undoc-members:
     :show-inheritance:
@@ -21,7 +29,7 @@ Analysis Package
 :mod:`Hohlraum` Module
 ----------------------
 
-.. automodule:: NIF_WRF.Analysis.Hohlraum
+.. automodule:: WRF_Analysis.Analysis.Hohlraum
     :members:
     :undoc-members:
     :show-inheritance:
@@ -29,7 +37,7 @@ Analysis Package
 :mod:`rhoR_Analysis` Module
 ---------------------------
 
-.. automodule:: NIF_WRF.Analysis.rhoR_Analysis
+.. automodule:: WRF_Analysis.Analysis.rhoR_Analysis
     :members:
     :undoc-members:
     :show-inheritance:
@@ -37,7 +45,7 @@ Analysis Package
 :mod:`rhoR_Model` Module
 ------------------------
 
-.. automodule:: NIF_WRF.Analysis.rhoR_Model
+.. automodule:: WRF_Analysis.Analysis.rhoR_Model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -45,15 +53,7 @@ Analysis Package
 :mod:`rhoR_model_plots` Module
 ------------------------------
 
-.. automodule:: NIF_WRF.Analysis.rhoR_model_plots
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`Shot_Analysis` Module
----------------------------
-
-.. automodule:: NIF_WRF.Analysis.Shot_Analysis
+.. automodule:: WRF_Analysis.Analysis.rhoR_model_plots
     :members:
     :undoc-members:
     :show-inheritance:
@@ -61,7 +61,7 @@ Analysis Package
 :mod:`SlideGenerator` Module
 ----------------------------
 
-.. automodule:: NIF_WRF.Analysis.SlideGenerator
+.. automodule:: WRF_Analysis.Analysis.SlideGenerator
     :members:
     :undoc-members:
     :show-inheritance:

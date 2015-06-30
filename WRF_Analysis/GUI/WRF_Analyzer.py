@@ -133,110 +133,114 @@ class WRF_Analyzer(tk.Toplevel):
 
     def __run_analysis__(self, *args):
         """Run the analysis routine for the selected parameters"""
-        # get the spectrum and image:
-        spectrum = self.file.spectrum
-        # sanity check:
-        if spectrum is None:
-            from tkinter.messagebox import showerror
-            showerror('Error', 'Could not load spectrum')
-            return
-        Nxy = self.image
+        try:
+            # get the spectrum and image:
+            spectrum = self.file.spectrum
+            # sanity check:
+            if spectrum is None:
+                from tkinter.messagebox import showerror
+                showerror('Error', 'Could not load spectrum')
+                return
+            Nxy = self.image
 
-        # get uncertainties
-        random = [0, 0, 0]
-        random[0] = self.file.Unc_Random[2]
-        random[1] = self.file.Unc_Random[0]
-        random[2] = self.file.Unc_Random[1]
-        systematic = [0, 0, 0]
-        systematic[0] = self.file.Unc_Systematic[2]
-        systematic[1] = self.file.Unc_Systematic[0]
-        systematic[2] = self.file.Unc_Systematic[1]
+            # get uncertainties
+            random = [0, 0, 0]
+            random[0] = self.file.Unc_Random[2]
+            random[1] = self.file.Unc_Random[0]
+            random[2] = self.file.Unc_Random[1]
+            systematic = [0, 0, 0]
+            systematic[0] = self.file.Unc_Systematic[2]
+            systematic[1] = self.file.Unc_Systematic[0]
+            systematic[2] = self.file.Unc_Systematic[1]
 
-        # get a name and summary
-        name = self.file.fname.split('/')[-1]
-        # Get the shot title/name description thing
-        shot_name_query = self.file.shot
-        summary = self.file.shot
-        # if we are using TeX for rendering, then fix underscores:
-        if matplotlib.rcParams['text.usetex'] == True:
-            summary = summary.replace('_',r'$\textunderscore$')
+            # get a name and summary
+            name = self.file.fname.split('/')[-1]
+            # Get the shot title/name description thing
+            shot_name_query = self.file.shot
+            summary = self.file.shot
+            # if we are using TeX for rendering, then fix underscores:
+            if matplotlib.rcParams['text.usetex'] == True:
+                summary = summary.replace('_',r'$\textunderscore$')
 
-        # get the hohlraum wall:
-        do_hohl_corr = self.hohl_var.get()
-        if do_hohl_corr:
-            dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
-            Au = dialog.result
-            dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
-            DU = dialog.result
-            dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
-            Al = dialog.result
+            # get the hohlraum wall:
+            do_hohl_corr = self.hohl_var.get()
+            if do_hohl_corr:
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input Au thickness in um', default=0.)
+                Au = dialog.result
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input DU thickness in um', default=0.)
+                DU = dialog.result
+                dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
+                Al = dialog.result
 
-            hohl_thick = [Au, DU, Al]
-            wall = None
-        else:
-            wall = None
-            hohl_thick = None
-        use_bump_corr = False
-        bump_corr = 0
+                hohl_thick = [Au, DU, Al]
+                wall = None
+            else:
+                wall = None
+                hohl_thick = None
+            use_bump_corr = False
+            bump_corr = 0
 
-        # ask if we should generate rhoR plots
-        from tkinter.filedialog import askdirectory
-        opts = dict(mustexist='False',
-                       initialdir=WRF_Analyzer.WRF_Analyzer_last_dir,
-                       title='Save files to')
-        OutputDir = askdirectory(**opts)
-        # sanity check:
-        if OutputDir == '':  # user cancelled
-            return
-        WRF_Analyzer.WRF_Analyzer_last_dir = OutputDir
+            # ask if we should generate rhoR plots
+            from tkinter.filedialog import askdirectory
+            opts = dict(mustexist='False',
+                           initialdir=WRF_Analyzer.WRF_Analyzer_last_dir,
+                           title='Save files to')
+            OutputDir = askdirectory(**opts)
+            # sanity check:
+            if OutputDir == '':  # user cancelled
+                return
+            WRF_Analyzer.WRF_Analyzer_last_dir = OutputDir
 
-        # Get a guess to help the fitting routine from the numbers in the initial analysis
-        guess_Y = self.file.Fit[2]
-        guess_E = self.file.Fit[0]
-        guess_s = self.file.Fit[1]
-        if guess_Y < 0 or guess_E < 0 or guess_s < 0:
-            guess_Y = self.file.Fit_Raw[2]
-            guess_E = self.file.Fit_Raw[0]
-            guess_s = self.file.Fit_Raw[1]
-        fit_guess = [guess_Y, guess_E, guess_s]
+            # Get a guess to help the fitting routine from the numbers in the initial analysis
+            guess_Y = self.file.Fit[2]
+            guess_E = self.file.Fit[0]
+            guess_s = self.file.Fit[1]
+            if guess_Y < 0 or guess_E < 0 or guess_s < 0:
+                guess_Y = self.file.Fit_Raw[2]
+                guess_E = self.file.Fit_Raw[0]
+                guess_s = self.file.Fit_Raw[1]
+            fit_guess = [guess_Y, guess_E, guess_s]
 
-        # energy limits if requested:
-        if self.energy_limits.get():
-            try:
-                minE = float(self.min_energy.get())
-                maxE = float(self.max_energy.get())
-                limits = [minE,maxE]
-            except:
+            # energy limits if requested:
+            if self.energy_limits.get():
+                try:
+                    minE = float(self.min_energy.get())
+                    maxE = float(self.max_energy.get())
+                    limits = [minE,maxE]
+                except:
+                    limits = None
+            else:
                 limits = None
-        else:
-            limits = None
 
-        # get the model
-        model = self.adv_frame.get_rhoR_Analysis()
+            # get the model
+            model = self.adv_frame.get_rhoR_Analysis()
 
-        result, corr_spec = Analyze_Spectrum(spectrum,
-                                  random,
-                                  systematic,
-                                  [0,0],
-                                  hohl_wall=wall,
-                                  hohl_thick=hohl_thick,
-                                  name=name,
-                                  summary=summary,
-                                  plots=self.plot_var.get(),
-                                  verbose=self.verbose_var.get(),
-                                  rhoR_plots=self.rhoR_plot_var.get(),
-                                  OutputDir=OutputDir,
-                                  Nxy=Nxy,
-                                  ProgressBar=None,
-                                  ShowSlide=self.display_results.get(),
-                                  model=model,
-                                  fit_guess=fit_guess,
-                                  limits=limits,
-                                  use_bump_corr=use_bump_corr,
-                                  bump_corr=bump_corr)
+            result, corr_spec = Analyze_Spectrum(spectrum,
+                                      random,
+                                      systematic,
+                                      [0,0],
+                                      hohl_wall=wall,
+                                      hohl_thick=hohl_thick,
+                                      name=name,
+                                      summary=summary,
+                                      plots=self.plot_var.get(),
+                                      verbose=self.verbose_var.get(),
+                                      rhoR_plots=self.rhoR_plot_var.get(),
+                                      OutputDir=OutputDir,
+                                      Nxy=Nxy,
+                                      ProgressBar=None,
+                                      ShowSlide=self.display_results.get(),
+                                      model=model,
+                                      fit_guess=fit_guess,
+                                      limits=limits,
+                                      use_bump_corr=use_bump_corr,
+                                      bump_corr=bump_corr)
 
-        # add to DB:
-        print(result)
+            # add to DB:
+            print(result)
+        except Exception as inst:
+            from tkinter.messagebox import showerror
+            showerror("Error!", "Problem running analysis" + "\n" + str(inst))
 
         # finish by removing the window:
         self.__cancel__()

@@ -1,21 +1,20 @@
-.. NIF_WRF documentation master file, created by
+.. WRF_Analysis documentation master file, created by
    sphinx-quickstart on Mon Oct 21 16:27:30 2013.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to NIF_WRF's documentation!
-===================================
+Welcome to WRF_Analysis's documentation!
+========================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 1
 
-   NIF_WRF
-   NIF_WRF.Analysis
-   NIF_WRF.DB
-   NIF_WRF.GUI
-   NIF_WRF.util
+   WRF_Analysis
+   WRF_Analysis.Analysis
+   WRF_Analysis.GUI
+   WRF_Analysis.util
 
 
 
