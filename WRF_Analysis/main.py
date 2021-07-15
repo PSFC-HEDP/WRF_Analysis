@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import platform
-if platform.system() is 'Darwin':
+if platform.system() == 'Darwin':
     import syslog
     syslog.openlog("Python")
 
@@ -29,7 +29,7 @@ try:
     from WRF_Analysis.GUI.AsymmetryPlot import AsymmetryPlot
 
 except Exception as inst:
-   if platform.system() is 'Darwin':
+   if platform.system() == 'Darwin':
        syslog.syslog(syslog.LOG_ALERT, 'Python error: '+str(inst))
    from tkinter.messagebox import showerror
    showerror("Error!", "Problem loading python modules" + "\n" + str(inst))
