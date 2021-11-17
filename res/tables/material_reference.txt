@@ -1,0 +1,5 @@
+epoxy:      1.2 g/cm3   C21H25ClO5
+parylene C: 1.289 g/cm3 C16H14Cl2
+kapton:     1.42 g/cm3  25.8% H, 56.3% C, 5.1% N, 12.8% O
+accura 60:  1.1 g/cm3
+microfine green: 1.07 g/cm3???
