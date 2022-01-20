@@ -6,13 +6,16 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import re
 from scipy import integrate
 
+from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
-FOLDERS = ['N211026-001', '002', '003']
-OVERLAP = ['2h', '2.5h']
 
-HOHLRAUM_LAYERS = []
+FOLDERS = ['N211229-002']
+# FOLDERS = ['I_MJDD_PDD_DDExpPush']
+OVERLAP = []
+
+# HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(8, 'Au')]
-# HOHLRAUM_LAYERS = [(30, 'Au')]
+HOHLRAUM_LAYERS = [(30, 'Au')]
 # HOHLRAUM_LAYERS = [(10, 'U'), (20, 'Au')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (2, 'Al'), (594, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (205, 'Al'), (2, 'Al'), (445, 'accura60'), (5, 'parylene')]
@@ -21,13 +24,13 @@ HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
 
 WEIRD_FILTERS = {
-	# 'full': [(3000, 'In')],
+	# '': [(3000, 'In')],
 	'top': [(10, 'Ti'), (5, 'Ta')],
 }
 
 SHOW_PLOTS = False
 
-ROOT = os.path.join('..', 'data')
+ROOT = 'data'
 σWRF = .159
 δσWRF = .014
 
@@ -48,7 +51,7 @@ def get_ein_from_eout(eout, layers):
 	""" do the reverse stopping power calculation """
 	energy = eout # [MeV]
 	for thickness, formula in layers[::-1]:
-		data = np.loadtxt(f"../res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
+		data = np.loadtxt(f"res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
 		energy_axis = data[:,0]/1e3 # [MeV]
 		dEdx = data[:,1]/1e3 # [MeV/μm]
 		energy = integrate.odeint(
@@ -95,40 +98,41 @@ if __name__ == '__main__':
 	yields = []
 	rhoRs = []
 	compression_yields = []
+	rhoR_objects = {}
 	for i, folder in enumerate(FOLDERS):
 		if i > 0 and len(folder) == 3:
 			FOLDERS[i] = FOLDERS[i-1][:-3] + folder
 
-	for i, folder in enumerate(FOLDERS):
+	for i, folder in enumerate(FOLDERS): # for each specified folder
 		folder = os.path.join(ROOT, folder)
 		assert os.path.isdir(folder), f"El sistema no puede encontrar la ruta espificada: '{folder}'"
 
-		for subfolder, _, _ in os.walk(folder):
-			for filename in os.listdir(subfolder):
-				if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}.csv', filename):
+		for subfolder, _, _ in os.walk(folder): # and any subfolders inside it
+			for filename in os.listdir(subfolder): # scan all files inside that folder
+				if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}.csv', filename): # if it is a campaign summary file
 
 					with open(os.path.join(subfolder, filename)) as f:
 						shot_day, shot_number = filename[:-4].split('-')
 
-						for row in f.readlines():
+						for row in f.readlines(): # read all the wrf summaries out of it
 							line_of_site, posicion, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error = row.split()
 							locacion = ':'.join((line_of_site, posicion))
 
 							shot_days.append(shot_day)
 							shot_numbers.append(shot_number)
 							locacions.append(locacion)
-							flags.append("full")
+							flags.append('')
 							overlapd.append(False)
 							means.append([float(mean_value), float(mean_error)])
 							sigmas.append([0, 0])
 							yields.append([float(yield_value), float(yield_error)])
 							rhoRs.append([float(rhoR_value), float(rhoR_error), 0, 0])
 
-				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename):
+				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 
 					number, line_of_site, position, wrf_number = None, None, None, None
-					flag = "full"
-					identifiers = filename[:-4].split('_')
+					flag = ''
+					identifiers = filename[:-4].split('_') # figure out what wrf this is
 					for identifier in identifiers:
 						if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}(-?999)?', identifier):
 							number = identifier
@@ -143,9 +147,9 @@ if __name__ == '__main__':
 					shot_day, shot_number, _ = number.split('-')
 					locacion = ':'.join((line_of_site, posicion))
 
-					print(f"{wrf_number} – {shot_day}-{shot_number} {locacion} ({flag})")
+					print(f"{wrf_number} – {shot_day}-{shot_number} {locacion} {flag}")
 
-					with open(os.path.join(subfolder, filename), newline='') as f:
+					with open(os.path.join(subfolder, filename), newline='') as f: # read thru its contents
 
 						mean_value, sigma_value, yield_value = None, None, None
 						mean_variance, sigma_variance, yield_variance = 0, 0, 0
@@ -187,7 +191,7 @@ if __name__ == '__main__':
 					spectrum = spectrum[spectrum[:,2] != 0]
 					spectrum = spectrum[1:]
 
-					plt.figure(figsize=(10, 4))
+					plt.figure(figsize=(10, 4)) # plot its spectrum
 					plt.plot([0, 20], [0, 0], 'k', linewidth=1)
 					if gaussian_fit:
 						x = np.linspace(0, 20, 1000)
@@ -198,7 +202,7 @@ if __name__ == '__main__':
 					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
 					plt.xlabel("Energy after hohlraum wall [MeV]" if len(HOHLRAUM_LAYERS) >= 1 else "Energy [MeV]")
 					plt.ylabel("Yield [MeV^-1]")
-					if flag != 'full':
+					if flag != '':
 						plt.title(f"{line_of_site}, position {posicion} ({flag})")
 					else:
 						plt.title(f"{line_of_site}, position {posicion}")
@@ -209,7 +213,7 @@ if __name__ == '__main__':
 						plt.show()
 					plt.close()
 
-					if yield_value != 0:
+					if yield_value != 0: # summarize it
 						shot_days.append(shot_day)
 						shot_numbers.append(shot_number)
 						locacions.append(locacion)
@@ -220,16 +224,44 @@ if __name__ == '__main__':
 						sigma_error = np.sqrt(sigma_variance)
 						yield_error = np.sqrt(yield_variance)
 
-						if flag in WEIRD_FILTERS:
+						if flag in WEIRD_FILTERS: # account for weird filters if need be
 							mean_value, mean_error, sigma_value = perform_correction(
 									'filter', WEIRD_FILTERS[flag], mean_value, mean_error, sigma_value)
 						if '90' in line_of_site and len(HOHLRAUM_LAYERS) > 0:
 							mean_value, mean_error, sigma_value = perform_correction(
 									'hohlraum', HOHLRAUM_LAYERS, mean_value, mean_error, sigma_value)
 
-						means.append([mean_value, mean_error])
+						if shot_day+shot_number not in rhoR_objects: # try to load the rhoR analysis parameters
+							try:
+								params = {}
+								with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
+									for line in f.readlines():
+										params[line.split()[0]] = line.split()[2]
+							except IOError:
+								print(f"Did not find {os.path.join(folder, 'rhoR_parameters.txt')}")
+							else:
+								rhoR_objects[shot_day+shot_number] = rhoR_Analysis(
+									shell_mat = params['Shell'],
+									Ri        = float(params['Ri'])*1e-4,
+									Ro        = float(params['Ro'])*1e-4,
+									fD        = float(params['fD']),
+									f3He      = float(params['f3He']),
+									P0        = float(params['P']),
+									Tshell    = float(params['Tshell'])*1e-4,
+									E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
+
+						if shot_day+shot_number in rhoR_objects: # if you did or they were already there, calculate the rhoR
+							analysis_object = rhoR_objects[shot_day+shot_number]
+							rhoR_value, _, rhoR_error = analysis_object.Calc_rhoR(E1=mean_value, dE=mean_error)
+							rhoR_value *= 1000
+							rhoR_error *= 1000 # convert from (g/cm^2) to (mg/cm^2)
+						else:
+							rhoR_value, rhoR_error = 0, 0
+
+						means.append([mean_value, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error])
 						yields.append([yield_value, yield_error])
+						rhoRs.append([rhoR_value, rhoR_error, 0, 0])
 
 						compression_value = np.sum(spectrum[:,1], where=spectrum[:,0] < 11)
 						compression_error = yield_error/yield_value*compression_value#1/np.sqrt(np.sum(1/spectrum[:,2]**2, where=spectrum[:,0] < 11))
@@ -260,30 +292,21 @@ if __name__ == '__main__':
 	temps[:,0] = (np.sqrt(sigmas[:,0]**2 - σWRF**2)/76.68115805e-3)**2
 	temps[:,1] = np.sqrt((2*sigmas[:,0]*sigmas[:,1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
 
-	if rhoRs.size == 0:
-		others = []
-		for name, number in [('rhoR', 4), ('Te', 6)]:
-			try:
-				other_data = np.atleast_2d(np.loadtxt(os.path.join(ROOT, FOLDERS[0], f'{name}.txt')))
-				if np.all(other_data == 0):
-					other_data = None
-			except IOError:
-				other_data = None
-				np.savetxt(os.path.join(ROOT, FOLDERS[0], f'{name}.txt'), [0]*number)
-			if other_data is None:
-				other_data = np.full((means.shape[0], number), np.nan)
-			assert other_data.shape[0] == means.shape[0], "This ρR file has the rong number of entries"
-			others.append(other_data)
-		rhoRs, secondary_stuff = others
-		secondary_rhoRs = secondary_stuff[:,0:3]
-		secondary_temps = secondary_stuff[:,3:6]
-	else:
-		secondary_rhoRs, secondary_temps = np.zeros((2, rhoRs.shape[0], 3))
+	base_directory = os.path.join(ROOT, FOLDERS[0])
+
+	try:
+		secondary_stuff = np.atleast_2d(np.loadtxt(os.path.join(base_directory, f'Te.txt')))
+	except IOError:
+		secondary_stuff = np.full((means.shape[0], 6), np.nan)
+		np.savetxt(os.path.join(base_directory, f'Te.txt'), secondary_stuff)
+	assert secondary_stuff.shape[0] == means.shape[0], "This secondary analysis file has the rong number of entries"
+	secondary_rhoRs = secondary_stuff[:,0:3]
+	secondary_temps = secondary_stuff[:,3:6]
 
 	print()
-	with open(os.path.join(ROOT, FOLDERS[0], f'wrf_analysis.csv'), 'w') as f:
-		print("|  WRF               |  Yield              | Mean energy [MeV] |  ρR [g/cm^2]   |")
-		print("|--------------------|----------------------|-----------------|-----------------|")
+	with open(os.path.join(base_directory, f'wrf_analysis.csv'), 'w') as f:
+		print("|  WRF              |  Yield              | Mean energy [MeV] |  ρR [g/cm^2]   |")
+		print("|-------------------|----------------------|-----------------|-----------------|")
 		f.write("WRF, Yield, Yield unc., Mean energy [MeV], Mean energy unc. [MeV], Sigma [MeV], Sigma unc. [MeV]\n")
 		for [label, \
 				(yield_value, yield_error), \
@@ -294,7 +317,7 @@ if __name__ == '__main__':
 				(temp_value, temp_error), \
 				] in zip(labels, yields, means, rhoRs, sigmas, widths, temps):
 			label = label.replace('\n', ' ')
-			print(f"|  {label:16.16s}  |  {yield_value:#.2g}  ± {yield_error:#.2g}  |  {mean_value:5.2f}  ± {mean_error:4.2f}  |  {rhoR_value:5.1f}  ± {rhoR_error:4.1f}  |")
+			print(f"|  {label:15.15s}  |  {yield_value:#.2g}  ± {yield_error:#.2g}  |  {mean_value:5.2f}  ± {mean_error:4.2f}  |  {rhoR_value:5.1f}  ± {rhoR_error:4.1f}  |")
 			f.write(f"{label},{yield_value},{yield_error},{mean_value},{mean_error},{sigma_value},{sigma_error}\n")
 	print()
 
@@ -305,14 +328,17 @@ if __name__ == '__main__':
 	# 	print(f"  Fuel: {np.average(rhoRs[:,2], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
 	# 	print(f"  Shell: {np.average(rhoRs[:,3], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
 
-	if yields.shape[0] <= 6:
-		spacing = 1
+	if len(shot_numbers) <= 6: # choose label spacing based on number of shots
 		rotation = 0
 		alignment = 'center'
+		spacing = 1
 	else:
-		spacing = 0.55
 		rotation = 45
 		alignment = 'right'
+		if len(shot_numbers) <= 15 or len(set(shot_numbers)) > 1:
+			spacing = 0.55
+		else:
+			spacing = 0.40
 
 	for label, filetag, values in [
 			("Yield", 'yield', yields),
@@ -343,7 +369,7 @@ if __name__ == '__main__':
 		if np.any(bottoms > 0) and np.any(tops < 1e20):
 			plot_top = max(np.max(tops[(bottoms>0)&(tops<1e20)]), max_value)
 			plot_bottom = min(np.min(bottoms[bottoms>0]), min_value)
-			if min_value > 0 and max_value/min_value > 100 and np.any(bottoms > 0):
+			if min_value > 0 and max_value/min_value > 30 and np.any(bottoms > 0):
 				plt.yscale('log')
 				rainge = plot_top/plot_bottom
 				plt.ylim(plot_bottom/rainge**0.1, plot_top*rainge**0.1)
@@ -351,12 +377,16 @@ if __name__ == '__main__':
 				rainge = plot_top - plot_bottom
 				plt.ylim(plot_bottom - 0.1*rainge, plot_top + 0.1*rainge)
 
+		# if filetag == "yield":
+		# 	plt.ylim(-.1e11, 2e11)
+		if filetag == "temperature_electron":
+			plt.ylim(None, 4)
 		plt.xticks(ticks=np.arange(values.shape[0]), labels=labels, rotation=rotation, ha=alignment) # then do the labels and stuff
 		plt.ylabel(label)
 		plt.grid()
 		plt.tight_layout()
-		plt.savefig(os.path.join(ROOT, FOLDERS[0], f'summary_{filetag}.png'), dpi=150)
-		plt.savefig(os.path.join(ROOT, FOLDERS[0], f'summary_{filetag}.eps'), dpi=150)
+		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=150)
+		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'), dpi=150)
 
 	if SHOW_PLOTS:
 		plt.show()

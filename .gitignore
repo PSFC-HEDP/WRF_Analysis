@@ -5,3 +5,4 @@ test/runAnalysis/AnalysisOutputs
 build
 data/*
 res/tables/*.csv
+.eggs/*
