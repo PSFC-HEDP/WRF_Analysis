@@ -9,7 +9,7 @@ from scipy import integrate
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
-FOLDERS = ['N211229-002']
+FOLDERS = ['OM210312', 'OM210512', 'OM211111']
 # FOLDERS = ['I_MJDD_PDD_DDExpPush']
 OVERLAP = []
 
@@ -85,6 +85,58 @@ def perform_correction(noun, layers, mean_value, mean_error, sigma_value):
 	return mean_value, mean_error, sigma_value
 
 
+def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
+	""" calcualte the rhoR using whatever tecneke makes most sense.
+		return rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR (mg/cm^2)
+	"""
+	if shot_name.startswith("O"): # if it's an omega shot
+		if shot_name not in rhoR_objects:
+			try:
+				with open("res/tables/stopping_range_protons_D_plasma_20gcc_500eV.txt") as f:
+					data = np.loadtxt(f, skiprows=4)
+			except IOError:
+				print("Did not find res/tables/stopping_range_protons_D_plasma_20gcc_500eV.txt.")
+			else:
+				rhoR_objects[shot_name] = [data[::-1,1], data[::-1,0]*1000] # load a table from Frederick's program
+
+		if shot_name in rhoR_objects:
+			energy_ref, rhoR_ref = rhoR_objects[shot_name]
+			upper = np.interp(mean_energy + mean_energy_error, energy_ref, rhoR_ref)
+			middle = np.interp(mean_energy                   , energy_ref, rhoR_ref)
+			lower = np.interp(mean_energy - mean_energy_error, energy_ref, rhoR_ref)
+			return middle, max(abs(upper - middle), abs(lower - middle)), 0, 0
+
+	elif shot_name.startswith("N"): # if it's a NIF shot
+		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
+			try:
+				params = {}
+				with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
+					for line in f.readlines():
+						params[line.split()[0]] = line.split()[2]
+			except IOError:
+				print(f"Did not find {os.path.join(folder, 'rhoR_parameters.txt')}.")
+			else:
+				rhoR_objects[shot_name] = rhoR_Analysis(
+					shell_mat = params['Shell'],
+					Ri        = float(params['Ri'])*1e-4,
+					Ro        = float(params['Ro'])*1e-4,
+					fD        = float(params['fD']),
+					f3He      = float(params['f3He']),
+					P0        = float(params['P']),
+					Tshell    = float(params['Tshell'])*1e-4,
+					E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
+
+		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
+			analysis_object = rhoR_objects[shot_day+shot_number]
+			rhoR_value, Rcm_value, rhoR_error = analysis_object.Calc_rhoR(E1=mean_energy, dE=mean_energy_error)
+			hotspot_rhoR, shell_rhoR, ablated_rhoR = analysis_object.rhoR_Parts(Rcm_value)
+			return 1000*rhoR_value, 1000*rhoR_error, 1000*hotspot_rhoR, 1000*shell_rhoR # convert from g/cm2 to mg/cm2
+		else:
+			return 0, 0, 0, 0
+
+	else:
+		raise NotImplementedError(shot_name)
+
 
 def combine_measurements(*args):
 	nume = 0
@@ -106,13 +158,12 @@ if __name__ == '__main__':
 	yields = []
 	rhoRs = []
 	compression_yields = []
-	rhoR_objects = {}
 	for i, folder in enumerate(FOLDERS):
 		if i > 0 and len(folder) == 3:
 			FOLDERS[i] = FOLDERS[i-1][:-3] + folder
 
-	for i, folder in enumerate(FOLDERS): # for each specified folder
-		folder = os.path.join(ROOT, folder)
+	for i, folder_name in enumerate(FOLDERS): # for each specified folder
+		folder = os.path.join(ROOT, folder_name)
 		assert os.path.isdir(folder), f"El sistema no puede encontrar la ruta espificada: '{folder}'"
 
 		for subfolder, _, _ in os.walk(folder): # and any subfolders inside it
@@ -138,22 +189,30 @@ if __name__ == '__main__':
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 
-					number, line_of_site, position, wrf_number = None, None, None, None
+					shot_day, shot_number, line_of_site, posicion, wrf_number = None, None, None, None, None
 					flag = ''
 					identifiers = filename[:-4].split('_') # figure out what wrf this is
-					for identifier in identifiers:
-						if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}(-?999)?', identifier):
-							number = identifier
-						elif re.fullmatch(r'(0+-0+|0?90-(0?78|124|315))', identifier):
+					identifiers.append(folder_name)
+					for identifier in reversed(identifiers):
+						if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
+							shot_day, shot_number, _ = identifier.split('-')
+						elif re.fullmatch(r'O[mM]?\d{6}', identifier):
+							shot_day = identifier
+						elif re.fullmatch(r'9\d{4}|1\d{5}', identifier):
+							shot_number = identifier
+						elif re.fullmatch(r'0+-0+|0?90-(0?78|124|315)|TIM[1-6]', identifier):
 							line_of_site = identifier
 						elif re.fullmatch(r'[1-4]', identifier):
 							posicion = identifier
-						elif re.fullmatch(r'134\d{5}', identifier):
+						elif re.fullmatch(r'134\d{5}|[gG][0-2]\d{2}', identifier):
 							wrf_number = identifier
-						elif re.fullmatch(r'(left|right|top|bottom)', identifier):
+						elif re.fullmatch(r'(left|right|top|bottom|full)', identifier):
 							flag = identifier
-					shot_day, shot_number, _ = number.split('-')
-					locacion = ':'.join((line_of_site, posicion))
+					locacion = line_of_site
+					if posicion is not None:
+						locacion += f":{posicion}"
+
+					assert shot_day is not None and shot_number is not None, identifiers
 
 					print(f"{wrf_number} – {shot_day}-{shot_number} {locacion} {flag}")
 
@@ -212,12 +271,14 @@ if __name__ == '__main__':
 					plt.ylabel("Yield (MeV^-1)")
 					if flag != '':
 						plt.title(f"{line_of_site}, position {posicion} ({flag})")
-					else:
+					elif posicion is not None:
 						plt.title(f"{line_of_site}, position {posicion}")
+					else:
+						plt.title(f"{shot_number}, {line_of_site}")
 					plt_set_locators()
 					plt.tight_layout()
-					plt.savefig(os.path.join(subfolder, filename+'_spectrum.png'), dpi=150)
-					plt.savefig(os.path.join(subfolder, filename+'_spectrum.eps'), dpi=150)
+					plt.savefig(os.path.join(subfolder, filename+'_spectrum.png'), dpi=300)
+					plt.savefig(os.path.join(subfolder, filename+'_spectrum.eps'))
 					if SHOW_PLOTS:
 						plt.show()
 					plt.close()
@@ -240,34 +301,9 @@ if __name__ == '__main__':
 							mean_value, mean_error, sigma_value = perform_correction(
 									'hohlraum', HOHLRAUM_LAYERS, mean_value, mean_error, sigma_value)
 
-						if shot_day+shot_number not in rhoR_objects: # try to load the rhoR analysis parameters
-							try:
-								params = {}
-								with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
-									for line in f.readlines():
-										params[line.split()[0]] = line.split()[2]
-							except IOError:
-								print(f"Did not find {os.path.join(folder, 'rhoR_parameters.txt')}")
-							else:
-								rhoR_objects[shot_day+shot_number] = rhoR_Analysis(
-									shell_mat = params['Shell'],
-									Ri        = float(params['Ri'])*1e-4,
-									Ro        = float(params['Ro'])*1e-4,
-									fD        = float(params['fD']),
-									f3He      = float(params['f3He']),
-									P0        = float(params['P']),
-									Tshell    = float(params['Tshell'])*1e-4,
-									E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
-
-						if shot_day+shot_number in rhoR_objects: # if you did or they were already there, calculate the rhoR
-							analysis_object = rhoR_objects[shot_day+shot_number]
-							rhoR_value, Rcm_value, rhoR_error = analysis_object.Calc_rhoR(E1=mean_value, dE=mean_error)
-							rhoR_value, rhoR_error = 1000*rhoR_value, 1000*rhoR_error # convert from (g/cm^2) to (mg/cm^2)
-							hotspot_rhoR, shell_rhoR, ablated_rhoR = analysis_object.rhoR_Parts(Rcm_value)
-							hotspot_rhoR, shell_rhoR = 1000*hotspot_rhoR, 1000*shell_rhoR
-						else:
-							rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = 0, 0, 0, 0
-
+						rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = calculate_rhoR(
+							mean_value, mean_error, shot_day+shot_number) # calculate ρR if you can
+						
 						means.append([mean_value, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error])
 						yields.append([yield_value, yield_error])
@@ -288,7 +324,7 @@ if __name__ == '__main__':
 
 	labels = []
 	for shot_day, shot_number, locacion, flag in zip(shot_days, shot_numbers, locacions, flags): # compose labels of the appropirate specificity
-		if len(set(shot_days)) > 1:
+		if len(set(shot_days)) > 1 and len(shot_number) < 4:
 			labels.append(f"{shot_day}-{shot_number}\n{locacion}")
 		elif len(set(shot_numbers)) > 1:
 			labels.append(f"{shot_number} {locacion}")
@@ -401,8 +437,8 @@ if __name__ == '__main__':
 		plt.ylabel(label)
 		plt.grid()
 		plt.tight_layout()
-		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=150)
-		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'), dpi=150)
+		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=300)
+		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'))
 
 	if SHOW_PLOTS:
 		plt.show()

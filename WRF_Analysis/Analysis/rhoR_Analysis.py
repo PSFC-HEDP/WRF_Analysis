@@ -142,7 +142,7 @@ class rhoR_Analysis(object):
         rhoR, Rcm = self.model.Calc_rhoR(E1)
 
         ModelError = self.__calc_error__("Calc_rhoR", Rcm, E1, breakout=breakout)
-        # Two cases: non-zeno user-supplied error bar, or model error only:
+        # Two cases: non-zero user-supplied error bar, or model error only:
         if dE > 0:
             rhoR_min = self.model.Calc_rhoR(E1+dE)[0]
             rhoR_max = self.model.Calc_rhoR(E1-dE)[0]
