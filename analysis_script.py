@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+from matplotlib.ticker import ScalarFormatter, MaxNLocator
 import re
 from scipy import integrate
 
@@ -45,6 +45,14 @@ class FixedOrderFormatter(ScalarFormatter):
 	def _set_orderOfMagnitude(self, range):
 		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
 		self.orderOfMagnitude = self._order_of_mag
+
+
+def locator():
+	return MaxNLocator(nbins='auto', steps=[1, 2, 5])
+def plt_set_locators():
+	ax = plt.gca()
+	ax.xaxis.set_major_locator(locator())
+	ax.yaxis.set_major_locator(locator())
 
 
 def get_ein_from_eout(eout, layers):
@@ -200,12 +208,13 @@ if __name__ == '__main__':
 					plt.errorbar(x=spectrum[:,0], y=spectrum[:,1], yerr=spectrum[:,2], fmt='.', color='#000000', elinewidth=1, markersize=6)
 					plt.axis([4, 18, min(0, np.min(spectrum[:,1]+spectrum[:,2])), None])
 					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
-					plt.xlabel("Energy after hohlraum wall [MeV]" if len(HOHLRAUM_LAYERS) >= 1 else "Energy [MeV]")
-					plt.ylabel("Yield [MeV^-1]")
+					plt.xlabel("Energy after hohlraum wall (MeV)" if len(HOHLRAUM_LAYERS) >= 1 else "Energy (MeV)")
+					plt.ylabel("Yield (MeV^-1)")
 					if flag != '':
 						plt.title(f"{line_of_site}, position {posicion} ({flag})")
 					else:
 						plt.title(f"{line_of_site}, position {posicion}")
+					plt_set_locators()
 					plt.tight_layout()
 					plt.savefig(os.path.join(subfolder, filename+'_spectrum.png'), dpi=150)
 					plt.savefig(os.path.join(subfolder, filename+'_spectrum.eps'), dpi=150)
@@ -252,16 +261,17 @@ if __name__ == '__main__':
 
 						if shot_day+shot_number in rhoR_objects: # if you did or they were already there, calculate the rhoR
 							analysis_object = rhoR_objects[shot_day+shot_number]
-							rhoR_value, _, rhoR_error = analysis_object.Calc_rhoR(E1=mean_value, dE=mean_error)
-							rhoR_value *= 1000
-							rhoR_error *= 1000 # convert from (g/cm^2) to (mg/cm^2)
+							rhoR_value, Rcm_value, rhoR_error = analysis_object.Calc_rhoR(E1=mean_value, dE=mean_error)
+							rhoR_value, rhoR_error = 1000*rhoR_value, 1000*rhoR_error # convert from (g/cm^2) to (mg/cm^2)
+							hotspot_rhoR, shell_rhoR, ablated_rhoR = analysis_object.rhoR_Parts(Rcm_value)
+							hotspot_rhoR, shell_rhoR = 1000*hotspot_rhoR, 1000*shell_rhoR
 						else:
-							rhoR_value, rhoR_error = 0, 0
+							rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = 0, 0, 0, 0
 
 						means.append([mean_value, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error])
 						yields.append([yield_value, yield_error])
-						rhoRs.append([rhoR_value, rhoR_error, 0, 0])
+						rhoRs.append([rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR])
 
 						compression_value = np.sum(spectrum[:,1], where=spectrum[:,0] < 11)
 						compression_error = yield_error/yield_value*compression_value#1/np.sqrt(np.sum(1/spectrum[:,2]**2, where=spectrum[:,0] < 11))
@@ -305,20 +315,26 @@ if __name__ == '__main__':
 
 	print()
 	with open(os.path.join(base_directory, f'wrf_analysis.csv'), 'w') as f:
-		print("|  WRF              |  Yield              | Mean energy [MeV] |  ρR [g/cm^2]   |")
+		print("|  WRF              |  Yield              | Mean energy (MeV) |  ρR (mg/cm^2)  |")
 		print("|-------------------|----------------------|-----------------|-----------------|")
-		f.write("WRF, Yield, Yield unc., Mean energy [MeV], Mean energy unc. [MeV], Sigma [MeV], Sigma unc. [MeV]\n")
+		f.write(
+			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "+
+			"Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "+
+			"Hot-spot rho-R (mg/cm^2), Shell rho-R (mg/cm^2)\n")
 		for [label, \
 				(yield_value, yield_error), \
 				(mean_value, mean_error), \
-				(rhoR_value, rhoR_error, _, _), \
+				(rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR), \
 				(sigma_value, sigma_error), \
 				(width_value, width_error), \
 				(temp_value, temp_error), \
 				] in zip(labels, yields, means, rhoRs, sigmas, widths, temps):
 			label = label.replace('\n', ' ')
-			print(f"|  {label:15.15s}  |  {yield_value:#.2g}  ± {yield_error:#.2g}  |  {mean_value:5.2f}  ± {mean_error:4.2f}  |  {rhoR_value:5.1f}  ± {rhoR_error:4.1f}  |")
-			f.write(f"{label},{yield_value},{yield_error},{mean_value},{mean_error},{sigma_value},{sigma_error}\n")
+			print("|  {:15.15s}  |  {:#.2g}  ± {:#.2g}  |  {:5.2f}  ± {:4.2f}  |  {:5.1f}  ± {:4.1f}  |".format(
+				label, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error))
+			f.write("{},{},{},{},{},{},{},{},{},{},{}\n".format(
+				label, yield_value, yield_error, mean_value, mean_error, sigma_value, sigma_error,
+				rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR))
 	print()
 
 	# for shot in sorted(shots):
