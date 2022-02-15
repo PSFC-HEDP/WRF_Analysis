@@ -9,7 +9,7 @@ from scipy import integrate
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
-FOLDERS = ['OM210312', 'OM210512', 'OM211111']
+FOLDERS = ['Om211201']
 # FOLDERS = ['I_MJDD_PDD_DDExpPush']
 OVERLAP = []
 
@@ -91,20 +91,31 @@ def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
 	"""
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
-			try:
-				with open("res/tables/stopping_range_protons_D_plasma_20gcc_500eV.txt") as f:
-					data = np.loadtxt(f, skiprows=4)
-			except IOError:
-				print("Did not find res/tables/stopping_range_protons_D_plasma_20gcc_500eV.txt.")
-			else:
-				rhoR_objects[shot_name] = [data[::-1,1], data[::-1,0]*1000] # load a table from Frederick's program
+			rhoR_objects[shot_name] = []
+			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
+				try:
+					with open(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt") as f:
+						data = np.loadtxt(f, skiprows=4)
+				except IOError:
+					print(f"Did not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
+					rhoR_objects.pop(shot_name)
+					break
+				else:
+					rhoR_objects[shot_name].append([data[::-1,1], data[::-1,0]*1000]) # load a table from Frederick's program
 
 		if shot_name in rhoR_objects:
-			energy_ref, rhoR_ref = rhoR_objects[shot_name]
-			upper = np.interp(mean_energy + mean_energy_error, energy_ref, rhoR_ref)
-			middle = np.interp(mean_energy                   , energy_ref, rhoR_ref)
-			lower = np.interp(mean_energy - mean_energy_error, energy_ref, rhoR_ref)
-			return middle, max(abs(upper - middle), abs(lower - middle)), 0, 0
+			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
+			best_gess = np.interp(mean_energy, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+			error_bar = 0
+			for energy in [mean_energy - mean_energy_error, mean_energy, mean_energy + mean_energy_error]:
+				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
+					if abs(perturbd_gess - best_gess) > error_bar:
+						error_bar = abs(perturbd_gess - best_gess)
+			return best_gess, error_bar, 0, 0
+
+		else:
+			return 0, 0, 0, 0
 
 	elif shot_name.startswith("N"): # if it's a NIF shot
 		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
@@ -119,10 +130,15 @@ def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
 				rhoR_objects[shot_name] = rhoR_Analysis(
 					shell_mat = params['Shell'],
 					Ri        = float(params['Ri'])*1e-4,
+					Ri_err    = 0.1e-4,
 					Ro        = float(params['Ro'])*1e-4,
+					Ro_err    = 0.1e-4,
 					fD        = float(params['fD']),
+					fD_err    = 1e-2,
 					f3He      = float(params['f3He']),
+					f3He_err  = 1e-2,
 					P0        = float(params['P']),
+					P0_err    = 0.1,
 					Tshell    = float(params['Tshell'])*1e-4,
 					E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
 
@@ -387,7 +403,7 @@ if __name__ == '__main__':
 	else:
 		rotation = 45
 		alignment = 'right'
-		if len(shot_numbers) <= 15 or len(set(shot_numbers)) > 1:
+		if len(shot_numbers) <= 15 or len(set(shot_days)) > 1:
 			spacing = 0.55
 		else:
 			spacing = 0.40
@@ -433,6 +449,8 @@ if __name__ == '__main__':
 		# 	plt.ylim(-.1e11, 2e11)
 		if filetag == "temperature_electron":
 			plt.ylim(None, 4)
+		plt_set_locators()
+		
 		plt.xticks(ticks=np.arange(values.shape[0]), labels=labels, rotation=rotation, ha=alignment) # then do the labels and stuff
 		plt.ylabel(label)
 		plt.grid()
