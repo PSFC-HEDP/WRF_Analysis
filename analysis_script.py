@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, MaxNLocator
 import re
 from scipy import integrate
+import xlsxwriter as xls
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
@@ -174,6 +175,7 @@ if __name__ == '__main__':
 	yields = []
 	rhoRs = []
 	compression_yields = []
+	spectra = []
 	for i, folder in enumerate(FOLDERS):
 		if i > 0 and len(folder) == 3:
 			FOLDERS[i] = FOLDERS[i-1][:-3] + folder
@@ -274,6 +276,8 @@ if __name__ == '__main__':
 					spectrum = spectrum[spectrum[:,2] != 0]
 					spectrum = spectrum[1:]
 
+					spectra.append(spectrum)
+
 					plt.figure(figsize=(10, 4)) # plot its spectrum
 					plt.plot([0, 20], [0, 0], 'k', linewidth=1)
 					if gaussian_fit:
@@ -365,8 +369,21 @@ if __name__ == '__main__':
 	secondary_rhoRs = secondary_stuff[:,0:3]
 	secondary_temps = secondary_stuff[:,3:6]
 
+	workbook = xls.Workbook(os.path.join(base_directory, 'spectra.xlsx'))
+	worksheet = workbook.add_worksheet() # save the spectra in a spreadsheet
+	for i in range(len(spectra)):
+		worksheet.merge_range(0, 4*i, 0, 4*i+2, labels[i])
+		worksheet.write(1, 4*i,   "Energy (MeV)")
+		worksheet.write(1, 4*i+1, "Spectrum (MeV^-1)")
+		worksheet.write(1, 4*i+2, "Error bar (MeV^-1)")
+		spectrum = spectra[i]
+		for j in range(spectrum.shape[0]):
+			for k in range(3):
+				worksheet.write(2+j, 4*i+k, spectrum[j,k])
+	workbook.close()
+
 	print()
-	with open(os.path.join(base_directory, f'wrf_analysis.csv'), 'w') as f:
+	with open(os.path.join(base_directory, 'wrf_analysis.csv'), 'w') as f:
 		print("|  WRF              |  Yield              | Mean energy (MeV) |  ρR (mg/cm^2)  |")
 		print("|-------------------|----------------------|-----------------|-----------------|")
 		f.write(
