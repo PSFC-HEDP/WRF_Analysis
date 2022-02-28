@@ -48,12 +48,8 @@ class FixedOrderFormatter(ScalarFormatter):
 		self.orderOfMagnitude = self._order_of_mag
 
 
-def locator():
-	return MaxNLocator(nbins='auto', steps=[1, 2, 5])
 def plt_set_locators():
-	ax = plt.gca()
-	ax.xaxis.set_major_locator(locator())
-	ax.yaxis.set_major_locator(locator())
+	plt.locator_params(steps=[1, 2, 5, 10])
 
 
 def get_ein_from_eout(eout, layers):
