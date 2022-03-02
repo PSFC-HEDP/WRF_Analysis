@@ -10,13 +10,14 @@ import xlsxwriter as xls
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
-FOLDERS = ['Om211201']
-# FOLDERS = ['I_MJDD_PDD_DDExpPush']
+# FOLDERS = ['N220207-001', 'N220208-001', '-002']
+FOLDERS = ['I_MJDD_PDD_HotE']
 OVERLAP = []
+CLIPPING = ['N220208-002']
 
-# HOHLRAUM_LAYERS = []
+HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(8, 'Au')]
-HOHLRAUM_LAYERS = [(30, 'Au')]
+# HOHLRAUM_LAYERS = [(30, 'Au')]
 # HOHLRAUM_LAYERS = [(10, 'U'), (20, 'Au')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (2, 'Al'), (594, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (205, 'Al'), (2, 'Al'), (445, 'accura60'), (5, 'parylene')]
@@ -26,7 +27,7 @@ HOHLRAUM_LAYERS = [(30, 'Au')]
 
 WEIRD_FILTERS = {
 	# '': [(3000, 'In')],
-	'top': [(10, 'Ti'), (5, 'Ta')],
+	# 'top': [(10, 'Ti'), (5, 'Ta')],
 }
 
 SHOW_PLOTS = False
@@ -127,15 +128,15 @@ def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
 				rhoR_objects[shot_name] = rhoR_Analysis(
 					shell_mat = params['Shell'],
 					Ri        = float(params['Ri'])*1e-4,
-					Ri_err    = 0.1e-4,
+					Ri_Err    = 0.1e-4,
 					Ro        = float(params['Ro'])*1e-4,
-					Ro_err    = 0.1e-4,
+					Ro_Err    = 0.1e-4,
 					fD        = float(params['fD']),
-					fD_err    = 1e-2,
+					fD_Err    = 1e-2,
 					f3He      = float(params['f3He']),
-					f3He_err  = 1e-2,
+					f3He_Err  = 1e-2,
 					P0        = float(params['P']),
-					P0_err    = 0.1,
+					P0_Err    = 0.1,
 					Tshell    = float(params['Tshell'])*1e-4,
 					E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
 
@@ -166,6 +167,7 @@ if __name__ == '__main__':
 	locacions = []
 	flags = []
 	overlapd = []
+	clipd = []
 	means = []
 	sigmas = []
 	yields = []
@@ -173,8 +175,8 @@ if __name__ == '__main__':
 	compression_yields = []
 	spectra = []
 	for i, folder in enumerate(FOLDERS):
-		if i > 0 and len(folder) == 3:
-			FOLDERS[i] = FOLDERS[i-1][:-3] + folder
+		if i > 0 and len(folder) < 7: # allow user to only specify the last few digits when most of the foldername is the same
+			FOLDERS[i] = FOLDERS[i-1][:-len(folder)] + folder
 
 	for i, folder_name in enumerate(FOLDERS): # for each specified folder
 		folder = os.path.join(ROOT, folder_name)
@@ -196,6 +198,7 @@ if __name__ == '__main__':
 							locacions.append(locacion)
 							flags.append('')
 							overlapd.append(False)
+							clipd.append(False)
 							means.append([float(mean_value), float(mean_error)])
 							sigmas.append([0, 0])
 							yields.append([float(yield_value), float(yield_error)])
@@ -305,6 +308,7 @@ if __name__ == '__main__':
 						locacions.append(locacion)
 						flags.append(flag)
 						overlapd.append(any(overlap_indicator in filename for overlap_indicator in OVERLAP))
+						clipd.append(any(clipping_indicator in filename for clipping_indicator in CLIPPING))
 
 						mean_error = np.sqrt(mean_variance)
 						sigma_error = np.sqrt(sigma_variance)
@@ -356,9 +360,11 @@ if __name__ == '__main__':
 
 	base_directory = os.path.join(ROOT, FOLDERS[0])
 
-	try:
+	try: # load any results we got from Patrick's secondary analysis
 		secondary_stuff = np.atleast_2d(np.loadtxt(os.path.join(base_directory, f'Te.txt')))
 	except IOError:
+		secondary_stuff = None # but it's okey if there is none
+	if secondary_stuff is None or np.all(np.isnan(secondary_stuff)):
 		secondary_stuff = np.full((means.shape[0], 6), np.nan)
 		np.savetxt(os.path.join(base_directory, f'Te.txt'), secondary_stuff)
 	assert secondary_stuff.shape[0] == means.shape[0], "This secondary analysis file has the rong number of entries"
@@ -386,17 +392,19 @@ if __name__ == '__main__':
 			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "+
 			"Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "+
 			"Hot-spot rho-R (mg/cm^2), Shell rho-R (mg/cm^2)\n")
-		for [label, \
-				(yield_value, yield_error), \
-				(mean_value, mean_error), \
-				(rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR), \
-				(sigma_value, sigma_error), \
-				(width_value, width_error), \
-				(temp_value, temp_error), \
-				] in zip(labels, yields, means, rhoRs, sigmas, widths, temps):
+		for i in range(len(labels)):
+			label = labels[i]
+			yield_value, yield_error = yields[i]
+			mean_value, mean_error = means[i]
+			rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = rhoRs[i]
+			sigma_value, sigma_error = sigmas[i]
+			width_value, width_error = widths[i]
+			temp_value, temp_error = temps[i]
 			label = label.replace('\n', ' ')
 			print("|  {:15.15s}  |  {:#.2g}  ± {:#.2g}  |  {:5.2f}  ± {:4.2f}  |  {:5.1f}  ± {:4.1f}  |".format(
 				label, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error))
+			if i + 1 < len(labels) and shot_days[i+1]+shot_numbers[i+1] != shot_days[i]+shot_numbers[i]:
+				print()
 			f.write("{},{},{},{},{},{},{},{},{},{},{}\n".format(
 				label, yield_value, yield_error, mean_value, mean_error, sigma_value, sigma_error,
 				rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR))
@@ -438,6 +446,11 @@ if __name__ == '__main__':
 		if np.any(overlapd):
 			if filetag in ['yield', 'yield_compression', 'rhoR_fuel', 'temperature_electron']: # alter the error bars if there is track overlap
 				values[overlapd,1] = 2e20
+		if np.any(clipd):
+			if filetag in ['yield', 'yield_compression', 'rhoR_total']: # or if there is spectral clipping at the bottom
+				values[clipd,1] = 2e20
+			elif filetag in ['mean']:
+				values[clipd,2] = 2e20
 
 		plt.figure(figsize=(1.5+values.shape[0]*spacing, 4.5)) # then plot it!
 		plt.errorbar(x=np.arange(values.shape[0]), y=values[:,0], yerr=[values[:,2], values[:,1]], fmt='.k', elinewidth=2, markersize=12)
