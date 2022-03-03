@@ -7,6 +7,7 @@ import scipy.interpolate
 #    import syslog
 #    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
+from WRF_Analysis.util.Material import Material
 from WRF_Analysis.util.Constants import *
 from WRF_Analysis.util.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
 
@@ -48,71 +49,6 @@ class rhoR_Model(object):
     def_fD = 0.3  # deuterium fraction in fuel
     def_f3He = 0.7  # 3He fraction in fuel
 
-    # a few densities and masses for the shell
-    def_shell_mat = 'CH'
-    # CH = standard plastic
-    # HDC = diamond
-    # SiO2 = standard glass
-    # Be = standard beryllium
-    # CHGe = standard plastic, with 0.5% Ge dopant, same mass density
-    # CHSi = standard plastic, with 1.0% Si dopant, same mass density
-    # plastic with higher hydrogen content
-    shell_opts = ['CH', 'HDC', 'SiO2', 'Be', 'CHGe', 'CHSi', 'CHSi2x', 'CH2']
-
-    __shell_rho__ = {   'CH': 1.084, 
-                        'HDC': 3.5, 
-                        'SiO2': 2.56, 
-                        'Be': 1.85, 
-                        'CHGe': 1.084, 
-                        'CHSi': 1.084,
-                        'CHSi2x': 1.084,
-                        'CH2': 1.084}
-
-    __shell_A__ = {     'CH': [1,12,16], 
-                        'HDC': [12], 
-                        'SiO2': [28,16], 
-                        'Be': [9],
-                        'CHGe': [1,12,16,72.6],
-                        'CHSi': [1,12,16,28.1],
-                        'CHSi2x': [1,12,16,28.1],
-                        'CH2': [1,12]}
-
-    __shell_AvgA__ = {  'CH': 5.728, 
-                        'HDC': 12., 
-                        'SiO2': 20., 
-                        'Be': 9.,
-                        'CHGe': 5.862,
-                        'CHSi': 5.817,
-                        'CHSi2x': 5.906,
-                        'CH2': 4.66}
-
-    __shell_Z__ = {     'CH': [1,6,8], 
-                        'HDC': [6], 
-                        'SiO2': [14,8], 
-                        'Be': [4],
-                        'CHGe': [1,6,8,32],
-                        'CHSi': [1,6,8,14],
-                        'CHSi2x': [1,6,8,14],
-                        'CH2': [1,6]}
-
-    __shell_AvgZ__ = {  'CH': 3.19, 
-                        'HDC': 6., 
-                        'SiO2': 10., 
-                        'Be': 4.,
-                        'CHGe': 3.248,
-                        'CHSi': 3.233,
-                        'CHSi2x': 3.276,
-                        'CH2': 2.665}
-
-    __shell_F__ = {     'CH': [0.572,0.423,0.005], 
-                        'HDC': [1], 
-                        'SiO2': [0.333,0.667], 
-                        'Be': [1],
-                        'CHGe': [0.571,0.422,0.005,0.002],
-                        'CHSi': [0.570,0.421,0.005,0.004],
-                        'CHSi2x': [0.567,0.419,0.006,0.008],
-                        'CH2': [0.667,0.333]}
-
     # some info for the gas:
     rho_D2_STP = 2 * 0.08988e-3  # density of D2 gas at STP [g/cc]
     rho_3He_STP = (3 / 4) * 0.1786e-3  # density of 3he gas at STP [g/cc]
@@ -152,7 +88,7 @@ class rhoR_Model(object):
                  rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
                  Tshell=40e-4, Mrem=0.15, E0=14.7, dEdx_model='LP'):
         """Initialize the rhoR model."""
-        self.shell_mat = shell_mat
+        self.shell = Material(shell_mat)
         self.Ri = Ri
         self.Ro = Ro
         self.fD = fD
@@ -176,14 +112,14 @@ class rhoR_Model(object):
 
         # calculate initial masses:
         # total mass of shell in the implosion [g]
-        self.Mass_Shell_Total = (4 * math.pi / 3) * self.__shell_rho__[self.shell_mat] * (Ro ** 3 - Ri ** 3)
+        self.Mass_Shell_Total = (4 * math.pi / 3) * self.shell.rho * (Ro ** 3 - Ri ** 3)
         # mix mass in g:
         self.Mass_Mix_Total = self.Mass_Shell_Total * self.MixF
 
         # set up stopping power definitions for the downshift calculations
         # shell material shorthand:
-        A = self.__shell_A__[self.shell_mat]
-        Z = self.__shell_Z__[self.shell_mat]
+        A = self.shell.A
+        Z = self.shell.Z
         # Set up DoubleVectors for gas plus mix stopping power
         self.__mfGasMix__ = DoubleVector(3+len(A))  # eg e-, D , 3He , H , C
         self.__mfGasMix__[0] = 2
@@ -440,8 +376,8 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :return: ni,ne [1/cc]
         """
-        ni = self.rho_Mix(Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
-        ne = self.__shell_AvgZ__[self.shell_mat] * ni
+        ni = self.rho_Mix(Rcm) / (self.shell.AvgA * mp)
+        ne = self.shell.AvgZ * ni
         return ni, ne
 
     def rho_Shell(self, Rcm) -> float:
@@ -470,8 +406,8 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc]
         """
-        ni = self.rho_Shell(Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
-        ne = self.__shell_AvgZ__[self.shell_mat] * ni
+        ni = self.rho_Shell(Rcm) / (self.shell.AvgA * mp)
+        ne = self.shell.AvgZ * ni
         return ni, ne
 
     def get_Abl_radii(self, Rcm) -> tuple:
@@ -535,8 +471,8 @@ class rhoR_Model(object):
 
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc] """
-        ni = self.rho_Abl(r, Rcm) / (self.__shell_AvgA__[self.shell_mat] * mp)
-        ne = self.__shell_AvgZ__[self.shell_mat] * ni
+        ni = self.rho_Abl(r, Rcm) / (self.shell.AvgA * mp)
+        ne = self.shell.AvgZ * ni
         return ni, ne
 
     def rhoR_Total(self, Rcm) -> float:
@@ -583,11 +519,11 @@ class rhoR_Model(object):
 
         ni_gas, ne_gas = self.n_Gas(Rcm)
         ni_mix, ne_mix = self.n_Mix(Rcm)
-        nf = DoubleVector(2 + len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
+        nf = DoubleVector(2 + len(self.shell.A) + (self.dEdx_model!='Z'))
         nf[0] = ni_gas * self.fD
         nf[1] = ni_gas * self.f3He
-        for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[2+i] = ni_mix * self.__shell_F__[self.shell_mat][i]
+        for i in range(len(self.shell.f)):
+            nf[2+i] = ni_mix * self.shell.f[i]
         # for plasma models, include electrons:
         if self.dEdx_model != 'Z':
             nf[-1] = ne_gas + ne_mix
@@ -623,9 +559,9 @@ class rhoR_Model(object):
         :returns: downshifted energy [MeV]
         """
         ni, ne = self.n_Shell(Rcm)
-        nf = DoubleVector(len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
-        for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[i] = ni * self.__shell_F__[self.shell_mat][i]
+        nf = DoubleVector(len(self.shell.A) + (self.dEdx_model!='Z'))
+        for i in range(len(self.shell.f)):
+            nf[i] = ni * self.shell.f[i]
         # for plasma models, include electrons:
         if self.dEdx_model != 'Z':
             nf[-1] = ne
@@ -655,9 +591,9 @@ class rhoR_Model(object):
         :returns: stopping power [MeV/cm]
         """
         ni, ne = self.n_Abl(r, Rcm)
-        nf = DoubleVector(len(self.__shell_A__[self.shell_mat]) + (self.dEdx_model!='Z'))
-        for i in range(len(self.__shell_F__[self.shell_mat])):
-            nf[i] = ni * self.__shell_F__[self.shell_mat][i]
+        nf = DoubleVector(len(self.shell.A) + (self.dEdx_model!='Z'))
+        for i in range(len(self.shell.f)):
+            nf[i] = ni * self.shell.f[i]
         # for plasma models, include electrons:
         if self.dEdx_model != 'Z':
             nf[-1] = ne
