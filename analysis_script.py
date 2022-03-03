@@ -10,8 +10,8 @@ import xlsxwriter as xls
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 
-# FOLDERS = ['N220207-001', 'N220208-001', '-002']
-FOLDERS = ['I_MJDD_PDD_HotE']
+FOLDERS = ['N220207-001', 'N220208-001', '-002']
+# FOLDERS = ['I_MJDD_PDD_HotE']
 OVERLAP = []
 CLIPPING = ['N220208-002']
 
@@ -164,7 +164,8 @@ def combine_measurements(*args):
 if __name__ == '__main__':
 	shot_days = []
 	shot_numbers = []
-	locacions = []
+	lines_of_site = []
+	posicions = []
 	flags = []
 	overlapd = []
 	clipd = []
@@ -178,6 +179,7 @@ if __name__ == '__main__':
 		if i > 0 and len(folder) < 7: # allow user to only specify the last few digits when most of the foldername is the same
 			FOLDERS[i] = FOLDERS[i-1][:-len(folder)] + folder
 
+	# first, load the analyzed data
 	for i, folder_name in enumerate(FOLDERS): # for each specified folder
 		folder = os.path.join(ROOT, folder_name)
 		assert os.path.isdir(folder), f"El sistema no puede encontrar la ruta espificada: '{folder}'"
@@ -191,11 +193,11 @@ if __name__ == '__main__':
 
 						for row in f.readlines(): # read all the wrf summaries out of it
 							line_of_site, posicion, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error = row.split()
-							locacion = ':'.join((line_of_site, posicion))
 
 							shot_days.append(shot_day)
 							shot_numbers.append(shot_number)
-							locacions.append(locacion)
+							lines_of_site.append(line_of_site)
+							positions.append(posicion)
 							flags.append('')
 							overlapd.append(False)
 							clipd.append(False)
@@ -225,13 +227,10 @@ if __name__ == '__main__':
 							wrf_number = identifier
 						elif re.fullmatch(r'(left|right|top|bottom|full)', identifier):
 							flag = identifier
-					locacion = line_of_site
-					if posicion is not None:
-						locacion += f":{posicion}"
 
 					assert shot_day is not None and shot_number is not None, identifiers
 
-					print(f"{wrf_number} – {shot_day}-{shot_number} {locacion} {flag}")
+					print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{posicion} {flag}")
 
 					with open(os.path.join(subfolder, filename), newline='') as f: # read thru its contents
 
@@ -305,7 +304,8 @@ if __name__ == '__main__':
 					if yield_value != 0: # summarize it
 						shot_days.append(shot_day)
 						shot_numbers.append(shot_number)
-						locacions.append(locacion)
+						lines_of_site.append(line_of_site)
+						posicions.append(posicion)
 						flags.append(flag)
 						overlapd.append(any(overlap_indicator in filename for overlap_indicator in OVERLAP))
 						clipd.append(any(clipping_indicator in filename for clipping_indicator in CLIPPING))
@@ -324,14 +324,14 @@ if __name__ == '__main__':
 						rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = calculate_rhoR(
 							mean_value, mean_error, shot_day+shot_number) # calculate ρR if you can
 						
-						means.append([mean_value, mean_error]) # and add the info to the list
-						sigmas.append([sigma_value, sigma_error])
-						yields.append([yield_value, yield_error])
-						rhoRs.append([rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR])
+						means.append([mean_value, mean_error, mean_error]) # and add the info to the list
+						sigmas.append([sigma_value, sigma_error, sigma_error])
+						yields.append([yield_value, yield_error, yield_error])
+						rhoRs.append([rhoR_value, rhoR_error, rhoR_error, hotspot_rhoR, shell_rhoR])
 
 						compression_value = np.sum(spectrum[:,1], where=spectrum[:,0] < 11)
 						compression_error = yield_error/yield_value*compression_value#1/np.sqrt(np.sum(1/spectrum[:,2]**2, where=spectrum[:,0] < 11))
-						compression_yields.append([compression_value, compression_error])
+						compression_yields.append([compression_value, compression_error, compression_error])
 					else:
 						print("this one had an invalid analysis.")
 
@@ -341,26 +341,51 @@ if __name__ == '__main__':
 	yields = np.array(yields)
 	rhoRs = np.array(rhoRs)
 	compression_yields = np.array(compression_yields)
+	shot_days = np.array(shot_days)
+	shot_numbers = np.array(shot_numbers)
+	lines_of_site = np.array(lines_of_site)
+	posicions = np.array(posicions)
 
+	# compose labels of the appropirate specificity
+	shots = []
+	locacions = []
 	labels = []
-	for shot_day, shot_number, locacion, flag in zip(shot_days, shot_numbers, locacions, flags): # compose labels of the appropirate specificity
-		if len(set(shot_days)) > 1 and len(shot_number) < 4:
-			labels.append(f"{shot_day}-{shot_number}\n{locacion}")
-		elif len(set(shot_numbers)) > 1:
-			labels.append(f"{shot_number} {locacion}")
-		else:
-			labels.append(f"{locacion}")
-		if len(set(flags)) > 1:
-			labels[-1] += f" ({flag})"
+	for i in range(len(shot_days)):
+		shot_day = shot_days[i]
+		shot_number = shot_numbers[i]
 
+		if posicions[i] is None:
+			locacions.append(lines_of_site[i])
+		else:
+			locacions.append(f"{lines_of_site[i]}:{posicions[i]}")
+		if len(set(shot_days)) > 1 and len(shot_number) < 4:
+			shots.append(f"{shot_day}-{shot_number}")
+		else:
+			shots.append(shot_number)
+
+		if len(set(shot_days)) > 1 or len(set(shot_numbers)) > 1:
+			labels.append(f"{shots[-1]}\n{locacions[-1]}")
+		else:
+			labels.append(f"{locacions[-1]}")
+		if len(set(flags)) > 1:
+			labels[-1] += f" ({flags[i]})"
+		if len(labels[-1]) < 12:
+			labels[-1] = labels[-1].replace('\n', ' ')
+
+	shots = np.array(shots)
+	locacions = np.array(locacions)
+
+	# convert sigmas to widths and temperatures
 	widths = sigmas*2.355e3
 	temps = np.empty(sigmas.shape)
 	temps[:,0] = (np.sqrt(sigmas[:,0]**2 - σWRF**2)/76.68115805e-3)**2
 	temps[:,1] = np.sqrt((2*sigmas[:,0]*sigmas[:,1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
+	temps[:,2] = temps[:,1]
 
 	base_directory = os.path.join(ROOT, FOLDERS[0])
 
-	try: # load any results we got from Patrick's secondary analysis
+	# load any results we got from Patrick's secondary analysis
+	try:
 		secondary_stuff = np.atleast_2d(np.loadtxt(os.path.join(base_directory, f'Te.txt')))
 	except IOError:
 		secondary_stuff = None # but it's okey if there is none
@@ -371,8 +396,9 @@ if __name__ == '__main__':
 	secondary_rhoRs = secondary_stuff[:,0:3]
 	secondary_temps = secondary_stuff[:,3:6]
 
+	# save the spectra in a spreadsheet
 	workbook = xls.Workbook(os.path.join(base_directory, 'spectra.xlsx'))
-	worksheet = workbook.add_worksheet() # save the spectra in a spreadsheet
+	worksheet = workbook.add_worksheet()
 	for i in range(len(spectra)):
 		worksheet.merge_range(0, 4*i, 0, 4*i+2, labels[i])
 		worksheet.write(1, 4*i,   "Energy (MeV)")
@@ -384,6 +410,7 @@ if __name__ == '__main__':
 				worksheet.write(2+j, 4*i+k, spectrum[j,k])
 	workbook.close()
 
+	# print out a table, and also save the condensed results in a csv file
 	print()
 	with open(os.path.join(base_directory, 'wrf_analysis.csv'), 'w') as f:
 		print("|  WRF              |  Yield              | Mean energy (MeV) |  ρR (mg/cm^2)  |")
@@ -394,21 +421,30 @@ if __name__ == '__main__':
 			"Hot-spot rho-R (mg/cm^2), Shell rho-R (mg/cm^2)\n")
 		for i in range(len(labels)):
 			label = labels[i]
-			yield_value, yield_error = yields[i]
-			mean_value, mean_error = means[i]
-			rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = rhoRs[i]
-			sigma_value, sigma_error = sigmas[i]
-			width_value, width_error = widths[i]
-			temp_value, temp_error = temps[i]
+			yield_value, yield_error, _ = yields[i]
+			mean_value, mean_error, _ = means[i]
+			rhoR_value, rhoR_error, _, hotspot_rhoR, shell_rhoR = rhoRs[i]
+			sigma_value, sigma_error, _ = sigmas[i]
+			width_value, width_error, _ = widths[i]
+			temp_value, temp_error, _ = temps[i]
 			label = label.replace('\n', ' ')
 			print("|  {:15.15s}  |  {:#.2g}  ± {:#.2g}  |  {:5.2f}  ± {:4.2f}  |  {:5.1f}  ± {:4.1f}  |".format(
 				label, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error))
-			if i + 1 < len(labels) and shot_days[i+1]+shot_numbers[i+1] != shot_days[i]+shot_numbers[i]:
+			if i + 1 < len(labels) and shots[i+1] != shots[i]:
 				print()
 			f.write("{},{},{},{},{},{},{},{},{},{},{}\n".format(
 				label, yield_value, yield_error, mean_value, mean_error, sigma_value, sigma_error,
 				rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR))
 	print()
+
+	# make the error bars asymmetrick if there are issues with the data
+	if np.any(overlapd):
+		for affected_values in [yields, compression_yields, secondary_rhoRs, secondary_temps]:
+			affected_values[overlapd, 1] = 2e20
+	if np.any(clipd):
+		for affected_values in [yields, compression_yields, secondary_rhoRs, secondary_temps, rhoRs]:
+			affected_values[clipd, 1] = 2e20
+		means[clipd, 2] = 2e20
 
 	# for shot in sorted(shots):
 	# 	matching_shot = [shot in label for label in loong_labels]
@@ -417,7 +453,8 @@ if __name__ == '__main__':
 	# 	print(f"  Fuel: {np.average(rhoRs[:,2], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
 	# 	print(f"  Shell: {np.average(rhoRs[:,3], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
 
-	if len(shot_numbers) <= 6: # choose label spacing based on number of shots
+	# choose label spacing based on number of shots
+	if len(shot_numbers) <= 6:
 		rotation = 0
 		alignment = 'center'
 		spacing = 1
@@ -429,6 +466,7 @@ if __name__ == '__main__':
 		else:
 			spacing = 0.40
 
+	# create the comparison plots
 	for label, filetag, values in [
 			("Yield", 'yield', yields),
 			("Compression yield", 'yield_compression', compression_yields),
@@ -441,17 +479,6 @@ if __name__ == '__main__':
 			]:
 		if np.all(np.isnan(values)): # skip if there's noting here
 			continue
-		if values.shape[1] != 3: # first, reshape the data array to be in a consistent format
-			values = np.stack([values[:,0], values[:,1], values[:,1]]).T
-		if np.any(overlapd):
-			if filetag in ['yield', 'yield_compression', 'rhoR_fuel', 'temperature_electron']: # alter the error bars if there is track overlap
-				values[overlapd,1] = 2e20
-		if np.any(clipd):
-			if filetag in ['yield', 'yield_compression', 'rhoR_total']: # or if there is spectral clipping at the bottom
-				values[clipd,1] = 2e20
-			elif filetag in ['mean']:
-				values[clipd,2] = 2e20
-
 		plt.figure(figsize=(1.5+values.shape[0]*spacing, 4.5)) # then plot it!
 		plt.errorbar(x=np.arange(values.shape[0]), y=values[:,0], yerr=[values[:,2], values[:,1]], fmt='.k', elinewidth=2, markersize=12)
 		plt.xlim(-1/2, values.shape[0]-1/2)
@@ -484,6 +511,39 @@ if __name__ == '__main__':
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=300)
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'))
 
+	# now create a line-of-site comparison plot
+	compared_lines_of_site = sorted(set(lines_of_site))
+	if len(compared_lines_of_site) >= 2:
+		compared_shots = sorted(set(shots))
+		los_rhoRs = np.empty((len(compared_shots), 2, 3))
+		for i, shot in enumerate(compared_shots):
+			for j, line_of_site in enumerate(compared_lines_of_site[:2]):
+				here = (lines_of_site == line_of_site) & (shots == shot)
+				if np.sum(here) > 0:
+					los_rhoRs[i,j,0] = np.average(rhoRs[here, 0], weights=rhoRs[here, 2]**(-2))
+					los_rhoRs[i,j,1] = np.min(rhoRs[here, 1])
+					los_rhoRs[i,j,2] = np.min(rhoRs[here, 2])
+				else:
+					los_rhoRs[i,j,:] = np.nan
+
+		plt.figure(figsize=(4.5, 4.5))
+		plt.errorbar(y=los_rhoRs[:, 0, 0],
+			         yerr=los_rhoRs[:, 0, [2,1]].T,
+			         x=los_rhoRs[:, 1, 0],
+			         xerr=los_rhoRs[:, 1, [2,1]].T,
+			         fmt='.', color='#000000', markersize=12)
+		plt.axline((0, 0), slope=1, color='k', linewidth=1)
+		plt.ylabel(f"ρR on {compared_lines_of_site[0]}")
+		plt.xlabel(f"ρR on {compared_lines_of_site[1]}")
+		plt.axis('square')
+		plt.xlim(0, 220)
+		plt.ylim(0, 220)
+		plt.grid('on')
+		plt.tight_layout()
+		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.png'), dpi=300)
+		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.eps'))
+
+	# show plots
 	if SHOW_PLOTS:
 		plt.show()
 	plt.close('all')
