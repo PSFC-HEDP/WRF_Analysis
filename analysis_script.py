@@ -11,11 +11,10 @@ from scipy import integrate
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
-
-FOLDERS = ['N220207-001', 'N220208-001', '-002']
-# FOLDERS = ['I_MJDD_PDD_HotE']
+FOLDERS = ['N220405-002', '-003', 'N220406-001']
+# FOLDERS = ['I_DPI_Sym_BPhase']
 OVERLAP = []
-CLIPPING = ['N220208-002']
+CLIPPING = []
 
 HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(8, 'Au')]
@@ -203,14 +202,14 @@ if __name__ == '__main__':
 							shot_days.append(shot_day)
 							shot_numbers.append(shot_number)
 							lines_of_site.append(line_of_site)
-							positions.append(posicion)
+							posicions.append(posicion)
 							flags.append('')
 							overlapd.append(False)
 							clipd.append(False)
-							means.append([float(mean_value), float(mean_error)])
-							sigmas.append([0, 0])
-							yields.append([float(yield_value), float(yield_error)])
-							rhoRs.append([float(rhoR_value), float(rhoR_error), 0, 0])
+							means.append([float(mean_value), float(mean_error), float(mean_error)])
+							sigmas.append([0, 0, 0])
+							yields.append([float(yield_value), float(yield_error), float(yield_error)])
+							rhoRs.append([float(rhoR_value), float(rhoR_error), float(rhoR_error), 0, 0])
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 
@@ -423,8 +422,8 @@ if __name__ == '__main__':
 	# print out a table, and also save the condensed results in a csv file
 	print()
 	with open(os.path.join(base_directory, 'wrf_analysis.csv'), 'w') as f:
-		print("|  WRF              |  Yield              | Mean energy (MeV) |  ρR (mg/cm^2)  |")
-		print("|-------------------|----------------------|-----------------|-----------------|")
+		print("|  WRF              |  Yield              |Mean energy (MeV)| ρR (mg/cm^2)  |")
+		print("|-------------------|---------------------|----------------|----------------|")
 		f.write(
 			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), " +
 			"Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), " +
@@ -438,7 +437,7 @@ if __name__ == '__main__':
 			width_value, width_error, _ = widths[i]
 			temp_value, temp_error, _ = temps[i]
 			label = label.replace('\n', ' ')
-			print("|  {:15.15s}  |  {:#.2g}  ± {:#.2g}  |  {:5.2f}  ± {:4.2f}  |  {:5.1f}  ± {:4.1f}  |".format(
+			print("|  {:15.15s}  |  {:#.2g} ± {:#.2g}  |  {:5.2f} ± {:4.2f}  |  {:5.1f} ± {:4.1f}  |".format(
 				label, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error))
 			if i + 1 < len(labels) and shots[i+1] != shots[i]:
 				print()
