@@ -310,7 +310,7 @@ def plot_profile(analysis, Rcm, filename=None, ax=None, xlim=None, ylim=None, fi
 
     # get modeled shell thickness:
     Tshell = analysis.Tshell[1]
-    Mrem = analysis.Mrem[1]
+    Mrem = analysis.f_Shell_remain[1]
     Rgas = Rcm - Tshell / 2
     rho_Gas = analysis.model.rho_Gas(Rcm)
     Rshell = Rcm + Tshell / 2

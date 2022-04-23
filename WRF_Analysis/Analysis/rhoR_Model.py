@@ -30,64 +30,38 @@ class rhoR_Model(object):
     :param rho_Abl_Max: (optional) maximum density in the ablated mass [g/cc] {default=1.5}
     :param rho_Abl_Min: (optional) minimum density in the ablated mass [g/cc] {default=0.1}
     :param rho_Abl_Scale: (optional) scale length for the ablated mass [cm] {default=70e-4}
-    :param MixF: (optional) amount of shell material mixed into the fuel [fractional] {default=0.025}
-    :param Tshell: (optional) thickness of the shell in-flight [cm] {default = 40e-4}
-    :param Mrem: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
+    :param f_Mix: (optional) amount of shell material mixed into the fuel [fractional] {default=0.025}
+    :param t_Shell: (optional) thickness of the shell in-flight [cm] {default = 40e-4}
+    :param f_Remain: (optional) mass remaining of the in-flight shell [fractional] {default=0.15}
     :param E0: (optional) initial proton energy [MeV] {default=14.7}
     :param dEdx_model: (optional) Stopping model to use, valid choices are 'LP', 'BPS', 'Z' {default='LP'}
+    :raise ValueError: if one of the given parameters is invalid (e.g. if outer radius is nonpositive)
     :author: Alex Zylstra
     :date: 2014/09/25
     """
 
-    # values below are defaults
-    # anything beginning with a def_ is replaced with a class variable
-
-    # initial shell conditions:
-    def_Ri = 900e-4  # initial inner radius [cm]
-    def_Ro = 1100e-4  # initial outer radius [cm]
-    def_P0 = 50  # initial pressure [atm]
-    def_fD = 0.3  # deuterium fraction in fuel
-    def_f3He = 0.7  # 3He fraction in fuel
-
     # some info for the gas:
     rho_D2_STP = 2 * 0.08988e-3  # density of D2 gas at STP [g/cc]
     rho_3He_STP = (3 / 4) * 0.1786e-3  # density of 3he gas at STP [g/cc]
-    # rho0_Gas = 0  # initial gas density [atm]
-
-    # total masses in the system:
-    #def_Mass_Shell_Total = 0  # total mass of shell in the implosion [g]
-    #def_Mass_Mix_Total = 0  # total mix mass [g]
-
-    # ASSUMED CONDITIONS
-    def_Te_Gas = 3  # keV
-    def_Te_Shell = 0.2  # keV
-    def_Te_Abl = 0.3  # keV
-    def_Te_Mix = 1  # keV
-    # ablated mass is modeled as an exponential profile
-    # specified by max, min, and length scale:
-    def_rho_Abl_Max = 1.5  # g/cc
-    def_rho_Abl_Min = 0.1  # g/cc
-    def_rho_Abl_Scale = 70e-4  # [cm]
-    # Fraction of CH mixed into the hot spot
-    def_MixF = 0.005
-    # thickness of the shell in-flight
-    def_Tshell = 40e-4  # [cm]
-    # mass remaining of the shell:
-    def_Mrem = 0.15  # fractional
-
-    # initial proton energy:
-    def_E0 = 14.7
 
     dEdx_models_avail = ['LP', 'BPS', 'Z']
 
     # options for stop pow calculations:
     steps = 100  # steps in radius per region
 
-    def __init__(self, shell_mat='CH', Ri=9e-2, Ro=11e-2, fD=0.3, f3He=0.7, P0=50,
-                 Te_Gas=3, Te_Shell=0.2, Te_Abl=0.3, Te_Mix=1,
-                 rho_Abl_Max=1.5, rho_Abl_Min=0.1, rho_Abl_Scale=70e-4, MixF=0.005,
-                 Tshell=40e-4, Mrem=0.15, E0=14.7, dEdx_model='LP'):
+    def __init__(self,
+                 shell_mat, Ri, Ro, fD, f3He, P0,
+                 Te_Gas, Te_Shell, Te_Abl, Te_Mix,
+                 rho_Abl_Max, rho_Abl_Min, rho_Abl_Scale,
+                 f_Mix, t_Shell, f_Remain,
+                 E0, dEdx_model='LP'):
         """Initialize the rhoR model."""
+        if Ri <= 0 or Ro <= 0 or fD < 0 or f3He < 0 or P0 < 0 or \
+                Te_Gas <= 0 or Te_Shell <= 0 or Te_Abl <= 0 or Te_Mix <= 0 or \
+                rho_Abl_Max <= 0 or rho_Abl_Min <= 0 or rho_Abl_Scale <= 0 or \
+                f_Mix < 0 or t_Shell <= 0 or f_Remain < 0 or E0 <= 0:
+            raise ValueError("you passd something negative.  idk which one.")
+
         self.shell = Material(shell_mat)
         self.Ri = Ri
         self.Ro = Ro
@@ -101,9 +75,9 @@ class rhoR_Model(object):
         self.rho_Abl_Max = rho_Abl_Max
         self.rho_Abl_Min = rho_Abl_Min
         self.rho_Abl_Scale = rho_Abl_Scale
-        self.MixF = MixF
-        self.Tshell = Tshell
-        self.Mrem = Mrem
+        self.f_Mix = f_Mix
+        self.t_Shell = t_Shell
+        self.f_Remain = f_Remain
         self.E0 = E0
         self.dEdx_model = dEdx_model
 
@@ -114,7 +88,7 @@ class rhoR_Model(object):
         # total mass of shell in the implosion [g]
         self.Mass_Shell_Total = (4 * math.pi / 3) * self.shell.rho * (Ro ** 3 - Ri ** 3)
         # mix mass in g:
-        self.Mass_Mix_Total = self.Mass_Shell_Total * self.MixF
+        self.Mass_Mix_Total = self.Mass_Shell_Total * self.f_Mix
 
         # set up stopping power definitions for the downshift calculations
         # shell material shorthand:
@@ -271,35 +245,21 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: the final proton energy [MeV]
         """
+        assert Rcm >= 0
         E = self.E0
         # range through gas+mix:
-        dr = 1e4 * (Rcm - self.Tshell / 2)  # length in um
-        E = self.Eout_GasMix(E, dr, Rcm)
+        l_gas = max(0, 1e4 * (Rcm - self.t_Shell/2))  # length in um
+        E = self.Eout_GasMix(E, l_gas, Rcm)
 
         #range through shell:
-        dr = 1e4 * self.Tshell
-        E = self.Eout_Shell(E, dr, Rcm)
+        l_shell = 1e4 * (Rcm + self.t_Shell/2) - l_gas
+        if (l_shell < 0):
+            print(l_shell)
+        E = self.Eout_Shell(E, l_shell, Rcm)
 
         #range through ablated mass gradient:
         r1, r2, r3 = self.get_Abl_radii(Rcm)
-        #print('r1,r2,r3 = ', r1, r2, r3)
-        if r3 <= r2:
-            print('Warning: problem in ablated region')
-
-        # first part of the ablated region:
-        dr = (r2 - r1) / self.steps
-        if dr > 0:
-            # have to do manually b/c of density gradient:
-            for i in range(self.steps):
-                E += dr * self.dEdr_Abl(E, r1 + dr * i, Rcm)
-
-        # for the rest of the ablated mass, stopping power is constant:
-        dEdr = self.dEdr_Abl(E, (r2+r3)/2, Rcm)
-        dr = (r3 - r2) / self.steps
-        if dr > 0:
-            # have to do manually b/c of density gradient:
-            for i in range(self.steps):
-                E += dr * dEdr
+        E = self.Eout_Abl(E, r1, r2, r3, Rcm)
 
         return max(E, 0)
 
@@ -329,7 +289,7 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: gas density [g/cc]
         """
-        Rgas = Rcm - self.Tshell / 2
+        Rgas = Rcm - self.t_Shell / 2
         return self.rho0_Gas * (self.Ri / Rgas) ** 3
 
     def rhoR_Gas(self, Rcm) -> float:
@@ -338,7 +298,7 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: the gas areal density [g/cm2]
         """
-        Rgas = Rcm - self.Tshell / 2
+        Rgas = Rcm - self.t_Shell / 2
         return self.rho0_Gas * Rgas * (self.Ri / Rgas) ** 3
 
     def n_Gas(self, Rcm) -> tuple:
@@ -359,7 +319,7 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: mix mass density [g/cc]
         """
-        V = (4 * math.pi / 3) * (Rcm - self.Tshell / 2) ** 3
+        V = (4 * math.pi / 3) * (Rcm - self.t_Shell / 2) ** 3
         return self.Mass_Mix_Total / V
 
     def rhoR_Mix(self, Rcm) -> float:
@@ -367,8 +327,8 @@ class rhoR_Model(object):
 
         :param Rcm: shell radius at shock BT [cm]
         :returns: mix mass areal density [g/cm2]"""
-        V = (4 * math.pi / 3) * (Rcm - self.Tshell / 2) ** 3
-        return (Rcm - self.Tshell / 2) * self.Mass_Mix_Total / V
+        V = (4 * math.pi / 3) * (Rcm - self.t_Shell / 2) ** 3
+        return (Rcm - self.t_Shell / 2) * self.Mass_Mix_Total / V
 
     def n_Mix(self, Rcm) -> tuple:
         """Calculate mix number density
@@ -386,8 +346,8 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: mass density in the shell [g/cc]
         """
-        m = self.Mass_Shell_Total * self.Mrem
-        V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
+        m = self.Mass_Shell_Total * self.f_Remain
+        V = (4 * math.pi / 3) * ((Rcm + self.t_Shell / 2) ** 3 - (Rcm - self.t_Shell / 2) ** 3)
         return m / V
 
     def rhoR_Shell(self, Rcm) -> float:
@@ -396,9 +356,9 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: areal density [g/cm2]
         """
-        m = self.Mass_Shell_Total * self.Mrem
-        V = (4 * math.pi / 3) * ((Rcm + self.Tshell / 2) ** 3 - (Rcm - self.Tshell / 2) ** 3)
-        return self.Tshell * m / V
+        m = self.Mass_Shell_Total * self.f_Remain
+        V = (4 * math.pi / 3) * ((Rcm + self.t_Shell / 2) ** 3 - (Rcm - self.t_Shell / 2) ** 3)
+        return self.t_Shell * m / V
 
     def n_Shell(self, Rcm) -> tuple:
         """Calculate particle number density in the shell.
@@ -420,8 +380,8 @@ class rhoR_Model(object):
         """
         # density has an exponential ramp from max to min rho, then flat tail
         # as far out as necessary to conserve mass.
-        m = self.Mass_Shell_Total * (1 - self.Mrem - self.MixF)
-        r1 = Rcm + self.Tshell / 2  # start of ablated mass
+        m = self.Mass_Shell_Total * (1 - self.f_Remain - self.f_Mix)
+        r1 = Rcm + self.t_Shell / 2  # start of ablated mass
         # end of exponential ramp:
         r2 = r1 + self.rho_Abl_Scale * math.log(self.rho_Abl_Max / self.rho_Abl_Min)
         # mass left in the "tail"
@@ -460,7 +420,7 @@ class rhoR_Model(object):
         :returns: areal density [g/cm2]"""
         r1, r2, r3 = self.get_Abl_radii(Rcm)
         # integrate from r1 to r3
-        #return scipy.integrate.quad(self.rho_Abl, r1, r3, args=(Rcm, self.Tshell, Mrem))[0]
+        #return scipy.integrate.quad(self.rho_Abl, r1, r3, args=(Rcm, self.t_Shell, f_Remain))[0]
         # contribution from exponential part:
         rhoR = self.rho_Abl_Max * self.rho_Abl_Scale * (1 - math.exp(-(r2-r1)/self.rho_Abl_Scale))
         # contribution from linear part:
@@ -471,6 +431,7 @@ class rhoR_Model(object):
     def n_Abl(self, r, Rcm) -> tuple:
         """Calculate the ablated mass number density.
 
+        :param r: position at which to evaluate the density
         :param Rcm: shell radius at shock BT [cm]
         :returns: ni,ne [1/cc] """
         ni = self.rho_Abl(r, Rcm) / (self.shell.AvgA * mp)

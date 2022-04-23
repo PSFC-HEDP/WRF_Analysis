@@ -1,11 +1,13 @@
 import csv
-import numpy as np
 import os
-import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, MaxNLocator
 import re
-from scipy import integrate
+from typing import Any
+
+import matplotlib.pyplot as plt
+import numpy as np
 import xlsxwriter as xls
+from matplotlib.ticker import ScalarFormatter
+from scipy import integrate
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
@@ -43,63 +45,65 @@ class FixedOrderFormatter(ScalarFormatter):
 	def __init__(self, order_of_mag=0, useOffset=True, useMathText=False):
 		self._order_of_mag = order_of_mag
 		ScalarFormatter.__init__(self, useOffset=useOffset, 
-								 useMathText=useMathText)
-	def _set_orderOfMagnitude(self, range):
+		                         useMathText=useMathText)
+	def _set_orderOfMagnitude(self, _):
 		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
 		self.orderOfMagnitude = self._order_of_mag
 
 
-def plt_set_locators():
+def plt_set_locators() -> None:
 	plt.locator_params(steps=[1, 2, 5, 10])
 
 
-def get_ein_from_eout(eout, layers):
+def get_ein_from_eout(eout: float, layers: list[tuple[float, str]]) -> float:
 	""" do the reverse stopping power calculation """
 	energy = eout # [MeV]
 	for thickness, formula in layers[::-1]:
 		data = np.loadtxt(f"res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
-		energy_axis = data[:,0]/1e3 # [MeV]
-		dEdx = data[:,1]/1e3 # [MeV/μm]
+		energy_axis = data[:, 0]/1e3 # [MeV]
+		dEdx = data[:, 1]/1e3 # [MeV/μm]
 		energy = integrate.odeint(
-			func = lambda E,x: np.interp(E, energy_axis, dEdx),
+			func = lambda E, x: np.interp(E, energy_axis, dEdx),
 			y0   = energy,
 			t    = [0, thickness]
-		)[-1,0]
+		)[-1, 0]
 	return energy
 
-def get_dein_from_deout(deout, eout, layers):
+def get_dein_from_deout(deout: float, eout: float, layers: list[tuple[float, str]]) -> float:
 	""" do a derivative of the stopping power calculation """
 	left = get_ein_from_eout(eout - deout, layers)
 	rite = get_ein_from_eout(eout + deout, layers)
 	return (rite - left)/2
 
 
-def perform_correction(noun, layers, mean_value, mean_error, sigma_value):
-	print(f"Correcting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_value:.2f} ± {sigma_value:.2f} becomes ", end='')
-	mean_error = get_dein_from_deout(mean_error, mean_value, layers)
-	sigma_value = get_dein_from_deout(sigma_value, mean_value, layers)
-	mean_value = get_ein_from_eout(mean_value, layers)
-	print(f"{mean_value:.2f} ± {sigma_value:.2f}")
-	return mean_value, mean_error, sigma_value
+def perform_correction(noun: str, layers: list[tuple[float, str]],
+                       mean_energy: float, mean_energy_error: float, sigma: float) -> tuple[float, float, float]:
+	""" correct some spectral properties for a hohlraum """
+	print(f"Correcting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
+	mean_energy_error = get_dein_from_deout(mean_energy_error, mean_energy, layers)
+	sigma = get_dein_from_deout(sigma, mean_energy, layers)
+	mean_energy = get_ein_from_eout(mean_energy, layers)
+	print(f"{mean_energy:.2f} ± {sigma:.2f}")
+	return mean_energy, mean_energy_error, sigma
 
 
-def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
+def calculate_rhoR(mean_energy: float, mean_energy_error: float,
+                   shot_name: str, rhoR_objects: dict[str, Any] = {}):
 	""" calcualte the rhoR using whatever tecneke makes most sense.
-		return rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR (mg/cm^2)
+		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
 	"""
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
 			rhoR_objects[shot_name] = []
 			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
 				try:
-					with open(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt") as f:
-						data = np.loadtxt(f, skiprows=4)
+					data = np.loadtxt(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt", skiprows=4)
 				except IOError:
 					print(f"Did not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
 					rhoR_objects.pop(shot_name)
 					break
 				else:
-					rhoR_objects[shot_name].append([data[::-1,1], data[::-1,0]*1000]) # load a table from Frederick's program
+					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
 
 		if shot_name in rhoR_objects:
 			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
@@ -126,25 +130,27 @@ def calculate_rhoR(mean_energy, mean_energy_error, shot_name, rhoR_objects={}):
 				print(f"Did not find {os.path.join(folder, 'rhoR_parameters.txt')}.")
 			else:
 				rhoR_objects[shot_name] = rhoR_Analysis(
-					shell_mat = params['Shell'],
-					Ri        = float(params['Ri'])*1e-4,
-					Ri_Err    = 0.1e-4,
-					Ro        = float(params['Ro'])*1e-4,
-					Ro_Err    = 0.1e-4,
-					fD        = float(params['fD']),
-					fD_Err    = 1e-2,
-					f3He      = float(params['f3He']),
-					f3He_Err  = 1e-2,
-					P0        = float(params['P']),
-					P0_Err    = 0.1,
-					Tshell    = float(params['Tshell'])*1e-4,
-					E0        = 14.7 if float(params['f3He']) > 0 else 15.0)
+					shell_mat   = params['shell_material'],
+					Ri          = float(params['Ri'])*1e-4,
+					Ri_err      = 0.1e-4,
+					Ro          = float(params['Ro'])*1e-4,
+					Ro_err      = 0.1e-4,
+					fD          = float(params['fD']),
+					fD_err      = min(float(params['fD']), 1e-2),
+					f3He        = float(params['f3He']),
+					f3He_err    = min(float(params['f3He']), 1e-2),
+					P0          = float(params['P']),
+					P0_err      = 0.1,
+					t_Shell     = float(params['shell_thickness'])*1e-4,
+					t_Shell_err = float(params['shell_thickness'])/2*1e-4,
+					E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
+				)
 
 		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
 			analysis_object = rhoR_objects[shot_day+shot_number]
-			rhoR_value, Rcm_value, rhoR_error = analysis_object.Calc_rhoR(E1=mean_energy, dE=mean_energy_error)
-			hotspot_rhoR, shell_rhoR, ablated_rhoR = analysis_object.rhoR_Parts(Rcm_value)
-			return 1000*rhoR_value, 1000*rhoR_error, 1000*hotspot_rhoR, 1000*shell_rhoR # convert from g/cm2 to mg/cm2
+			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy, dE=mean_energy_error)
+			hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
+			return np.multiply(1000, [rhoR, error, hotspot_component, shell_component]) # convert from g/cm2 to mg/cm2
 		else:
 			return 0, 0, 0, 0
 
@@ -249,7 +255,7 @@ if __name__ == '__main__':
 										mean_value = float(row[1])
 										sigma_value = float(row[2])
 										yield_value = float(row[3])
-									except:
+									except ValueError:
 										gaussian_fit = False
 
 								elif row[0] == 'Value (raw stats):' and mean_value is None:
@@ -271,7 +277,7 @@ if __name__ == '__main__':
 
 					spectrum = np.array(spectrum)
 
-					spectrum = spectrum[spectrum[:,2] != 0]
+					spectrum = spectrum[spectrum[:, 2] != 0]
 					spectrum = spectrum[1:]
 
 					spectra.append(spectrum)
@@ -281,10 +287,14 @@ if __name__ == '__main__':
 					if gaussian_fit:
 						x = np.linspace(0, 20, 1000)
 						μ, σ, Σ = mean_value, sigma_value, yield_value
-						plt.plot(x, Σ*np.exp(-(x - μ)**2/(2*σ**2))/np.sqrt(2*np.pi*σ**2), color='#C00000')
-					plt.errorbar(x=spectrum[:,0], y=spectrum[:,1], yerr=spectrum[:,2], fmt='.', color='#000000', elinewidth=1, markersize=6)
-					plt.axis([4, 18, min(0, np.min(spectrum[:,1]+spectrum[:,2])), None])
-					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
+						plt.plot(x, Σ*np.exp(-(x - μ)**2/(2*σ**2))/np.sqrt(2*np.pi*σ**2),
+						         color='#C00000')
+					plt.errorbar(x=spectrum[:, 0],
+					             y=spectrum[:, 1],
+					             yerr=spectrum[:, 2],
+					             fmt='.', color='#000000', elinewidth=1, markersize=6)
+					plt.axis([4, 18, min(0, np.min(spectrum[:, 1]+spectrum[:, 2])), None])
+					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 					plt.xlabel("Energy after hohlraum wall (MeV)" if len(HOHLRAUM_LAYERS) >= 1 else "Energy (MeV)")
 					plt.ylabel("Yield (MeV^-1)")
 					if flag != '':
@@ -327,10 +337,10 @@ if __name__ == '__main__':
 						means.append([mean_value, mean_error, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error, sigma_error])
 						yields.append([yield_value, yield_error, yield_error])
-						rhoRs.append([rhoR_value, rhoR_error, rhoR_error, hotspot_rhoR, shell_rhoR])
+						rhoRs.append([rhoR_value, rhoR_error, rhoR_error, hotspot_rhoR, shell_rhoR]) # tho the hotspot and shell components are probably not reliable...
 
-						compression_value = np.sum(spectrum[:,1], where=spectrum[:,0] < 11)
-						compression_error = yield_error/yield_value*compression_value#1/np.sqrt(np.sum(1/spectrum[:,2]**2, where=spectrum[:,0] < 11))
+						compression_value = np.sum(spectrum[:, 1], where=spectrum[:, 0] < 11)
+						compression_error = yield_error/yield_value*compression_value
 						compression_yields.append([compression_value, compression_error, compression_error])
 					else:
 						print("this one had an invalid analysis.")
@@ -378,9 +388,9 @@ if __name__ == '__main__':
 	# convert sigmas to widths and temperatures
 	widths = sigmas*2.355e3
 	temps = np.empty(sigmas.shape)
-	temps[:,0] = (np.sqrt(sigmas[:,0]**2 - σWRF**2)/76.68115805e-3)**2
-	temps[:,1] = np.sqrt((2*sigmas[:,0]*sigmas[:,1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
-	temps[:,2] = temps[:,1]
+	temps[:, 0] = (np.sqrt(sigmas[:, 0]**2 - σWRF**2)/76.68115805e-3)**2
+	temps[:, 1] = np.sqrt((2*sigmas[:, 0]*sigmas[:, 1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
+	temps[:, 2] = temps[:, 1]
 
 	base_directory = os.path.join(ROOT, FOLDERS[0])
 
@@ -393,8 +403,8 @@ if __name__ == '__main__':
 		secondary_stuff = np.full((means.shape[0], 6), np.nan)
 		np.savetxt(os.path.join(base_directory, f'Te.txt'), secondary_stuff)
 	assert secondary_stuff.shape[0] == means.shape[0], "This secondary analysis file has the rong number of entries"
-	secondary_rhoRs = secondary_stuff[:,0:3]
-	secondary_temps = secondary_stuff[:,3:6]
+	secondary_rhoRs = secondary_stuff[:, 0:3]
+	secondary_temps = secondary_stuff[:, 3:6]
 
 	# save the spectra in a spreadsheet
 	workbook = xls.Workbook(os.path.join(base_directory, 'spectra.xlsx'))
@@ -407,7 +417,7 @@ if __name__ == '__main__':
 		spectrum = spectra[i]
 		for j in range(spectrum.shape[0]):
 			for k in range(3):
-				worksheet.write(2+j, 4*i+k, spectrum[j,k])
+				worksheet.write(2+j, 4*i+k, spectrum[j, k])
 	workbook.close()
 
 	# print out a table, and also save the condensed results in a csv file
@@ -416,8 +426,8 @@ if __name__ == '__main__':
 		print("|  WRF              |  Yield              | Mean energy (MeV) |  ρR (mg/cm^2)  |")
 		print("|-------------------|----------------------|-----------------|-----------------|")
 		f.write(
-			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "+
-			"Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "+
+			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), " +
+			"Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), " +
 			"Hot-spot rho-R (mg/cm^2), Shell rho-R (mg/cm^2)\n")
 		for i in range(len(labels)):
 			label = labels[i]
@@ -480,16 +490,19 @@ if __name__ == '__main__':
 		if np.all(np.isnan(values)): # skip if there's noting here
 			continue
 		plt.figure(figsize=(1.5+values.shape[0]*spacing, 4.5)) # then plot it!
-		plt.errorbar(x=np.arange(values.shape[0]), y=values[:,0], yerr=[values[:,2], values[:,1]], fmt='.k', elinewidth=2, markersize=12)
+		plt.errorbar(x=np.arange(values.shape[0]),
+		             y=values[:, 0],
+		             yerr=[values[:, 2], values[:, 1]],
+		             fmt='.k', elinewidth=2, markersize=12)
 		plt.xlim(-1/2, values.shape[0]-1/2)
 
-		max_value = np.max(values[:,0]) # figure out the scale and limits
-		min_value = np.min(values[:,0], where=values[:,0] != 0, initial=np.inf)
-		tops = values[:,0] + values[:,1]
-		bottoms = values[:,0] - values[:,2]
+		max_value = np.max(values[:, 0]) # figure out the scale and limits
+		min_value = np.min(values[:, 0], where=values[:, 0] != 0, initial=np.inf)
+		tops = values[:, 0] + values[:, 1]
+		bottoms = values[:, 0] - values[:, 2]
 		if np.any(bottoms > 0) and np.any(tops < 1e20):
-			plot_top = max(np.max(tops[(bottoms>0)&(tops<1e20)]), max_value)
-			plot_bottom = min(np.min(bottoms[bottoms>0]), min_value)
+			plot_top = max(np.max(tops[(bottoms > 0) & (tops < 1e20)]), max_value)
+			plot_bottom = min(np.min(bottoms[bottoms > 0]), min_value)
 			if min_value > 0 and max_value/min_value > 30 and np.any(bottoms > 0):
 				plt.yscale('log')
 				rainge = plot_top/plot_bottom
@@ -519,19 +532,19 @@ if __name__ == '__main__':
 		for i, shot in enumerate(compared_shots):
 			for j, line_of_site in enumerate(compared_lines_of_site[:2]):
 				here = (lines_of_site == line_of_site) & (shots == shot)
-				if np.sum(here) > 0:
-					los_rhoRs[i,j,0] = np.average(rhoRs[here, 0], weights=rhoRs[here, 2]**(-2))
-					los_rhoRs[i,j,1] = np.min(rhoRs[here, 1])
-					los_rhoRs[i,j,2] = np.min(rhoRs[here, 2])
+				if np.sum(here) > 0 and not np.any(rhoRs[here, 2] == 0):
+					los_rhoRs[i, j, 0] = np.average(rhoRs[here, 0], weights=rhoRs[here, 2]**(-2))
+					los_rhoRs[i, j, 1] = np.min(rhoRs[here, 1])
+					los_rhoRs[i, j, 2] = np.min(rhoRs[here, 2])
 				else:
-					los_rhoRs[i,j,:] = np.nan
+					los_rhoRs[i, j, :] = np.nan
 
 		plt.figure(figsize=(4.5, 4.5))
 		plt.errorbar(y=los_rhoRs[:, 0, 0],
-			         yerr=los_rhoRs[:, 0, [2,1]].T,
-			         x=los_rhoRs[:, 1, 0],
-			         xerr=los_rhoRs[:, 1, [2,1]].T,
-			         fmt='.', color='#000000', markersize=12)
+		             yerr=los_rhoRs[:, 0, [2, 1]].T,
+		             x=los_rhoRs[:, 1, 0],
+		             xerr=los_rhoRs[:, 1, [2, 1]].T,
+		             fmt='.', color='#000000', markersize=12)
 		plt.axline((0, 0), slope=1, color='k', linewidth=1)
 		plt.ylabel(f"ρR on {compared_lines_of_site[0]}")
 		plt.xlabel(f"ρR on {compared_lines_of_site[1]}")
