@@ -424,15 +424,17 @@ class rhoR_Model(object):
         r1 = Rcm + self.Tshell / 2  # start of ablated mass
         # end of exponential ramp:
         r2 = r1 + self.rho_Abl_Scale * math.log(self.rho_Abl_Max / self.rho_Abl_Min)
-        # mass left in the "tail""
-        scale = self.rho_Abl_Scale  # shorthand
-        m23 = m - 4 * math.pi * scale * (2 * scale ** 2 + 2 * r1 * scale
-                                         - math.exp((r1 - r2) / scale) * (2 * scale ** 2 + 2 * scale * r2 + r2 ** 2))
-        if m23 > 0:
-            r3 = (math.pow(3 * m23 + 4 * math.pi * r2 ** 3 * scale, 1 / 3)
-                  / (math.pow(4 * math.pi * self.rho_Abl_Min, 1 / 3)))
+        # mass left in the "tail"
+        λ = self.rho_Abl_Scale  # shorthand
+        m12 = self.rho_Abl_Max * 4*math.pi*λ * (
+                2*λ**2 + 2*r1*λ + r1**2 - (2*λ**2 + 2*λ*r2 + r2**2)*math.exp((r1 - r2)/λ))
+        if m12 < m:
+            m23 = m - m12
+            r3 = (r2**3 + 3*m23/(4*math.pi*self.rho_Abl_Min))**(1/3)
         else:
             r3 = r2
+
+        assert r1 <= r2 <= r3
         return r1, r2, r3
 
     def rho_Abl(self, r, Rcm) -> float:
@@ -513,9 +515,7 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: downshifted energy [MeV]
         """
-        # sanity check:
-        if x <= 0:
-            return 0
+        assert x >= 0
 
         ni_gas, ne_gas = self.n_Gas(Rcm)
         ni_mix, ne_mix = self.n_Mix(Rcm)
@@ -534,21 +534,20 @@ class rhoR_Model(object):
             if nf[i] <= 0:
                 nf[i] = 1
 
-        if nf[0] > 0:  # with sanity check
-            # choose the correct model
-            if self.dEdx_model == 'BPS':
-                model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
-            elif self.dEdx_model == 'Z':
-                model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfGasMix_PI__, self.__ZfGasMix_PI__, self.__TfGasMix_PI__, nf, self.__ZbarGasMix_PI__, self.Te_Gas)
-            else: # default to LP
-                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
+        assert all(numpy.isfinite(nf))
 
-            # check limits:
-            if model.get_Emin() < Ep < model.get_Emax():
-                return model.Eout(Ep, x)
+        # choose the correct model
+        if self.dEdx_model == 'BPS':
+            model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
+        elif self.dEdx_model == 'Z':
+            model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfGasMix_PI__, self.__ZfGasMix_PI__, self.__TfGasMix_PI__, nf, self.__ZbarGasMix_PI__, self.Te_Gas)
+        else: # default to LP
+            model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfGasMix__, self.__ZfGasMix__, self.__TfGasMix__, nf)
 
-        print('Warning: dE/dx failure in Eout_GasMix')
-        return Ep
+        try:
+            return model.Eout(Ep, x)
+        except SystemError: # SystemError is the model's way of telling us that the particle has ranged out :/
+            return 0
 
     def Eout_Shell(self, Ep, x, Rcm) -> float:
         """Calculate downshift in the shell.
@@ -558,7 +557,11 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: downshifted energy [MeV]
         """
+        assert x >= 0, x
+
         ni, ne = self.n_Shell(Rcm)
+        assert ne > 0, ne
+
         nf = DoubleVector(len(self.shell.A) + (self.dEdx_model!='Z'))
         for i in range(len(self.shell.f)):
             nf[i] = ni * self.shell.f[i]
@@ -566,39 +569,36 @@ class rhoR_Model(object):
         if self.dEdx_model != 'Z':
             nf[-1] = ne
 
-        if ne > 0:
-            # choose the correct model
-            if self.dEdx_model == 'BPS':
-                model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
-            elif self.dEdx_model == 'Z':
-                model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfShell_PI__, self.__ZfShell_PI__, self.__TfShell_PI__, nf, self.__ZbarShell_PI__, self.Te_Shell)
-            else:
-                model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
+        # choose the correct model
+        if self.dEdx_model == 'BPS':
+            model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
+        elif self.dEdx_model == 'Z':
+            model = StopPow_Zimmerman(self.__mt__, self.__Zt__, self.__mfShell_PI__, self.__ZfShell_PI__, self.__TfShell_PI__, nf, self.__ZbarShell_PI__, self.Te_Shell)
+        else:
+            model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfShell__, self.__ZfShell__, self.__TfShell__, nf)
 
-            # check limits:
-            if model.get_Emin() < Ep < model.get_Emax():
-                return model.Eout(Ep, x)
+        try:
+            return model.Eout(Ep, x)
+        except SystemError: # SystemError is the model's way of telling us that the particle has ranged out :/
+            return 0
 
-        print('Warning: dE/dx failure in Eout_Shell')
-        return Ep
+    def Eout_Abl(self, Ep, r1, r2, r3, Rcm) -> float:
+        # first part of the ablated region:
+        dr = (r2 - r1) / self.steps
+        assert dr > 0
+        model = None
+        # have to do manually b/c of density gradient:
+        for i in range(self.steps):
+            ni, ne = self.n_Abl(r1 + (r2 - r1) * i/(self.steps - 1), Rcm)
+            assert ne > 0
 
-    def dEdr_Abl(self, Ep, r, Rcm):
-        """Calculate stopping power for protons in the ablated mass.
+            nf = DoubleVector(len(self.shell.A) + (self.dEdx_model!='Z'))
+            for i in range(len(self.shell.f)):
+                nf[i] = ni * self.shell.f[i]
+            # for plasma models, include electrons:
+            if self.dEdx_model != 'Z':
+                nf[-1] = ne
 
-        :param Ep: proton energy [MeV]
-        :param r: radius [cm]
-        :param Rcm: shell radius at shock BT [cm]
-        :returns: stopping power [MeV/cm]
-        """
-        ni, ne = self.n_Abl(r, Rcm)
-        nf = DoubleVector(len(self.shell.A) + (self.dEdx_model!='Z'))
-        for i in range(len(self.shell.f)):
-            nf[i] = ni * self.shell.f[i]
-        # for plasma models, include electrons:
-        if self.dEdx_model != 'Z':
-            nf[-1] = ne
-
-        if ne > 0:
             # choose the correct model
             if self.dEdx_model == 'BPS':
                 model = StopPow_BPS(self.__mt__, self.__Zt__, self.__mfAbl__, self.__ZfAbl__, self.__TfAbl__, nf)
@@ -607,11 +607,11 @@ class rhoR_Model(object):
             else:
                 model = StopPow_LP(self.__mt__, self.__Zt__, self.__mfAbl__ , self.__ZfAbl__, self.__TfAbl__, nf)
 
-            # check limits:
-            if model.get_Emin() > Ep:
-                return 0
-            if model.get_Emin() < Ep < model.get_Emax():
-                return 1e4 * model.dEdx(Ep)
+            if Ep >= model.get_Emin():
+                Ep += dr * 1e4 * model.dEdx(Ep)
 
-        print('Warning: dE/dx failure in dEdr_Abl')
-        return Ep
+        # for the rest of the ablated mass, stopping power is constant:
+        try:
+            return model.Eout(Ep, r3 - r2)
+        except SystemError: # SystemError is the model's way of telling us that the particle has ranged out :/
+            return 0
