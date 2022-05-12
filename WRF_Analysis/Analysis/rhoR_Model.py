@@ -188,9 +188,9 @@ class rhoR_Model(object):
             self.__TfAbl_PI__[i] = self.Te_Abl
 
         # set up arrays for precomputed data for a few things:
-        self.__RcmList__ = []
-        self.__EoutList__ = []
-        self.__rhoRList__ = []
+        self.__RcmList__ = [float('inf')]
+        self.__EoutList__ = [E0]
+        self.__rhoRList__ = [0]
         self.__interp_Eout__ = 0
         self.__interp_rhoR__ = 0
         self.__interp_Rcm__ = 0
@@ -223,7 +223,7 @@ class rhoR_Model(object):
         # set up interpolation:
         self.__interp_Eout__ = scipy.interpolate.interp1d(self.__RcmList__, self.__EoutList__, kind='linear', bounds_error=True)
         self.__interp_Rcm__ = scipy.interpolate.interp1d(self.__EoutList__, self.__RcmList__, kind='linear', bounds_error=True)
-        self.__interp_rhoR__ = scipy.interpolate.interp1d(self.__RcmList__, self.__rhoRList__, kind='linear', bounds_error=True)
+        self.__interp_rhoR__ = scipy.interpolate.interp1d(self.__EoutList__, self.__rhoRList__, kind='linear', bounds_error=True)
 
 
     def Eout(self, Rcm) -> float:
@@ -274,7 +274,10 @@ class rhoR_Model(object):
             return numpy.nan, numpy.nan
         try:
             Rcm = self.__interp_Rcm__(E1)
-            rhoR = self.rhoR_Total(Rcm)  #self.__interp_rhoR__(Rcm)
+            if numpy.isfinite(Rcm):
+                rhoR = self.rhoR_Total(Rcm)
+            else:
+                rhoR = self.__interp_rhoR__(E1)
 
             return rhoR, Rcm
         except ValueError:

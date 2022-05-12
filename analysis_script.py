@@ -11,20 +11,25 @@ from scipy import integrate
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
-FOLDERS = ['N220405-002', '-003', 'N220406-001']
-# FOLDERS = ['I_DPI_Sym_BPhase']
+FOLDERS = ['N220410-001']
+# FOLDERS = ['I_MJDD_PDD_DDExpPush']
 OVERLAP = []
 CLIPPING = []
 
-HOHLRAUM_LAYERS = []
+# HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(8, 'Au')]
-# HOHLRAUM_LAYERS = [(30, 'Au')]
+# HOHLRAUM_LAYERS = [(31, 'Au')]
 # HOHLRAUM_LAYERS = [(10, 'U'), (20, 'Au')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (2, 'Al'), (594, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (205, 'Al'), (2, 'Al'), (445, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (116, 'kapton'), (403, 'Cu'), (116, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (230, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
+HOHLRAUM_LAYERS = {
+	'1': [(31, 'Au'), (205, 'Al')],
+	'3': [(31, 'Au')],
+	'4': [(31, 'Au'), (205, 'Al')]
+}
 
 WEIRD_FILTERS = {
 	# '': [(3000, 'In')],
@@ -51,7 +56,10 @@ class FixedOrderFormatter(ScalarFormatter):
 
 
 def plt_set_locators() -> None:
-	plt.locator_params(steps=[1, 2, 5, 10])
+	try:
+		plt.locator_params(steps=[1, 2, 5, 10])
+	except TypeError:
+		pass
 
 
 def get_ein_from_eout(eout: float, layers: list[tuple[float, str]]) -> float:
@@ -78,11 +86,11 @@ def get_dein_from_deout(deout: float, eout: float, layers: list[tuple[float, str
 def perform_correction(noun: str, layers: list[tuple[float, str]],
                        mean_energy: float, mean_energy_error: float, sigma: float) -> tuple[float, float, float]:
 	""" correct some spectral properties for a hohlraum """
-	print(f"Correcting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
+	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
 	mean_energy_error = get_dein_from_deout(mean_energy_error, mean_energy, layers)
 	sigma = get_dein_from_deout(sigma, mean_energy, layers)
 	mean_energy = get_ein_from_eout(mean_energy, layers)
-	print(f"{mean_energy:.2f} ± {sigma:.2f}")
+	print(f"{mean_energy:.2f} ± {sigma:.2f} MeV")
 	return mean_energy, mean_energy_error, sigma
 
 
@@ -98,7 +106,7 @@ def calculate_rhoR(mean_energy: float, mean_energy_error: float,
 				try:
 					data = np.loadtxt(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt", skiprows=4)
 				except IOError:
-					print(f"Did not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
+					print(f"!\tDid not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
 					rhoR_objects.pop(shot_name)
 					break
 				else:
@@ -126,7 +134,7 @@ def calculate_rhoR(mean_energy: float, mean_energy_error: float,
 					for line in f.readlines():
 						params[line.split()[0]] = line.split()[2]
 			except IOError:
-				print(f"Did not find {os.path.join(folder, 'rhoR_parameters.txt')}.")
+				print(f"!\tDid not find {os.path.join(folder, 'rhoR_parameters.txt')}.")
 			else:
 				rhoR_objects[shot_name] = rhoR_Analysis(
 					shell_mat   = params['shell_material'],
@@ -295,7 +303,7 @@ if __name__ == '__main__':
 					plt.axis([4, 18, min(0, np.min(spectrum[:, 1]+spectrum[:, 2])), None])
 					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 					plt.xlabel("Energy after hohlraum wall (MeV)" if len(HOHLRAUM_LAYERS) >= 1 else "Energy (MeV)")
-					plt.ylabel("Yield (MeV^-1)")
+					plt.ylabel("Yield (MeV⁻¹)")
 					if flag != '':
 						plt.title(f"{line_of_site}, position {posicion} ({flag})")
 					elif posicion is not None:
@@ -323,15 +331,29 @@ if __name__ == '__main__':
 						sigma_error = np.sqrt(sigma_variance)
 						yield_error = np.sqrt(yield_variance)
 
-						if flag in WEIRD_FILTERS: # account for weird filters if need be
-							mean_value, mean_error, sigma_value = perform_correction(
-									'filter', WEIRD_FILTERS[flag], mean_value, mean_error, sigma_value)
+						
+						# correct for the hohlraum
+						noun = 'hohlraum'
 						if '90' in line_of_site and len(HOHLRAUM_LAYERS) > 0:
-							mean_value, mean_error, sigma_value = perform_correction(
-									'hohlraum', HOHLRAUM_LAYERS, mean_value, mean_error, sigma_value)
+							if posicion in HOHLRAUM_LAYERS:
+								layers = HOHLRAUM_LAYERS[posicion]
+							else:
+								layers = HOHLRAUM_LAYERS
+						else:
+							layers = []
+						# account for weird filters if need be
+						if flag in WEIRD_FILTERS:
+							layers += WEIRD_FILTERS[flag]
+							noun = 'filter'
 
+						mean_value, mean_error, sigma_value = perform_correction(
+								noun, layers, mean_value, mean_error, sigma_value)
 						rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = calculate_rhoR(
 							mean_value, mean_error, shot_day+shot_number) # calculate ρR if you can
+
+						test_mean, _, _ = perform_correction(noun, layers, 5, 0, 0)
+						test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number)
+						print(f"\tthe maximum measurable ρR is {test_rhoR:.1f} mg/cm^2")
 						
 						means.append([mean_value, mean_error, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error, sigma_error])
@@ -341,8 +363,9 @@ if __name__ == '__main__':
 						compression_value = np.sum(spectrum[:, 1], where=spectrum[:, 0] < 11)
 						compression_error = yield_error/yield_value*compression_value
 						compression_yields.append([compression_value, compression_error, compression_error])
+
 					else:
-						print("this one had an invalid analysis.")
+						print("!\tthis one had an invalid analysis.")
 
 	assert len(means) > 0, "No datum were found."
 	means = np.array(means)
@@ -387,7 +410,7 @@ if __name__ == '__main__':
 	# convert sigmas to widths and temperatures
 	widths = sigmas*2.355e3
 	temps = np.empty(sigmas.shape)
-	temps[:, 0] = (np.sqrt(sigmas[:, 0]**2 - σWRF**2)/76.68115805e-3)**2
+	temps[:, 0] = (np.sqrt(np.maximum(0, sigmas[:, 0]**2 - σWRF**2))/76.68115805e-3)**2
 	temps[:, 1] = np.sqrt((2*sigmas[:, 0]*sigmas[:, 1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
 	temps[:, 2] = temps[:, 1]
 
@@ -493,7 +516,14 @@ if __name__ == '__main__':
 		             y=values[:, 0],
 		             yerr=[values[:, 2], values[:, 1]],
 		             fmt='.k', elinewidth=2, markersize=12)
+
 		plt.xlim(-1/2, values.shape[0]-1/2)
+		plt.xticks(ticks=np.arange(values.shape[0]),
+		           labels=labels,
+		           rotation=rotation,
+		           ha=alignment) # set the tick stuff
+		plt.ylabel(label)
+		plt.grid()
 
 		max_value = np.max(values[:, 0]) # figure out the scale and limits
 		min_value = np.min(values[:, 0], where=values[:, 0] != 0, initial=np.inf)
@@ -502,8 +532,11 @@ if __name__ == '__main__':
 		if np.any(bottoms > 0) and np.any(tops < 1e20):
 			plot_top = max(np.max(tops[(bottoms > 0) & (tops < 1e20)]), max_value)
 			plot_bottom = min(np.min(bottoms[bottoms > 0]), min_value)
-			if min_value > 0 and max_value/min_value > 30 and np.any(bottoms > 0):
+			if "MeV" in label:
+				plot_top = min(15, plot_top)
+			if min_value > 0 and max_value/min_value > 6 and np.any(bottoms > 0):
 				plt.yscale('log')
+				plt.grid(axis='y', which='minor')
 				rainge = plot_top/plot_bottom
 				plt.ylim(plot_bottom/rainge**0.1, plot_top*rainge**0.1)
 			else:
@@ -516,9 +549,6 @@ if __name__ == '__main__':
 			plt.ylim(None, 4)
 		plt_set_locators()
 		
-		plt.xticks(ticks=np.arange(values.shape[0]), labels=labels, rotation=rotation, ha=alignment) # then do the labels and stuff
-		plt.ylabel(label)
-		plt.grid()
 		plt.tight_layout()
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=300)
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'))

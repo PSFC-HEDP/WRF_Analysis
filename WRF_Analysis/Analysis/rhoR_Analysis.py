@@ -181,8 +181,8 @@ class rhoR_Analysis(object):
         ModelError = self.__calc_error__("Calc_rhoR", Rcm, E1, breakdown=breakdown)
         # Two cases: non-zero user-supplied error bar, or model error only:
         if dE > 0:
-            rhoR_min = self.model.Calc_rhoR(E1+dE)[0]
-            rhoR_max = self.model.Calc_rhoR(E1-dE)[0]
+            rhoR_min = self.model.Calc_rhoR(min(E1+dE, self.E0))[0]
+            rhoR_max = self.model.Calc_rhoR(    E1-dE          )[0]
             TotalError = numpy.sqrt(0.25*(rhoR_max-rhoR_min)**2 + ModelError**2)
         else:
             TotalError = ModelError
