@@ -22,11 +22,19 @@ here are Graeme's instructions for installing on Linux:
     -python3 main.py
 
 this can also be run on Windows, but it's harder because the tools for compiling gsl aren't as readily available.
-basically, instead of \_StopPow.so, you want to end up with the Windows verison, which is \_StopPow.lib, and which must be compiled in Windows.
-I was abe to do this by getting GSL 1.x for Windows off the internet (I also had to find a copy of the GNU 1.16 source), compile that to a .def file (I didn't rite down how I did that, so maybe I just downloaded the .def file), and then compile that to the .lib using "Developer Command Prompt for VS 2019", which you may need to install (I think it comes with the Visual Studio compiler which I already had on my computer for some reason).
+basically, instead of \_StopPow.so, you want to end up with the Windows verison,
+which is \_StopPow.lib, and which must be compiled in Windows.
+I was abe to do this by getting GSL 1.x for Windows off the internet (I also had to find a copy of the GNU 1.16 source),
+compile that to a .def file (I didn't rite down how I did that, so maybe I just downloaded the .def file),
+and then compile that to the .lib using "Developer Command Prompt for VS 2019",
+which you may need to install (I think it comes with the Visual Studio compiler which I already had on my computer for some reason).
 I didn't write down the exact command, but you can probably just google it, since I think that's what I did.
 
-as a side note, I don't seem to have `_StopPow.lib` in my local copy of this repo but it still works, so idk what the deal with that is.
-I do have `_StopPow.cp39-win_amd64.pyc`, so maybe that's a sufficient substitute for the .lib file.
+as a side note, I don't seem to have `_StopPow.lib` in my local copy of this repo but it still works,
+so idk what the deal with that is.
+I do have `_StopPow.cp39-win_amd64.pyc` (which came from making in the python_swig folder),
+so maybe that's a sufficient substitute for the .lib file.
 but I really could have sworn I rememberd creating the .lib file.
-maybe I deleted it... weerd.
+How else would I have written the paragraph above this?
+maybe I deleted it...
+weerd.

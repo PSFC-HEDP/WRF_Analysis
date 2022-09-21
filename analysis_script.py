@@ -11,25 +11,26 @@ from scipy import integrate
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
-FOLDERS = ['N220410-001']
-# FOLDERS = ['I_MJDD_PDD_DDExpPush']
+# FOLDERS = ['N220905-002', 'N220906-001']
+FOLDERS = ['I_MJDD_PDD_HotE']
 OVERLAP = []
 CLIPPING = []
 
-# HOHLRAUM_LAYERS = []
+HOHLRAUM_LAYERS = []
 # HOHLRAUM_LAYERS = [(8, 'Au')]
-# HOHLRAUM_LAYERS = [(31, 'Au')]
+# HOHLRAUM_LAYERS = [(30, 'Au')]
+# HOHLRAUM_LAYERS = [(40.6, 'Au'), (63, 'Al'), (430, 'accura60')]
 # HOHLRAUM_LAYERS = [(10, 'U'), (20, 'Au')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (2, 'Al'), (594, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (205, 'Al'), (2, 'Al'), (445, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (116, 'kapton'), (403, 'Cu'), (116, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (230, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
 # HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
-HOHLRAUM_LAYERS = {
-	'1': [(31, 'Au'), (205, 'Al')],
-	'3': [(31, 'Au')],
-	'4': [(31, 'Au'), (205, 'Al')]
-}
+# HOHLRAUM_LAYERS = {
+# 	'1': [(31, 'Au'), (205, 'Al')],
+# 	'3': [(31, 'Au')],
+# 	'4': [(31, 'Au'), (205, 'Al')]
+# }
 
 WEIRD_FILTERS = {
 	# '': [(3000, 'In')],
@@ -86,11 +87,12 @@ def get_dein_from_deout(deout: float, eout: float, layers: list[tuple[float, str
 def perform_correction(noun: str, layers: list[tuple[float, str]],
                        mean_energy: float, mean_energy_error: float, sigma: float) -> tuple[float, float, float]:
 	""" correct some spectral properties for a hohlraum """
-	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
-	mean_energy_error = get_dein_from_deout(mean_energy_error, mean_energy, layers)
-	sigma = get_dein_from_deout(sigma, mean_energy, layers)
-	mean_energy = get_ein_from_eout(mean_energy, layers)
-	print(f"{mean_energy:.2f} ± {sigma:.2f} MeV")
+	if len(layers) > 0:
+		print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
+		mean_energy_error = get_dein_from_deout(mean_energy_error, mean_energy, layers)
+		sigma = get_dein_from_deout(sigma, mean_energy, layers)
+		mean_energy = get_ein_from_eout(mean_energy, layers)
+		print(f"{mean_energy:.2f} ± {sigma:.2f} MeV")
 	return mean_energy, mean_energy_error, sigma
 
 
