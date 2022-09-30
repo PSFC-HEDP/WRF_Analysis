@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+from math import sqrt, pi, nan, inf
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -11,8 +12,11 @@ from scipy import integrate
 
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
-# FOLDERS = ['N220905-002', 'N220906-001']
-FOLDERS = ['I_MJDD_PDD_HotE']
+import matplotlib
+matplotlib.use("qtagg")
+
+FOLDERS = ["N220913-002", "N220914-001", "-002"]
+# FOLDERS = ['I_MJDD_PDD_HotE']
 OVERLAP = []
 CLIPPING = []
 
@@ -47,10 +51,10 @@ ROOT = 'data'
 class FixedOrderFormatter(ScalarFormatter):
 	"""Formats axis ticks using scientifick notacion with a constant ordre of 
 	magnitude"""
-	def __init__(self, order_of_mag=0, useOffset=True, useMathText=False):
+	def __init__(self, order_of_mag=0, use_offset=True, use_math_text=False):
 		self._order_of_mag = order_of_mag
-		ScalarFormatter.__init__(self, useOffset=useOffset, 
-		                         useMathText=useMathText)
+		ScalarFormatter.__init__(self, useOffset=use_offset,
+		                         useMathText=use_math_text)
 	def _set_orderOfMagnitude(self, _):
 		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
 		self.orderOfMagnitude = self._order_of_mag
@@ -71,11 +75,12 @@ def get_ein_from_eout(eout: float, layers: list[tuple[float, str]]) -> float:
 		energy_axis = data[:, 0]/1e3 # [MeV]
 		dEdx = data[:, 1]/1e3 # [MeV/μm]
 		energy = integrate.odeint(
-			func = lambda E, x: np.interp(E, energy_axis, dEdx),
-			y0   = energy,
-			t    = [0, thickness]
-		)[-1, 0]
+			func =lambda E, x: np.interp(E, energy_axis, dEdx),
+			y0   =energy,
+			t    =[0, thickness]
+		)[-1, 0] # type: ignore
 	return energy
+
 
 def get_dein_from_deout(deout: float, eout: float, layers: list[tuple[float, str]]) -> float:
 	""" do a derivative of the stopping power calculation """
@@ -173,7 +178,7 @@ def combine_measurements(*args):
 	for value, unc in args:
 		nume += value/unc**2
 		deno += 1/unc**2
-	return nume/deno, np.sqrt(1/deno)
+	return nume/deno, sqrt(1/deno)
 
 
 if __name__ == '__main__':
@@ -256,7 +261,8 @@ if __name__ == '__main__':
 						spectrum = []
 
 						for row in csv.reader(f):
-							if len(row) == 0: continue
+							if len(row) == 0:
+								continue
 
 							if not we_have_reachd_the_spectrum_part:
 								if row[0] == 'Value (gaussian fit):':
@@ -296,13 +302,13 @@ if __name__ == '__main__':
 					if gaussian_fit:
 						x = np.linspace(0, 20, 1000)
 						μ, σ, Σ = mean_value, sigma_value, yield_value
-						plt.plot(x, Σ*np.exp(-(x - μ)**2/(2*σ**2))/np.sqrt(2*np.pi*σ**2),
+						plt.plot(x, Σ*np.exp(-(x - μ)**2/(2*σ**2))/np.sqrt(2*pi*σ**2),
 						         color='#C00000')
 					plt.errorbar(x=spectrum[:, 0],
 					             y=spectrum[:, 1],
 					             yerr=spectrum[:, 2],
 					             fmt='.', color='#000000', elinewidth=1, markersize=6)
-					plt.axis([4, 18, min(0, np.min(spectrum[:, 1]+spectrum[:, 2])), None])
+					plt.axis([4, 18, min(0, np.min(spectrum[:, 1] + spectrum[:, 2])), None])
 					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 					plt.xlabel("Energy after hohlraum wall (MeV)" if len(HOHLRAUM_LAYERS) >= 1 else "Energy (MeV)")
 					plt.ylabel("Yield (MeV⁻¹)")
@@ -333,12 +339,11 @@ if __name__ == '__main__':
 						sigma_error = np.sqrt(sigma_variance)
 						yield_error = np.sqrt(yield_variance)
 
-						
 						# correct for the hohlraum
 						noun = 'hohlraum'
 						if '90' in line_of_site and len(HOHLRAUM_LAYERS) > 0:
 							if posicion in HOHLRAUM_LAYERS:
-								layers = HOHLRAUM_LAYERS[posicion]
+								layers = HOHLRAUM_LAYERS[posicion] # type: ignore
 							else:
 								layers = HOHLRAUM_LAYERS
 						else:
@@ -353,9 +358,9 @@ if __name__ == '__main__':
 						rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = calculate_rhoR(
 							mean_value, mean_error, shot_day+shot_number) # calculate ρR if you can
 
-						test_mean, _, _ = perform_correction(noun, layers, 5, 0, 0)
-						test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number)
-						print(f"\tthe maximum measurable ρR is {test_rhoR:.1f} mg/cm^2")
+						# test_mean, _, _ = perform_correction(noun, layers, 5, 0, 0)
+						# test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number)
+						# print(f"\tthe maximum measurable ρR is {test_rhoR:.1f} mg/cm^2")
 						
 						means.append([mean_value, mean_error, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error, sigma_error])
@@ -363,7 +368,7 @@ if __name__ == '__main__':
 						rhoRs.append([rhoR_value, rhoR_error, rhoR_error, hotspot_rhoR, shell_rhoR]) # tho the hotspot and shell components are probably not reliable...
 
 						compression_value = np.sum(spectrum[:, 1], where=spectrum[:, 0] < 11)
-						compression_error = yield_error/yield_value*compression_value
+						compression_error = yield_error/yield_value*abs(compression_value)
 						compression_yields.append([compression_value, compression_error, compression_error])
 
 					else:
@@ -424,8 +429,8 @@ if __name__ == '__main__':
 	except IOError:
 		secondary_stuff = None # but it's okey if there is none
 	if secondary_stuff is None or np.all(np.isnan(secondary_stuff)):
-		secondary_stuff = np.full((means.shape[0], 6), np.nan)
-		np.savetxt(os.path.join(base_directory, f'Te.txt'), secondary_stuff)
+		secondary_stuff = np.full((means.shape[0], 6), nan)
+		np.savetxt(os.path.join(base_directory, f'Te.txt'), secondary_stuff) # type: ignore
 	assert secondary_stuff.shape[0] == means.shape[0], "This secondary analysis file has the rong number of entries"
 	secondary_rhoRs = secondary_stuff[:, 0:3]
 	secondary_temps = secondary_stuff[:, 3:6]
@@ -513,6 +518,7 @@ if __name__ == '__main__':
 			]:
 		if np.all(np.isnan(values)): # skip if there's noting here
 			continue
+
 		plt.figure(figsize=(1.5+values.shape[0]*spacing, 4.5)) # then plot it!
 		plt.errorbar(x=np.arange(values.shape[0]),
 		             y=values[:, 0],
@@ -528,7 +534,7 @@ if __name__ == '__main__':
 		plt.grid()
 
 		max_value = np.max(values[:, 0]) # figure out the scale and limits
-		min_value = np.min(values[:, 0], where=values[:, 0] != 0, initial=np.inf)
+		min_value = np.min(values[:, 0], where=values[:, 0] != 0, initial=inf)
 		tops = values[:, 0] + values[:, 1]
 		bottoms = values[:, 0] - values[:, 2]
 		if np.any(bottoms > 0) and np.any(tops < 1e20):
@@ -568,7 +574,7 @@ if __name__ == '__main__':
 					los_rhoRs[i, j, 1] = np.min(rhoRs[here, 1])
 					los_rhoRs[i, j, 2] = np.min(rhoRs[here, 2])
 				else:
-					los_rhoRs[i, j, :] = np.nan
+					los_rhoRs[i, j, :] = nan
 
 		plt.figure(figsize=(4.5, 4.5))
 		plt.errorbar(y=los_rhoRs[:, 0, 0],

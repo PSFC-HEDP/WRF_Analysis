@@ -188,7 +188,7 @@ class rhoR_Model(object):
             self.__TfAbl_PI__[i] = self.Te_Abl
 
         # set up arrays for precomputed data for a few things:
-        self.__RcmList__ = [float('inf')]
+        self.__RcmList__ = [2*self.Ri]
         self.__EoutList__ = [E0]
         self.__rhoRList__ = [0]
         self.__interp_Eout__ = 0
@@ -274,10 +274,7 @@ class rhoR_Model(object):
             return numpy.nan, numpy.nan
         try:
             Rcm = self.__interp_Rcm__(E1)
-            if numpy.isfinite(Rcm):
-                rhoR = self.rhoR_Total(Rcm)
-            else:
-                rhoR = self.__interp_rhoR__(E1)
+            rhoR = self.rhoR_Total(Rcm)
 
             return rhoR, Rcm
         except ValueError:
