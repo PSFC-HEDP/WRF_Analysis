@@ -1,8 +1,11 @@
 *.pyc
-*.eps
 .idea
 test/runAnalysis/AnalysisOutputs
 build
-data/*
+*.cpsa
+*.adat
+*.png
+*.eps
+*.xlsx
 res/tables/*.csv
 .eggs/*
