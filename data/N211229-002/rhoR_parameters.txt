@@ -1,0 +1,8 @@
+Ri = 831.7 um
+Ro = 1003.1 um
+Shell = CH
+Tshell = 34.3
+P = 48.1 atm
+fD = 0.30
+f3He = 0.70
+fT = 0.00

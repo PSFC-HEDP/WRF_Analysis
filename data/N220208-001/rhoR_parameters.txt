@@ -1,0 +1,8 @@
+Ri = 1079.8 um
+Ro = 1187.1 um
+Shell = CH-with-2Ge
+Tshell = 21.5
+P = 20.4 atm
+fD = 1.00
+f3He = 0.00
+fT = 0.00

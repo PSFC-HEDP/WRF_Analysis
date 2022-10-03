@@ -1,0 +1,8 @@
+Ri = 843.9 um
+Ro = 913.4 um
+Shell = HDC
+Tshell = 13.9
+P = 26.2 atm
+fD = 0.67
+f3He = 0.33
+fT = 0.00

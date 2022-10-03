@@ -5,6 +5,7 @@ build
 *.cpsa
 *.adat
 *.png
+*.jpg
 *.eps
 *.xlsx
 res/tables/*.csv
