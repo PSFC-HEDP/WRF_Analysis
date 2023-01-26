@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 for filename in os.listdir('.'):
-	if filename.startswith('Hydrogen in ') and filename.endswith('.csv'):
+	if filename.startswith('Hydrogen in ') and filename.endswith('.txt'):
 		print(filename)
 		target = filename[12:-4]
 		table = pd.read_csv(filename, delimiter=r'\s\s+', engine='python', names=['E', 'electric', 'nuclear', 'range', 'straggling', 'stroggling'])

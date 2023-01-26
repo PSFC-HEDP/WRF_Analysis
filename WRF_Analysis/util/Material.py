@@ -3,30 +3,32 @@ import re
 
 # a few densities and masses for the shell
 # see the __init__ docstring for more information
-__material_composition__ = {  'CH': {'C': 1.000, 'H': 1.352, 'O': .012},
-                              'CH2': {'C': 1, 'H': 2},
-                              'HDC': {'C': 1},
-                              'SiO2': {'Si': 1, 'O': 2} }
+__material_composition__ = {'CH': {'C': 1.000, 'H': 1.352, 'O': .012},
+                            'CH2': {'C': 1, 'H': 2},
+                            'HDC': {'C': 1},
+                            'SiO2': {'Si': 1, 'O': 2}}
 
-__material_rho__ = {          'CH': 1.084,
-                              'CH2': 1.084,
-                              'HDC': 3.5,
-                              'SiO2': 2.56,
-                              'Be': 1.85 }
+__material_rho__ = {'CH': 1.084,
+                    'CH2': 1.084,
+                    'HDC': 3.5,
+                    'SiO2': 2.56,
+                    'Be': 1.85 }
 
-__element_A__ = {  'H': 1,
-                   'Be': 9,
-                   'C': 12,
-                   'O': 16,
-                   'Si': 28.1,
-                   'Ge': 72.6 }
+__element_A__ = {'H': 1,
+                 'Be': 9,
+                 'C': 12,
+                 'O': 16,
+                 'Si': 28.1,
+                 'Ge': 72.6,
+                 'W': 183.8}
 
-__element_Z__ = {  'H': 1,
-                   'Be': 4,
-                   'C': 6,
-                   'O': 8,
-                   'Si': 14,
-                   'Ge': 32 }
+__element_Z__ = {'H': 1,
+                 'Be': 4,
+                 'C': 6,
+                 'O': 8,
+                 'Si': 14,
+                 'Ge': 32,
+                 'W': 74}
 
 
 class Material:

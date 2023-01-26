@@ -394,7 +394,7 @@ class rhoR_Model(object):
         else:
             r3 = r2
 
-        assert r1 <= r2 <= r3
+        assert r1 <= r2 <= r3, (r1, r2, r3)
         return r1, r2, r3
 
     def rho_Abl(self, r, Rcm) -> float:
@@ -456,6 +456,8 @@ class rhoR_Model(object):
         :param Rcm: shell radius at shock BT [cm]
         :returns: a tuple containing (fuel,shell,ablated) rhoR [g/cm2]
         """
+        if math.isnan(Rcm):
+            return math.nan, math.nan, math.nan
         gas = self.rhoR_Gas(Rcm)
         gas += self.rhoR_Mix(Rcm)
         shell = self.rhoR_Shell(Rcm)

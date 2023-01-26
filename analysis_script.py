@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+from collections import OrderedDict
 from math import sqrt, pi, nan, inf
 from typing import Any
 
@@ -15,37 +16,15 @@ from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 import matplotlib
 matplotlib.use("qtagg")
 
-FOLDERS = ["N220913-002", "N220914-001", "-002"]
-# FOLDERS = ['I_MJDD_PDD_HotE']
-OVERLAP = []
-CLIPPING = []
-
-HOHLRAUM_LAYERS = []
-# HOHLRAUM_LAYERS = [(8, 'Au')]
-# HOHLRAUM_LAYERS = [(30, 'Au')]
-# HOHLRAUM_LAYERS = [(40.6, 'Au'), (63, 'Al'), (430, 'accura60')]
-# HOHLRAUM_LAYERS = [(10, 'U'), (20, 'Au')]
-# HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (2, 'Al'), (594, 'accura60'), (5, 'parylene')]
-# HOHLRAUM_LAYERS = [(14, 'U'), (27, 'Au'), (205, 'Al'), (2, 'Al'), (445, 'accura60'), (5, 'parylene')]
-# HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (116, 'kapton'), (403, 'Cu'), (116, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
-# HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (230, 'kapton'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
-# HOHLRAUM_LAYERS = [(15, 'Au2Ta8'), (126, 'epoxy'), (462, 'microfine'), (2, 'Al'), (302, 'accura60'), (5, 'parylene')]
-# HOHLRAUM_LAYERS = {
-# 	'1': [(31, 'Au'), (205, 'Al')],
-# 	'3': [(31, 'Au')],
-# 	'4': [(31, 'Au'), (205, 'Al')]
-# }
-
-WEIRD_FILTERS = {
-	# '': [(3000, 'In')],
-	# 'top': [(10, 'Ti'), (5, 'Ta')],
-}
+# FOLDERS = ["N221128-001"]
+FOLDERS = ["I_Stag_Sym_HyECpl"]
 
 SHOW_PLOTS = False
 
 ROOT = 'data'
 σWRF = .159
 δσWRF = .014
+np.seterr(all="raise", under="warn")
 
 
 class FixedOrderFormatter(ScalarFormatter):
@@ -89,11 +68,11 @@ def get_dein_from_deout(deout: float, eout: float, layers: list[tuple[float, str
 	return (rite - left)/2
 
 
-def perform_correction(noun: str, layers: list[tuple[float, str]],
+def perform_correction(layers: list[tuple[float, str]],
                        mean_energy: float, mean_energy_error: float, sigma: float) -> tuple[float, float, float]:
 	""" correct some spectral properties for a hohlraum """
 	if len(layers) > 0:
-		print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} {noun}: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
+		print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {mean_energy:.2f} ± {sigma:.2f} becomes ", end='')
 		mean_energy_error = get_dein_from_deout(mean_energy_error, mean_energy, layers)
 		sigma = get_dein_from_deout(sigma, mean_energy, layers)
 		mean_energy = get_ein_from_eout(mean_energy, layers)
@@ -102,7 +81,8 @@ def perform_correction(noun: str, layers: list[tuple[float, str]],
 
 
 def calculate_rhoR(mean_energy: float, mean_energy_error: float,
-                   shot_name: str, rhoR_objects: dict[str, Any] = {}):
+                   shot_name: str, params: dict[str, Any],
+                   rhoR_objects: dict[str, Any] = {}):
 	""" calcualte the rhoR using whatever tecneke makes most sense.
 		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
 	"""
@@ -128,48 +108,75 @@ def calculate_rhoR(mean_energy: float, mean_energy_error: float,
 					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
 					if abs(perturbd_gess - best_gess) > error_bar:
 						error_bar = abs(perturbd_gess - best_gess)
-			return best_gess, error_bar, 0, 0
+			return best_gess, error_bar, nan, nan
 
 		else:
-			return 0, 0, 0, 0
+			return nan, nan, nan, nan
 
 	elif shot_name.startswith("N"): # if it's a NIF shot
 		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
-			try:
-				params = {}
-				with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
-					for line in f.readlines():
-						params[line.split()[0]] = line.split()[2]
-			except IOError:
-				print(f"!\tDid not find {os.path.join(folder, 'rhoR_parameters.txt')}.")
-			else:
-				rhoR_objects[shot_name] = rhoR_Analysis(
-					shell_mat   = params['shell_material'],
-					Ri          = float(params['Ri'])*1e-4,
-					Ri_err      = 0.1e-4,
-					Ro          = float(params['Ro'])*1e-4,
-					Ro_err      = 0.1e-4,
-					fD          = float(params['fD']),
-					fD_err      = min(float(params['fD']), 1e-2),
-					f3He        = float(params['f3He']),
-					f3He_err    = min(float(params['f3He']), 1e-2),
-					P0          = float(params['P']),
-					P0_err      = 0.1,
-					t_Shell     = float(params['shell_thickness'])*1e-4,
-					t_Shell_err = float(params['shell_thickness'])/2*1e-4,
-					E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
-				)
+			rhoR_objects[shot_name] = rhoR_Analysis(
+				shell_mat   = params['shell_material'],
+				Ri          = float(params['Ri'])*1e-4,
+				Ri_err      = 0.1e-4,
+				Ro          = float(params['Ro'])*1e-4,
+				Ro_err      = 0.1e-4,
+				fD          = float(params['fD']),
+				fD_err      = min(float(params['fD']), 1e-2),
+				f3He        = float(params['f3He']),
+				f3He_err    = min(float(params['f3He']), 1e-2),
+				P0          = float(params['P']),
+				P0_err      = 0.1,
+				t_Shell     = float(params['shell_thickness'])*1e-4,
+				t_Shell_err = float(params['shell_thickness'])/2*1e-4,
+				E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
+			)
 
 		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
-			analysis_object = rhoR_objects[shot_day+shot_number]
+			analysis_object = rhoR_objects[shot_name]
 			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy, dE=mean_energy_error)
 			hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
 			return np.multiply(1000, [rhoR, error, hotspot_component, shell_component]) # convert from g/cm2 to mg/cm2
 		else:
-			return 0, 0, 0, 0
+			return nan, nan, nan, nan
 
 	else:
 		raise NotImplementedError(shot_name)
+
+
+def load_rhoR_parameters(folder: str) -> dict[str, Any]:
+	params: dict[str, Any] = {}
+
+	# load each line as an attribute
+	with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
+		for line in f.readlines():
+			key, value = re.split(r"\s*=\s*", line.strip())
+			value = re.sub(r" (um|μm|atm)", "", value)  # strip off units
+			params[key] = value
+
+	# parse the hohlraum layers
+	hohlraum_codes = re.split(r",\s*", params["hohlraum"])
+	keyed_layer_sets = OrderedDict()
+	for hohlraum_code in hohlraum_codes:
+		if ":" in hohlraum_code:
+			key, layer_set_code = re.split(r"\s*:\s*", hohlraum_code, maxsplit=2)
+		else:
+			key, layer_set_code = "", hohlraum_code
+		layer_set: list[tuple[float, str]] = []
+		for layer_code in re.split(r"\s+", layer_set_code):
+			thickness, _, material = re.fullmatch(r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
+			layer_set.append((float(thickness), material))
+		keyed_layer_sets[key] = layer_set
+	params["hohlraum"] = keyed_layer_sets
+
+	# parse the comma-separated flags
+	for key in ["clipping", "overlap"]:
+		if key in params:
+			params[key] = set(re.split(r",\s*", params[key]))
+		else:
+			params[key] = set()
+
+	return params
 
 
 def combine_measurements(*args):
@@ -181,11 +188,11 @@ def combine_measurements(*args):
 	return nume/deno, sqrt(1/deno)
 
 
-if __name__ == '__main__':
+def main():
 	shot_days = []
 	shot_numbers = []
 	lines_of_site = []
-	posicions = []
+	positions = []
 	flags = []
 	overlapd = []
 	clipd = []
@@ -206,18 +213,20 @@ if __name__ == '__main__':
 
 		for subfolder, _, _ in os.walk(folder): # and any subfolders inside it
 			for filename in os.listdir(subfolder): # scan all files inside that folder
-				if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}.csv', filename): # if it is a campaign summary file
+				if re.fullmatch(r'(A|N|Om?)\d{6}-?\d{3}.csv', filename): # if it is a shot summary file
 
-					with open(os.path.join(subfolder, filename)) as f:
+					with open(os.path.join(subfolder, filename), encoding="utf8") as f:
 						shot_day, shot_number = filename[:-4].split('-')
 
 						for row in f.readlines(): # read all the wrf summaries out of it
-							line_of_site, posicion, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error = row.split()
+							print(re.sub(r"[|:±]", " ", row).split())
+							line_of_site, position, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error\
+								= re.sub(r"[|:±]", " ", row).split()
 
 							shot_days.append(shot_day)
 							shot_numbers.append(shot_number)
 							lines_of_site.append(line_of_site)
-							posicions.append(posicion)
+							positions.append(position)
 							flags.append('')
 							overlapd.append(False)
 							clipd.append(False)
@@ -228,29 +237,33 @@ if __name__ == '__main__':
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 
-					shot_day, shot_number, line_of_site, posicion, wrf_number = None, None, None, None, None
+					parameters = load_rhoR_parameters(folder)
+
+					shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
 					flag = ''
-					identifiers = filename[:-4].split('_') # figure out what wrf this is
-					identifiers.append(folder_name)
+					identifiers = [folder_name] + filename[:-4].split('_') # figure out what wrf this is
 					for identifier in reversed(identifiers):
 						if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
 							shot_day, shot_number, _ = identifier.split('-')
-						elif re.fullmatch(r'O[mM]?\d{6}', identifier):
+						elif re.fullmatch(r'O[mM]?2\d{5}', identifier):
 							shot_day = identifier
-						elif re.fullmatch(r'9\d{4}|1\d{5}', identifier):
+						elif re.fullmatch(r'O?1?\d{5}', identifier):
 							shot_number = identifier
-						elif re.fullmatch(r'0+-0+|0?90-(0?78|124|315)|TIM[1-6]', identifier):
+						elif re.fullmatch(r'(DIM-?)?(0+-0+|0?90-(0?78|124|315))|TIM[1-6]', identifier):
 							line_of_site = identifier
-						elif re.fullmatch(r'[1-4]', identifier):
-							posicion = identifier
+						elif re.fullmatch(r'(Pos-?)?[1-4]', identifier):
+							position = identifier[-1]
 						elif re.fullmatch(r'134\d{5}|[gG][0-2]\d{2}', identifier):
 							wrf_number = identifier
 						elif re.fullmatch(r'(left|right|top|bottom|full)', identifier):
 							flag = identifier
 
-					assert shot_day is not None and shot_number is not None, identifiers
+					assert None not in [shot_number, line_of_site] is not None, identifiers
+					if len(line_of_site) > 6: # standardize the DIM names if they're too long
+						line_of_site = "{:02d}-{:03d}".format(*(
+							int(angle) for angle in re.fullmatch(r"\D*(\d+)-(\d+)", line_of_site).group(1, 2)))
 
-					print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{posicion} {flag}")
+					print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{position} {flag}")
 
 					with open(os.path.join(subfolder, filename), newline='') as f: # read thru its contents
 
@@ -292,10 +305,14 @@ if __name__ == '__main__':
 
 					spectrum = np.array(spectrum)
 
-					spectrum = spectrum[spectrum[:, 2] != 0]
-					spectrum = spectrum[1:]
+					spectrum = spectrum[spectrum[:, 2] != 0, :] # remove any points with sus error bars
+					spectrum = spectrum[1:, :] # remove the lowest bin
 
 					spectra.append(spectrum)
+
+					any_hohlraum = any(parameters["hohlraum"].values())
+					any_clipping_here = any(indicator in filename for indicator in parameters["clipping"])
+					any_overlap_here = any(indicator in filename for indicator in parameters["overlap"])
 
 					plt.figure(figsize=(10, 4)) # plot its spectrum
 					plt.plot([0, 20], [0, 0], 'k', linewidth=1)
@@ -310,12 +327,12 @@ if __name__ == '__main__':
 					             fmt='.', color='#000000', elinewidth=1, markersize=6)
 					plt.axis([4, 18, min(0, np.min(spectrum[:, 1] + spectrum[:, 2])), None])
 					plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
-					plt.xlabel("Energy after hohlraum wall (MeV)" if len(HOHLRAUM_LAYERS) >= 1 else "Energy (MeV)")
+					plt.xlabel("Energy after hohlraum wall (MeV)" if any_hohlraum else "Energy (MeV)")
 					plt.ylabel("Yield (MeV⁻¹)")
 					if flag != '':
-						plt.title(f"{line_of_site}, position {posicion} ({flag})")
-					elif posicion is not None:
-						plt.title(f"{line_of_site}, position {posicion}")
+						plt.title(f"{line_of_site}, position {position} ({flag})")
+					elif position is not None:
+						plt.title(f"{line_of_site}, position {position}")
 					else:
 						plt.title(f"{shot_number}, {line_of_site}")
 					plt_set_locators()
@@ -330,38 +347,33 @@ if __name__ == '__main__':
 						shot_days.append(shot_day)
 						shot_numbers.append(shot_number)
 						lines_of_site.append(line_of_site)
-						posicions.append(posicion)
+						positions.append(position)
 						flags.append(flag)
-						overlapd.append(any(overlap_indicator in filename for overlap_indicator in OVERLAP))
-						clipd.append(any(clipping_indicator in filename for clipping_indicator in CLIPPING))
+						overlapd.append(any_overlap_here)
+						clipd.append(any_clipping_here)
 
-						mean_error = np.sqrt(mean_variance)
-						sigma_error = np.sqrt(sigma_variance)
-						yield_error = np.sqrt(yield_variance)
+						mean_error = sqrt(mean_variance)
+						sigma_error = sqrt(sigma_variance)
+						yield_error = sqrt(yield_variance)
 
 						# correct for the hohlraum
-						noun = 'hohlraum'
-						if '90' in line_of_site and len(HOHLRAUM_LAYERS) > 0:
-							if posicion in HOHLRAUM_LAYERS:
-								layers = HOHLRAUM_LAYERS[posicion] # type: ignore
+						if '90' in line_of_site and any(parameters["hohlraum"].values()) > 0:
+							if position in parameters["hohlraum"]:
+								layers = parameters["hohlraum"][position]
 							else:
-								layers = HOHLRAUM_LAYERS
+								layers = parameters["hohlraum"][""]
 						else:
 							layers = []
-						# account for weird filters if need be
-						if flag in WEIRD_FILTERS:
-							layers += WEIRD_FILTERS[flag]
-							noun = 'filter'
 
 						mean_value, mean_error, sigma_value = perform_correction(
-								noun, layers, mean_value, mean_error, sigma_value)
+								layers, mean_value, mean_error, sigma_value)
 						rhoR_value, rhoR_error, hotspot_rhoR, shell_rhoR = calculate_rhoR(
-							mean_value, mean_error, shot_day+shot_number) # calculate ρR if you can
+							mean_value, mean_error, shot_day+shot_number, parameters) # calculate ρR if you can
 
-						# test_mean, _, _ = perform_correction(noun, layers, 5, 0, 0)
-						# test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number)
+						# test_mean, _, _ = perform_correction(layers, 5, 0, 0)
+						# test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number, parameters)
 						# print(f"\tthe maximum measurable ρR is {test_rhoR:.1f} mg/cm^2")
-						
+
 						means.append([mean_value, mean_error, mean_error]) # and add the info to the list
 						sigmas.append([sigma_value, sigma_error, sigma_error])
 						yields.append([yield_value, yield_error, yield_error])
@@ -383,36 +395,34 @@ if __name__ == '__main__':
 	shot_days = np.array(shot_days)
 	shot_numbers = np.array(shot_numbers)
 	lines_of_site = np.array(lines_of_site)
-	posicions = np.array(posicions)
+	positions = np.array(positions)
 
 	# compose labels of the appropirate specificity
 	shots = []
-	locacions = []
 	labels = []
 	for i in range(len(shot_days)):
 		shot_day = shot_days[i]
 		shot_number = shot_numbers[i]
 
-		if posicions[i] is None:
-			locacions.append(lines_of_site[i])
+		if positions[i] is None:
+			location = lines_of_site[i]
 		else:
-			locacions.append(f"{lines_of_site[i]}:{posicions[i]}")
+			location = f"{lines_of_site[i]}:{positions[i]}"
 		if len(set(shot_days)) > 1 and len(shot_number) < 4:
 			shots.append(f"{shot_day}-{shot_number}")
 		else:
 			shots.append(shot_number)
 
 		if len(set(shot_days)) > 1 or len(set(shot_numbers)) > 1:
-			labels.append(f"{shots[-1]}\n{locacions[-1]}")
+			labels.append(f"{shots[-1]}\n{location}")
 		else:
-			labels.append(f"{locacions[-1]}")
+			labels.append(f"{location}")
 		if len(set(flags)) > 1:
 			labels[-1] += f" ({flags[i]})"
-		if len(labels[-1]) < 12:
+		if len(labels[-1]) < 13:
 			labels[-1] = labels[-1].replace('\n', ' ')
 
 	shots = np.array(shots)
-	locacions = np.array(locacions)
 
 	# convert sigmas to widths and temperatures
 	widths = sigmas*2.355e3
@@ -435,11 +445,19 @@ if __name__ == '__main__':
 	secondary_rhoRs = secondary_stuff[:, 0:3]
 	secondary_temps = secondary_stuff[:, 3:6]
 
+	# save the spectra to a csv file
+	for i in range(len(spectra)):
+		sanitized_label = re.sub(r"[:\s]", "_", labels[i])
+		filename = os.path.join(base_directory, f"spectrum_{sanitized_label}.csv")
+		np.savetxt(filename, spectra[i],
+		           header="Energy after passing through hohlraum (MeV),Spectrum (MeV^-1),Uncertainty (MeV^-1)",
+		           delimiter=",", comments="")
+
 	# save the spectra in a spreadsheet
-	workbook = xls.Workbook(os.path.join(base_directory, 'spectra.xlsx'))
+	workbook = xls.Workbook(os.path.join(base_directory, f"{shot_days[0]} WRF spectra.xlsx"))
 	worksheet = workbook.add_worksheet()
 	for i in range(len(spectra)):
-		worksheet.merge_range(0, 4*i, 0, 4*i+2, labels[i])
+		worksheet.merge_range(0, 4*i, 0, 4*i+2, labels[i].replace("\n", " "))
 		worksheet.write(1, 4*i,   "Energy (MeV)")
 		worksheet.write(1, 4*i+1, "Spectrum (MeV^-1)")
 		worksheet.write(1, 4*i+2, "Error bar (MeV^-1)")
@@ -514,9 +532,9 @@ if __name__ == '__main__':
 			("Fuel ρR (mg/cm^2)", 'rhoR_fuel', secondary_rhoRs),
 			("Electron temperature (keV)", 'temperature_electron', secondary_temps),
 			("Width (keV)", 'width', widths),
-			("Ion temperature (keV)", 'temperature_ion', temps)
+			("Ion temperature (keV)", 'temperature_ion', temps),
 			]:
-		if np.all(np.isnan(values)): # skip if there's noting here
+		if values.size == 0 or np.all(np.isnan(values[:, 0])): # skip if there's noting here
 			continue
 
 		plt.figure(figsize=(1.5+values.shape[0]*spacing, 4.5)) # then plot it!
@@ -537,19 +555,31 @@ if __name__ == '__main__':
 		min_value = np.min(values[:, 0], where=values[:, 0] != 0, initial=inf)
 		tops = values[:, 0] + values[:, 1]
 		bottoms = values[:, 0] - values[:, 2]
-		if np.any(bottoms > 0) and np.any(tops < 1e20):
-			plot_top = max(np.max(tops[(bottoms > 0) & (tops < 1e20)]), max_value)
-			plot_bottom = min(np.min(bottoms[bottoms > 0]), min_value)
-			if "MeV" in label:
-				plot_top = min(15, plot_top)
-			if min_value > 0 and max_value/min_value > 6 and np.any(bottoms > 0):
-				plt.yscale('log')
-				plt.grid(axis='y', which='minor')
-				rainge = plot_top/plot_bottom
-				plt.ylim(plot_bottom/rainge**0.1, plot_top*rainge**0.1)
-			else:
-				rainge = plot_top - plot_bottom
-				plt.ylim(plot_bottom - 0.1*rainge, plot_top + 0.1*rainge)
+		measurable = values[:, 0] - np.minimum(values[:, 1], values[:, 2]) >= 0
+
+		if np.any(measurable & (tops < 1e20)):
+			plot_top = np.max(tops[measurable & (tops < 1e20)])
+		elif np.any(tops < 1e20):
+			plot_top = np.max(tops[tops < 1e20])
+		else:
+			plot_top = max_value
+		if np.any(measurable & (bottoms > 0)):
+			plot_bottom = np.min(bottoms[measurable & (bottoms > 0)])
+		elif np.any(bottoms > -1e20):
+			plot_bottom = np.min(bottoms[bottoms > -1e20])
+		else:
+			plot_bottom = min_value
+		if "MeV" in label and np.all(values < 14.7):
+			plot_top = min(15, plot_top)
+
+		if min_value > 0 and max_value/min_value > 10 and plot_bottom > 0:
+			plt.yscale('log')
+			plt.grid(axis='y', which='minor')
+			rainge = plot_top/plot_bottom
+			plt.ylim(plot_bottom/rainge**0.15, plot_top*rainge**0.15)
+		else:
+			rainge = plot_top - plot_bottom
+			plt.ylim(plot_bottom - 0.15*rainge, plot_top + 0.15*rainge)
 
 		# if filetag == "yield":
 		# 	plt.ylim(-.1e11, 2e11)
@@ -597,3 +627,7 @@ if __name__ == '__main__':
 	if SHOW_PLOTS:
 		plt.show()
 	plt.close('all')
+
+
+if __name__ == "__main__":
+	main()

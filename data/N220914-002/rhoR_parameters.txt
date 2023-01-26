@@ -1,6 +1,6 @@
 Ri = 1688.4 um
 Ro = 1711.8 um
-shell_material = CH
+shell_material = CH-1Si
 shell_thickness = 4.7
 P = 10.0 atm
 fD = 1.00
