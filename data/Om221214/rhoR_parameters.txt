@@ -1,0 +1,9 @@
+Ri = 198.0 um
+Ro = 200.2 um
+shell_material = SiO2
+P = 19.6 atm
+fD = 0.50
+f3He = 0.50
+fT = 0.00
+hohlraum=
+overlap=O106735
