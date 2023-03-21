@@ -1,13 +1,11 @@
 import math
 import numpy as np
 import scipy
-try:
-    import scipy.interpolate
-    import scipy.optimize
-    import scipy.stats
-except:
-    import syslog
-    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
+from numpy.typing import NDArray
+
+import scipy.interpolate
+import scipy.optimize
+import scipy.stats
 import matplotlib
 import matplotlib.pyplot
 import sys
@@ -39,7 +37,7 @@ class GaussFit(object):
     :date: 2013/07/05
     """
 
-    def __init__(self, data, guess=[5e7, 10, 1], restrict_chi2=True, name="", limits=None):
+    def __init__(self, data, guess=(5e7, 10, 1), restrict_chi2=True, name="", limits=None):
         """Constructor."""
         # super constructor:
         super(GaussFit, self).__init__()
@@ -74,16 +72,16 @@ class GaussFit(object):
         self.OPT_RESTRICT_CHI2 = restrict_chi2
 
         # split data into components:
-        self.data_x = np.ndarray(len(data))
-        self.data_y = np.ndarray(len(data))
-        self.data_err = np.ndarray(len(data))
+        self.data_x = np.empty(len(data))
+        self.data_y = np.empty(len(data))
+        self.data_err = np.empty(len(data))
         for i in range(len(data)):
             self.data_x[i] = data[i][0]
             self.data_y[i] = data[i][1]
             self.data_err[i] = data[i][2]
 
         # Set restricted data sets if necessary:
-        if limits is not None and isinstance(limits,list) and len(limits)==2:
+        if limits is not None and isinstance(limits, list) and len(limits) == 2:
             minE = limits[0]
             maxE = limits[1]
             # Find indices corresponding to limits:
@@ -109,7 +107,7 @@ class GaussFit(object):
         # perform the fit:
         self.fit, self.covariance = self.do_fit(guess=guess)
 
-    def do_fit(self, method='chi^2', guess=[], fixed=[]) -> tuple:
+    def do_fit(self, method='chi^2', guess=[], fixed=[]) -> tuple[NDArray[float], NDArray[float]]:
         """Perform the fit. Called automatically by the constructor.
         Can be invoked again with different initial guess if desired.
 
@@ -138,7 +136,7 @@ class GaussFit(object):
                 x0=guess, # initial guess
                 disp=False) # turn off console output
 
-            return fit, []
+            return fit, np.empty(())
 
         # least squares minimization in scipy
         if method == 'leastsq':
@@ -161,7 +159,7 @@ class GaussFit(object):
             result = scipy.optimize.curve_fit(gaussian2, self.data_x_lim, self.data_y_lim, p0=guess, sigma=self.data_err_lim, absolute_sigma=True, maxfev=2000)
             return result[0], result[1]
 
-    def get_fit(self) -> list:
+    def get_fit(self) -> NDArray[float]:
         """Get the calculated best fit.
 
         :returns: a python list containing [a,mu,sigma] from the best fit.

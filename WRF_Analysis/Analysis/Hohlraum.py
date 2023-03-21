@@ -2,23 +2,15 @@
 
 import os
 import sys
-import numpy
-import math
-import scipy
-import scipy.interpolate
-import scipy.optimize
-import scipy.stats
-#try:
-#    import scipy.interpolate
-#    import scipy.optimize
-#    import scipy.stats
-#except:
-#    import syslog
-#    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
-import matplotlib
-from WRF_Analysis.util.GaussFit import GaussFit
-import WRF_Analysis.util.StopPow
+from math import inf, tan, radians
+from typing import Optional
 
+import matplotlib
+import numpy
+from numpy.typing import NDArray
+
+import WRF_Analysis.util.StopPow
+from WRF_Analysis.util.GaussFit import GaussFit
 
 __author__ = 'Alex Zylstra'
 
@@ -29,8 +21,8 @@ def LOS_r(z, theta) -> float:
     :param theta: theta the LOS polar angle
     :returns: r the radial position in cm
     """
-    theta2 = math.radians(90 - theta)
-    return z / math.tan(theta2)
+    theta2 = radians(90 - theta)
+    return z / tan(theta2)
 
 
 def LOS_z(r, theta) -> float:
@@ -40,8 +32,8 @@ def LOS_z(r, theta) -> float:
     :param theta: the LOS polar angle
     :returns: z the axial position in cm
     """
-    theta2 = math.radians(90 - theta)
-    return r * math.tan(theta2)
+    theta2 = radians(90 - theta)
+    return r * tan(theta2)
 
 
 def double_list_sort(list1, list2) -> tuple:
@@ -64,19 +56,15 @@ def flatten(l) -> list:
     return [item for sublist in l for item in sublist]
 
 
-class Hohlraum(object):
+class Hohlraum:
     """Wrapper class for hohlraum corrections, and associated metrics.
-    You must supply either the thickness array or an array containing wall data plus view angles.
 
     :param raw: the raw spectrum
-    :param wall: python array of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
-    :param angles: python array of [theta_min, theta_max] range in polar angle
-    :param Thickness: the [Au,DU,Al] thickness in um
-    :param d_Thickness: the uncertainty in wall thickness for [Au,DU,Al] in um
-    :param fit_guess: (optional) an input to the fitting routine, guess as Y,E,sigma [default=None]
+    :param layers: list of material names and corresponding thicknesses (um) that particles pass through.
+                   it should be ordered from inside to outside. the supported material names are whatever
+                   materials have proton stopping power tables in the res/tables directory (for example, "Au", "U", "Al")
+    :param fit_guess: (optional) an input to the fitting routine, guess as (Y, E, σ)
     :param limits: (optional) Energy limits (of raw spectrum) to use for fitting. Default uses entire spectrum.
-    :param use_bump_corr: (optional) Boolean flag to use a correction for the hohlraum thickness because of the 'bump' [default=False]
-    :param bump_corr: (optional) The change in thickness for the bump correction, which is added to the t=0 thickness [default=0]
 
     :author: Alex Zylstra
     """
@@ -85,71 +73,23 @@ class Hohlraum(object):
     mode_wall = 'Wall'
     mode_thick = 'Thick'
 
-    # set up SRIM calculators:
-    Al_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
-        os.path.join(os.environ['SRIM_data'], "Hydrogen in Aluminum.txt"))  # SRIM stopping power for Al
-    Au_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
-        os.path.join(os.environ['SRIM_data'], "Hydrogen in Gold.txt"))  # SRIM stopping power for Au
-    DU_SRIM = WRF_Analysis.util.StopPow.StopPow_SRIM(
-        os.path.join(os.environ['SRIM_data'], "Hydrogen in Uranium.txt"))  # SRIM stopping power for DU
-
-    def __init__(self, raw=None, wall=None, angles=None, Thickness=None, d_Thickness=(1, 1, 3), fit_guess=None, limits=None, use_bump_corr=False, bump_corr=0):
+    def __init__(self, layers: list[tuple[float, str]],
+                 raw: Optional[NDArray[float]] = None,
+                 fit_guess: Optional[tuple[float, float, float]] = None,
+                 limits: tuple[float, float] = (0, inf)):
         """Constructor for the hohlraum. """
-        super(Hohlraum, self).__init__() # super constructor
-
         # initializations:
-        self.raw = []  # raw spectrum
-        self.raw_fit = []  # Gaussian fit to the raw spectrum
+        self.raw: Optional[NDArray[float]] = None  # raw spectrum
+        self.raw_fit: Optional[GaussFit] = None  # Gaussian fit to the raw spectrum
         self.fit_guess = fit_guess
-        self.corr = []  # corrected spectrum
-        self.corr_fit = []  # Gaussian fit to the corrected spectrum
+        self.corr: Optional[NDArray[float]] = None  # corrected spectrum
+        self.corr_fit: Optional[GaussFit] = None  # Gaussian fit to the corrected spectrum
         self.limits = limits
-        self.corr_limits = []
+        self.corr_limits: tuple[float, float] = (0, inf)
+        self.stop_pow_calculators: dict[str, WRF_Analysis.util.StopPow.StopPow_SRIM] = {}
 
-        # thickness in um of three hohlraum components:
-        self.Au = 0  # Calculated or given thickness of Au
-        self.DU = 0  # Calculated or given thickness of DU
-        self.Al = 0  # Calculated or given thickness of Al
-        # uncertainties in thickness:
-        self.d_Au = 0  # Calculated or given uncertainty in thickness of Au
-        self.d_DU = 0  # Calculated or given uncertainty in thickness of DU
-        self.d_Al = 0  # Calculated or given uncertainty in thickness of Al
-
-        # Bump correction if requested:
-        self.use_bump_corr = use_bump_corr
-        self.bump_corr = bump_corr
-
-        #  r and z arrays for all wall layers:
-        self.all_r = []
-        self.all_z = []
-        self.layer_mat = []
-        self.angles = []
-
-        # if the wall is specified:
-        if wall is not None and len(wall) != 0 and angles is not None:
-            self.__calc_from_wall__(wall, angles)
-            self.mode = Hohlraum.mode_wall
-        # thickness is specified:
-        elif Thickness is not None and len(Thickness) is 3:
-            self.Au = Thickness[0]
-            self.DU = Thickness[1]
-            self.Al = Thickness[2]
-            self.mode = Hohlraum.mode_thick
-        # if neither is supplied, default to 0 thickness to be safe:
-        else:
-            self.Au = 0
-            self.DU = 0
-            self.Al = 0
-            self.mode = Hohlraum.mode_thick
-
-        # Correct for the bump:
-        if use_bump_corr:
-            self.Au = max(self.Au + bump_corr, 0)  # make sure this stays positive
-
-        # set the uncertainties:
-        self.d_Au = d_Thickness[0]
-        self.d_DU = d_Thickness[1]
-        self.d_Al = d_Thickness[2]
+        # hohlraum thickness and material
+        self.layers = layers
 
         # do spectral stuff only if not none:
         if raw is not None:
@@ -157,143 +97,23 @@ class Hohlraum(object):
             self.raw = numpy.copy(raw)
 
             # correct the spectrum:
-            self.__correct_spectrum__()
+            self.__correct_spectrum__(self.layers)
 
             # calculate corrected spectrum limits:
-            if limits is not None:
-                self.corr_limits = [self.shift_energy(self.limits[0], Au=self.Au, DU=self.DU, Al=self.Al),
-                                    self.shift_energy(self.limits[1], Au=self.Au, DU=self.DU, Al=self.Al)]
-            else:
-                self.corr_limits = None
+            self.corr_limits = [self.shift_energy(self.limits[0], self.layers),
+                                self.shift_energy(self.limits[1], self.layers)]
 
             # fit to the data:
             self.__fit_data__()
 
-    def __calc_from_wall__(self, wall, angles):
-        """Calculate the material thicknesses from a wall definition. Sets the class variables Au, DU, and Al.
-
-        :param wall: python list of [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
-        :param angles: python list of [theta_min, theta_max] range in polar angle
-        """
-        self.Au = 0
-        self.DU = 0
-        self.Al = 0
-
-        # ------------------------------------------------
-        # Split the incoming wall data into layers:
-        # ------------------------------------------------
-        # figure out how many layers there are:
-        num_layers = 0
-        for i in wall:
-            num_layers = max(num_layers, i[2])
-        num_layers += 1  # correct for zero-index data
-
-        # construct r and z arrays for all layers:
-        self.all_r = []
-        self.all_z = []
-        self.layer_mat = []
-        # create arrays of correct length for each layer:
-        for _ in numpy.arange(num_layers):
-            self.all_r.append([])
-            self.all_z.append([])
-            self.layer_mat.append([])
-
-        # now read data into the new arrays:
-        for i in wall:
-            self.all_r[int(i[2])].append(i[4])
-            self.all_z[int(i[2])].append(i[5])
-            if len(self.layer_mat[int(i[2])]) is 0:
-                self.layer_mat[int(i[2])] = i[3]
-
-        # we need to have the wall data sorted:
-        # iterate over each layer
-        for i in range(int(num_layers)):
-            # sort r values and z values together:
-            self.all_z[i], self.all_r[i] = double_list_sort(self.all_z[i], self.all_r[i])
-
-        # ------------------------------------------------
-        # Incorporate layer data into the class info:
-        # ------------------------------------------------
-        # iterate over layers
-        # each layer has two walls, thus factor of 2:
-        for i in range(int(num_layers / 2)):
-            thickness = self.__calc_layer_thickness__(self.all_r[2 * i], self.all_z[2 * i], self.all_r[2 * i + 1],
-                                                  self.all_z[2 * i + 1], angles)
-            # check material:
-            if self.layer_mat[2 * i] == 'Au':
-                self.Au += thickness[0] * 1e4  # also convert -> um
-            elif self.layer_mat[2 * i] == 'DU' or self.layer_mat[2 * i] == 'U':
-                self.DU += thickness[0] * 1e4  # also convert -> um
-            elif self.layer_mat[2 * i] == 'Al':
-                self.Al += thickness[0] * 1e4  # also convert -> um
-
-        self.angles = angles
-
-    def __calc_layer_thickness__(self, inner_r, inner_z, outer_r, outer_z, angles, n=50) -> tuple:
-        """Calculate the average thickness of a wall layer
-
-        :param inner_r: list of r values for points defining the inner wall
-        :param inner_z: list of z values for points defining the inner wall
-        :param outer_r: list of r values for points defining the outer wall
-        :param outer_z: list of z values for points defining the outer wall
-        :param angles: [min,max] polar angles for the line of sight
-        :param n: (optional) number of angle points to sample (default = 50)
-        :returns: a tuple containing (mean , stdev) of the thickness
-        """
-        values = []
-        dtheta = (angles[1] - angles[0]) / n
-        #iterate over angles:
-        for theta in numpy.arange(angles[0], angles[1], dtheta):
-            # set up interpolation:
-            inner_int = scipy.interpolate.interp1d(
-                inner_z,
-                inner_r,
-                kind='linear', bounds_error=False, fill_value=1e10)
-            outer_int = scipy.interpolate.interp1d(
-                outer_z,
-                outer_r,
-                kind='linear', bounds_error=False, fill_value=1e10)
-
-            # calculate the intersection points:
-            z1 = scipy.optimize.fminbound(
-                func=(lambda x: math.fabs(inner_int(x) - LOS_r(x, theta))),
-                x1=min(inner_z),
-                x2=max(inner_z),
-                xtol=1e-7)
-            r1 = LOS_r(z1, theta)
-            z2 = scipy.optimize.fminbound(
-                func=(lambda x: math.fabs(outer_int(x) - LOS_r(x, theta))),
-                x1=min(outer_z),
-                x2=max(outer_z),
-                xtol=1e-7)
-            r2 = LOS_r(z2, theta)
-
-            # calculate thickness:
-            values.append(math.sqrt((z2 - z1) ** 2 + (r2 - r1) ** 2))
-
-        return scipy.stats.tmean(values), scipy.stats.tstd(values)
-
-    def __correct_spectrum__(self, Al=None, DU=None, Au=None):
-        """Calculate the corrected spectrum.
-
-        :param Al: (optional) the aluminum thickness in um
-        :param DU: (optional) the uranium thickness in um
-        :param Au: (optional) the gold thickness in um
-        """
+    def __correct_spectrum__(self, layers: list[tuple[float, str]]) -> None:
+        """ Calculate the corrected spectrum. """
         self.corr = numpy.zeros([len(self.raw), len(self.raw[0])], numpy.float32)  # array of corrected data
-
-        # if no thicknesses are input, use default class variables:
-        if Al is None:
-            Al = self.Al
-        if DU is None:
-            DU = self.DU
-        if Au is None:
-            Au = self.Au
 
         # loop over all data:
         for i in range(len(self.raw)):
             # calculate new energy:
-            new_E = self.shift_energy(self.raw[i][0], Al=Al, DU=DU, Au=Au)
+            new_E = self.shift_energy(self.raw[i][0], layers)
 
             # infer the bin_size size:
             # make sure we don't cause problems with array indices:
@@ -303,8 +123,8 @@ class Hohlraum(object):
                 bin_size = self.raw[i + 1][0] - self.raw[i][0]
 
             # calculate a corrected bin_size size:
-            new_bin = (self.shift_energy(self.raw[i][0] + bin_size / 2, Al=Al, DU=DU, Au=Au)
-                       - self.shift_energy(self.raw[i][0] - bin_size / 2, Al=Al, DU=DU, Au=Au))
+            new_bin = (self.shift_energy(self.raw[i][0] + bin_size / 2, layers)
+                       - self.shift_energy(self.raw[i][0] - bin_size / 2, layers))
 
             # correct for accordian effect due to bin_size width:
             new_Y = self.raw[i][1] * bin_size / new_bin
@@ -322,33 +142,24 @@ class Hohlraum(object):
             self.corr[i][1] = new_Y
             self.corr[i][2] = new_err
 
-    def shift_energy(self, E, Al=None, DU=None, Au=None):
+    def shift_energy(self, E: float, layers: list[tuple[float, str]]) -> float:
         """Calculate the energy shift for a given incident energy.
 
-        :param E: the incident energy for a proton in MeV
-        :param Al: (optional) the aluminum thickness in um
-        :param DU: (optional) the uranium thickness in um
-        :param Au: (optional) the gold thickness in um
+        :param E: the incident energy for a proton (MeV)
+        :param layers: the materials and thicknesses (um) the proton must traverse
         :returns: the energy out in MeV
         """
         if E <= 0:
             return 0
 
-        # if no thicknesses are input, use default class variables:
-        if Al is None:
-            Al = self.Al
-        if DU is None:
-            DU = self.DU
-        if Au is None:
-            Au = self.Au
-
         new_E = E
-        # correct for Al:
-        new_E = self.Al_SRIM.Ein(new_E, Al)
-        # correct for DU:
-        new_E = self.DU_SRIM.Ein(new_E, DU)
-        # correct for Au:
-        new_E = self.Au_SRIM.Ein(new_E, Au)
+        for thickness, material in reversed(layers):
+            # load the stopping power for this material if you haven’t
+            if material not in self.stop_pow_calculators:
+                self.stop_pow_calculators[material] = WRF_Analysis.util.StopPow.StopPow_SRIM(
+                    os.path.join(f"res/tables/Hydrogen in {material}.txt"))
+            # then correct for this layer
+            new_E = self.stop_pow_calculators[material].Ein(new_E, thickness)
 
         return new_E
 
@@ -362,26 +173,26 @@ class Hohlraum(object):
 
         # fit corrected data:
         g = [self.get_fit_raw()[0],
-             self.shift_energy(self.get_fit_raw()[1]),
+             self.shift_energy(self.get_fit_raw()[1], self.layers),
              self.get_fit_raw()[2]]
 
         self.corr_fit = GaussFit(self.corr, guess=g, limits=self.corr_limits)
 
-    def get_fit_raw(self) -> list:
+    def get_fit_raw(self) -> NDArray[float]:
         """Get the fit to the raw data.
 
         :returns: an list containing [Yp,Ep,sigma]
         """
         return self.raw_fit.get_fit()
 
-    def get_fit_corr(self) -> list:
+    def get_fit_corr(self) -> NDArray[float]:
         """Get the fit to the corrected data.
 
         :returns: a list containing [Yp,Ep,sigma]
         """
         return self.corr_fit.get_fit()
 
-    def get_data_raw(self) -> list:
+    def get_data_raw(self) -> NDArray[float]:
         """Get the raw data.
 
         :returns: a list containing the raw data
@@ -427,43 +238,31 @@ class Hohlraum(object):
         fit_nominal = self.corr_fit.get_fit()
 
         # minimum thicknesses:
-        Au = self.Au
-        if Au > 0:
-            Au -= self.d_Au
-        DU = self.DU
-        if DU > 0:
-            DU -= self.d_DU
-        Al = self.Al
-        if Al > 0:
-            Al -= self.d_Al
+        minimal_layers = []
+        for thickness, material in self.layers:
+            minimal_layers.append((thickness*0.98, material))
 
         # calculate new spectrum and fits with these thicknesses:
-        self.__correct_spectrum__(Al=Al, DU=DU, Au=Au)
+        self.__correct_spectrum__(minimal_layers)
         self.__fit_data__()
 
         # fit to corrected spectrum with minimum thickness:
         fit_min = self.get_fit_corr()
 
-        # minimum thicknesses:
-        Au = self.Au
-        if Au > 0:
-            Au += self.d_Au
-        DU = self.DU
-        if DU > 0:
-            DU += self.d_DU
-        Al = self.Al
-        if Al > 0:
-            Al += self.d_Al
+        # maximum thicknesses:
+        maximal_layers = []
+        for thickness, material in self.layers:
+            maximal_layers.append((thickness*1.02, material))
 
         # calculate new spectrum and fits with these thicknesses:
-        self.__correct_spectrum__(Al=Al, DU=DU, Au=Au)
+        self.__correct_spectrum__(maximal_layers)
         self.__fit_data__()
 
         # fit to corrected spectrum with minimum thickness:
         fit_max = self.get_fit_corr()
 
         # put things back to nominal:
-        self.__correct_spectrum__()
+        self.__correct_spectrum__(self.layers)
         self.__fit_data__()
 
         # we want to return uncertainties and not absolute values,
@@ -614,125 +413,3 @@ class Hohlraum(object):
         ax.set_xlabel(r'Energy (MeV)')
         ax.set_ylabel(r'Yield/MeV')
         ax.set_title(r'Hohlraum Correction')
-
-    def plot_hohlraum_file(self, fname):
-        """Save a hohlraum profile plot to file.
-
-        :param fname: the file to save to
-        """
-        # sanity check, in thickness mode we cannot plot anything:
-        if self.mode == Hohlraum.mode_thick:
-            return
-
-        if matplotlib.get_backend() != 'agg':
-            matplotlib.pyplot.switch_backend('Agg')
-        # get the figure:
-        fig = matplotlib.pyplot.figure()
-        ax = fig.add_subplot(111)
-        self.plot_hohlraum(ax)
-
-        # save to file:
-        fig.savefig(fname)
-
-    def plot_hohlraum_window(self, interactive=False):
-        """Make a new hohlraum profile plot in a UI window.
-
-        :param interactive: (optional) whether to use the interactive mode {default=False}
-        """
-        # sanity check, in thickness mode we cannot plot anything:
-        if self.mode == Hohlraum.mode_thick:
-            return
-
-        # os detection
-        if sys.platform.startswith('linux'):  # generic *nix
-            matplotlib.pyplot.switch_backend('TkAgg')
-        elif sys.platform.startswith('darwin'):  # Mac OS X
-            if matplotlib.get_backend() != 'MacOSX':
-                matplotlib.pyplot.switch_backend('MacOSX')
-        # use interactive mode if requested:
-        matplotlib.pyplot.interactive(interactive)
-
-        # get the figure:
-        fig = matplotlib.pyplot.figure()
-        ax = fig.add_subplot(111)
-        self.plot_hohlraum(ax)
-
-        matplotlib.pyplot.show()
-
-    def plot_hohlraum(self, ax=None, text=True):
-        """ Make a plot of the hohlraum wall and LOS into given Axes.
-
-        :param ax: matplotlib Axes instance to plot into
-        :param text: show text labels of various things
-        """
-        # sanity check:
-        if ax is None:
-            ax = matplotlib.pyplot.gca()
-
-        # iterate over all layers:
-        # noinspection PyTypeChecker
-        for i in numpy.arange(len(self.all_z) / 2 - 1, -1, -1, dtype=numpy.int):
-            # choose a color based on material type:
-            c = 'black'
-            if self.layer_mat[2 * i] == 'Au':
-                c = 'orange'
-            if self.layer_mat[2 * i] == 'DU' or self.layer_mat[2 * i] == 'U':
-                c = '#555555'
-            if self.layer_mat[2 * i] == 'Al':
-                c = '#aaaaaa'
-
-            # plot this layer:
-            ax.fill_between(  # use fill_between type plot
-                              self.all_z[2 * i],  # z points
-                              self.all_r[2 * i],  # inner wall
-                              self.all_r[2 * i + 1],  # outer wall
-                              color=c)  # options
-
-        # now plot the LOS:
-        # find the max/min r we should plot:
-        r_max = max(flatten(self.all_r)) * 1.1
-        r_min = min(flatten(self.all_r)) * 0.9
-        for theta in self.angles:
-            r = numpy.linspace(r_min, r_max, 100)
-            z = LOS_z(r, theta)
-
-            ax.plot(z, r, 'b--')
-
-        if text:
-            # add a WRF text annotation for blue lines:
-            text = 'WRF LOS'
-            theta = scipy.stats.tmean(self.angles)
-            ax.text(LOS_z(r_max, theta), r_max,  # where to put it
-                    text,  #  text to display
-                    color='blue', horizontalalignment='center')
-            #backgroundcolor='blue') # fill background
-            #bbox=dict(ec='black', fc='blue', alpha=1.0)) # add black boundary
-
-            # Some coordinates for displaying text
-            z_min = min(flatten(self.all_z))
-            z_max = max(flatten(self.all_z))
-            if math.fabs(z_min) < 1e-3:
-                z_text = (z_max-z_min)/3.
-            else:
-                z_text = 0.
-            dr = (r_max-r_min)/15.
-
-            # add some text annotation with thicknesses:
-            text = '{:.1f}'.format(self.Au) + r' $\mu$m Au'
-            ax.text(z_text, r_min+2*dr, text, horizontalalignment='center')
-
-            text = '{:.1f}'.format(self.DU) + r' $\mu$m DU'
-            ax.text(z_text, r_min+dr, text, horizontalalignment='center')
-
-            text = '{:.1f}'.format(self.Al) + r' $\mu$m Al'
-            ax.text(z_text, r_min, text, horizontalalignment='center')
-
-
-            # add an indicator showing where N pole is in this plot
-            ax.arrow(z_max, r_min, z_max / 8, 0, fc='k', ec='k', head_width=z_max / 30, head_length=z_max / 30)
-            ax.text(z_max, r_min * 1.02, 'N pole', ha='left', va='bottom')
-
-        ax.set_xlabel('z (cm)')
-        ax.set_ylabel('r (cm)')
-
-        ax.set_title('Hohlraum Profile')

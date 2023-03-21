@@ -1,8 +1,8 @@
 # WRF analysis
 
 this code is meant to expedite the process of analyzing Wedge Range Filters (WRFs) for ICF implosions.
-there is a GUI that lets you do a bunch of spectrum correction and analysis stuff,
-and a script that takes a bunch of analysis files from the program Analyze CR39 an consolidates them into useful figures and tables.
+there is a a script that takes a bunch of analysis files from the program Analyze CR39 an consolidates them into useful figures and tables,
+and there is also a GUI that does the same stuff if you want your life to be more difficult.
 installation is tricky, as this relies on the stopping power library that is hosted in the StopPow repository.
 here are Graeme's instructions for installing on Linux:
 

@@ -6,15 +6,10 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from WRF_Analysis.GUI.widgets.Value_Prompt import Value_Prompt
 
-import math
 import matplotlib
 
-from WRF_Analysis.GUI.widgets.Option_Prompt import Option_Prompt
 from WRF_Analysis.GUI.widgets.Model_Frame import Model_Frame
-from WRF_Analysis.GUI.WRF_Progress_Dialog import WRF_Progress_Dialog
 from WRF_Analysis.Analysis.Analyze_Spectrum import Analyze_Spectrum
-from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
-from WRF_Analysis.Analysis.rhoR_Model import rhoR_Model
 from WRF_Analysis.GUI.Plot_Spectrum import Plot_Spectrum
 
 
@@ -22,9 +17,6 @@ class WRF_Analyzer(tk.Toplevel):
     """Implement a GUI dialog for providing input to the WRF analysis.
 
     :param parent: (optional) The parent element in Tkinter [default=None]
-    :param shot: (optional) The shot number used, as a str [default prompts user]
-    :param dim: (optional) The DIM used, as a str [default prompts user]
-    :param pos: (optional) The WRF position used, as a str [default prompts user]
     """
     WRF_Analyzer_last_dir = None
 
@@ -45,7 +37,7 @@ class WRF_Analyzer(tk.Toplevel):
         self.__create_widgets__()
         self.configure(background='#eeeeee')
 
-        self.minsize(300,200)
+        self.minsize(300, 200)
 
     def __create_widgets__(self):
         """Create the UI elements."""
@@ -171,20 +163,14 @@ class WRF_Analyzer(tk.Toplevel):
                 DU = dialog.result
                 dialog = Value_Prompt(self, title='Hohlraum', text='Input Al thickness in um', default=0.)
                 Al = dialog.result
-
-                hohl_thick = [Au, DU, Al]
-                wall = None
             else:
-                wall = None
-                hohl_thick = None
-            use_bump_corr = False
-            bump_corr = 0
+                Au, DU, Al = 0, 0, 0
 
             # ask if we should generate rhoR plots
             from tkinter.filedialog import askdirectory
             opts = dict(mustexist='False',
-                           initialdir=WRF_Analyzer.WRF_Analyzer_last_dir,
-                           title='Save files to')
+                        initialdir=WRF_Analyzer.WRF_Analyzer_last_dir,
+                        title='Save files to')
             OutputDir = askdirectory(**opts)
             # sanity check:
             if OutputDir == '':  # user cancelled
@@ -206,8 +192,8 @@ class WRF_Analyzer(tk.Toplevel):
                 try:
                     minE = float(self.min_energy.get())
                     maxE = float(self.max_energy.get())
-                    limits = [minE,maxE]
-                except:
+                    limits = [minE, maxE]
+                except ValueError:
                     limits = None
             else:
                 limits = None
@@ -215,26 +201,23 @@ class WRF_Analyzer(tk.Toplevel):
             # get the model
             model = self.adv_frame.get_rhoR_Analysis()
 
-            result, corr_spec = Analyze_Spectrum(spectrum,
-                                      random,
-                                      systematic,
-                                      [0,0],
-                                      hohl_wall=wall,
-                                      hohl_thick=hohl_thick,
-                                      name=name,
-                                      summary=summary,
-                                      plots=self.plot_var.get(),
-                                      verbose=self.verbose_var.get(),
-                                      rhoR_plots=self.rhoR_plot_var.get(),
-                                      OutputDir=OutputDir,
-                                      Nxy=Nxy,
-                                      ProgressBar=None,
-                                      ShowSlide=self.display_results.get(),
-                                      model=model,
-                                      fit_guess=fit_guess,
-                                      limits=limits,
-                                      use_bump_corr=use_bump_corr,
-                                      bump_corr=bump_corr)
+            result, corr_spec = Analyze_Spectrum(
+                spectrum,
+                random,
+                systematic,
+                hohlraum_layers=[(Au, "Au"), (DU, "U"), (Al, "Al")],
+                name=name,
+                summary=summary,
+                plots=self.plot_var.get(),
+                verbose=self.verbose_var.get(),
+                rhoR_plots=self.rhoR_plot_var.get(),
+                OutputDir=OutputDir,
+                Nxy=Nxy,
+                ProgressBar=None,
+                ShowSlide=self.display_results.get(),
+                model=model,
+                fit_guess=fit_guess,
+                limits=limits)
 
             # add to DB:
             print(result)

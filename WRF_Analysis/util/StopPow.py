@@ -14,15 +14,10 @@ if __package__ or "." in __name__:
 else:
     import _StopPow
 
-try:
-    import builtins as __builtin__
-except ImportError:
-    import __builtin__
-
 def _swig_repr(self):
     try:
-        strthis = "proxy of " + self.this.__repr__()
-    except __builtin__.Exception:
+        strthis = "proxy of " + repr(self.this)
+    except AttributeError:
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
@@ -697,8 +692,8 @@ class DoubleVector2D(object):
 # Register DoubleVector2D in _StopPow:
 _StopPow.DoubleVector2D_swigregister(DoubleVector2D)
 
-class StopPow(object):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+class StopPow:
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
 
     def __init__(self, *args, **kwargs):
         raise AttributeError("No constructor defined - class is abstract")
@@ -751,7 +746,7 @@ StopPow.MODE_LENGTH = _StopPow.cvar.StopPow_MODE_LENGTH
 StopPow.MODE_RHOR = _StopPow.cvar.StopPow_MODE_RHOR
 
 class StopPow_Plasma(StopPow):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
 
     def __init__(self, *args, **kwargs):
         raise AttributeError("No constructor defined - class is abstract")
@@ -780,7 +775,7 @@ class StopPow_Plasma(StopPow):
 _StopPow.StopPow_Plasma_swigregister(StopPow_Plasma)
 
 class StopPow_PartialIoniz(StopPow):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
 
     def __init__(self, *args, **kwargs):
         raise AttributeError("No constructor defined - class is abstract")
@@ -797,7 +792,7 @@ class StopPow_PartialIoniz(StopPow):
 _StopPow.StopPow_PartialIoniz_swigregister(StopPow_PartialIoniz)
 
 class StopPow_SRIM(StopPow):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, fname):
@@ -820,7 +815,7 @@ class StopPow_SRIM(StopPow):
 _StopPow.StopPow_SRIM_swigregister(StopPow_SRIM)
 
 class StopPow_LP(StopPow_Plasma):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -867,7 +862,7 @@ class StopPow_LP(StopPow_Plasma):
 _StopPow.StopPow_LP_swigregister(StopPow_LP)
 
 class StopPow_BetheBloch(StopPow):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, mt, Zt, mf, Zf, nf):
@@ -902,7 +897,7 @@ class StopPow_BetheBloch(StopPow):
 _StopPow.StopPow_BetheBloch_swigregister(StopPow_BetheBloch)
 
 class StopPow_AZ(StopPow):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -925,7 +920,7 @@ class StopPow_AZ(StopPow):
 _StopPow.StopPow_AZ_swigregister(StopPow_AZ)
 
 class StopPow_Mehlhorn(StopPow_PartialIoniz):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -954,7 +949,7 @@ class StopPow_Mehlhorn(StopPow_PartialIoniz):
 _StopPow.StopPow_Mehlhorn_swigregister(StopPow_Mehlhorn)
 
 class StopPow_Grabowski(StopPow_Plasma):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -980,7 +975,7 @@ class StopPow_Grabowski(StopPow_Plasma):
 _StopPow.StopPow_Grabowski_swigregister(StopPow_Grabowski)
 
 class StopPow_Zimmerman(StopPow_PartialIoniz):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -1015,7 +1010,7 @@ class StopPow_Zimmerman(StopPow_PartialIoniz):
 _StopPow.StopPow_Zimmerman_swigregister(StopPow_Zimmerman)
 
 class StopPow_BPS(StopPow_Plasma):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -1056,7 +1051,7 @@ class StopPow_BPS(StopPow_Plasma):
 _StopPow.StopPow_BPS_swigregister(StopPow_BPS)
 
 class StopPow_Fit(StopPow_PartialIoniz):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     def __init__(self, *args):
@@ -1097,7 +1092,7 @@ StopPow_Fit.MODE_GRABOWSKI = _StopPow.cvar.StopPow_Fit_MODE_GRABOWSKI
 StopPow_Fit.MODE_QUANTUM_GRABOWSKI = _StopPow.cvar.StopPow_Fit_MODE_QUANTUM_GRABOWSKI
 
 class AtomicData(object):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    thisown = property(lambda self: self.this.own(), lambda self, v: self.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
     @staticmethod

@@ -35,8 +35,8 @@ def myprint(text, ProgressBar=None):
     if ProgressBar is None:
         print(text)
     # GUI mode:
-    #else:
-        #ProgressBar.set_text(text)
+    else:
+        ProgressBar.set_text(text)
 
 def mytime(time, inc, ProgressBar=None):
     """Display a time elapsed on CLI or update ProgressBar.
@@ -52,17 +52,16 @@ def mytime(time, inc, ProgressBar=None):
         current = ProgressBar.counter.get()
         ProgressBar.counter.set(current+inc)
 
-def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=None, hohl_thick=None, name="", summary="", plots=True,
+def Analyze_Spectrum(data, spectrum_random, spectrum_systematic,
+                     hohlraum_layers, name="", summary="", plots=True,
                      verbose=True, rhoR_plots=False, OutputDir=None, Nxy=None, ProgressBar=None, ShowSlide=False,
-                     model=None, add_fit_unc=False, fit_guess=None, limits=None, use_bump_corr=False, bump_corr=0):
+                     model=None, add_fit_unc=False, fit_guess=None, limits=None):
     """Analyze a NIF WRF spectrum.
 
     :param data: The raw spectral data, n x 3 array where first column is energy (MeV), second column is yield/MeV, and third column is uncertainty in yield/MeV
     :param spectrum_random: Random 1 sigma error bars in spectrum as [dY,dE,dsigma]
     :param spectrum_systematic: Systematic total error bars in spectrum as [dY,dE,dsigma]
-    :param LOS: The line of sight of this wedge, and [theta,phi]
-    :param hohl_wall: Hohlraum wall info, requires a 2-D list with columns [ Drawing , Name , Layer # , Material , r (cm) , z (cm) ]
-    :param hohl_thick: Optionally specify hohlraum thickness directly as [Au, DU, Al] in units of um
+    :param hohlraum_layers: Hohlraum wall info, requires a list of tuples of thickness (μm) and material name
     :param name: (optional) Name of this wedge [default=""]
     :param summary: (optional) Any summary info to display [default=""]
     :param plots: (optional) Whether to make plots [default=True]
@@ -76,15 +75,12 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     :param add_fit_unc: (optional) Whether to add a chi^2 fit uncertainty to the error bars, in case it isn't already included [default=False]
     :param fit_guess: (optional) Supplied guess to start the Gaussian fitting, as a list containing Y,E,sigma [default=None]
     :param limits: (optional) Energy limits for fitting to the spectrum. Default (None) uses entire spectrum.
-    :param use_bump_corr: (optional) Boolean flag to use a correction for the hohlraum thickness because of the 'bump' [default=False]
-    :param bump_corr: (optional) The change in thickness for the bump correction, which is added to the t=0 thickness [default=0]
     :author: Alex Zylstra
     """
-    # sanity checking on the inputs:
+    # type checking on the inputs:
     assert isinstance(data, list) or isinstance(data, numpy.ndarray)
     assert isinstance(spectrum_random, list) or isinstance(spectrum_random, numpy.ndarray)
     assert isinstance(spectrum_systematic, list) or isinstance(spectrum_systematic, numpy.ndarray)
-    assert isinstance(LOS, list) or isinstance(LOS, numpy.ndarray)
 
     # for the progress bar:
     if ProgressBar is not None:
@@ -108,96 +104,45 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # ----------------------------
     # 		Hohlraum Correction
     # ----------------------------
-    # if no wall info is passed, assume the correction
-    # is not needed:
-    if hohl_wall is not None or hohl_thick is not None:
-        t1 = datetime.now()
-        myprint(name + ' hohlraum correction...', ProgressBar=ProgressBar)
+    t1 = datetime.now()
+    myprint(name + ' hohlraum correction...', ProgressBar=ProgressBar)
 
-        # Create the hohlraum based on either geometry or specified thickness:
-        if hohl_wall is not None:
-            hohl = Hohlraum(data,
-                            wall=hohl_wall,
-                            angles=LOS,
-                            fit_guess=fit_guess,
-                            limits=limits,
-                            use_bump_corr=use_bump_corr,
-                            bump_corr=bump_corr)
-        else:
-            hohl = Hohlraum(data,
-                            Thickness=hohl_thick,
-                            fit_guess=fit_guess,
-                            limits=limits,
-                            use_bump_corr=use_bump_corr,
-                            bump_corr=bump_corr)
+    # Create the hohlraum based on either geometry or specified thickness:
+    hohl = Hohlraum(data, hohlraum_layers,
+                    fit_guess=fit_guess,
+                    limits=limits)
 
-        # get corrected spectrum:
-        corr_data = hohl.get_data_corr()
-        corr_limits = hohl.get_limits_corr()
-        # get hohlraum uncertainty:
-        unc_hohl = hohl.get_unc()
+    # get corrected spectrum:
+    corr_data = hohl.get_data_corr()
+    corr_limits = hohl.get_limits_corr()
+    # get hohlraum uncertainty:
+    unc_hohl = hohl.get_unc()
 
-        if verbose:
-            log_file.writerow(['=== Hohlraum Analysis ==='])
-            log_file.writerow(['Raw Energy (MeV)', hohl.get_fit_raw()[1]])
-            log_file.writerow(['Corr Energy (MeV)', hohl.get_fit_corr()[1]])
-            log_file.writerow(['Au Thickness (um)', hohl.Au, '+/-', hohl.d_Au])
-            log_file.writerow(['DU Thickness (um)', hohl.DU, '+/-', hohl.d_DU])
-            log_file.writerow(['Al Thickness (um)', hohl.Al, '+/-', hohl.d_Al])
-            log_file.writerow(['Uncertainties due to hohlraum correction:'])
-            log_file.writerow(['Qty', '- err', '+ err'])
-            log_file.writerow(['Yield', unc_hohl[0][0], unc_hohl[0][1]])
-            log_file.writerow(['Energy (MeV)', unc_hohl[1][0], unc_hohl[1][1]])
-            log_file.writerow(['Sigma (MeV)', unc_hohl[2][0], unc_hohl[2][1]])
+    if verbose:
+        log_file.writerow(['=== Hohlraum Analysis ==='])
+        log_file.writerow(['Raw Energy (MeV)', hohl.get_fit_raw()[1]])
+        log_file.writerow(['Corr Energy (MeV)', hohl.get_fit_corr()[1]])
+        log_file.writerow(['Layers:', hohl.layers])
+        log_file.writerow(['Uncertainties due to hohlraum correction:'])
+        log_file.writerow(['Qty', '- err', '+ err'])
+        log_file.writerow(['Yield', unc_hohl[0][0], unc_hohl[0][1]])
+        log_file.writerow(['Energy (MeV)', unc_hohl[1][0], unc_hohl[1][1]])
+        log_file.writerow(['Sigma (MeV)', unc_hohl[2][0], unc_hohl[2][1]])
 
-        if plots:
-            # make plot of raw and corrected spectra:
-            hohl_plot1_fname = os.path.join(OutputDir, name + '_HohlCorr.eps')
-            hohl.plot_file(hohl_plot1_fname)
-            # make figure showing hohlraum profile:
-            hohl_plot2_fname = os.path.join(OutputDir, name + '_HohlProfile.eps')
-            hohl.plot_hohlraum_file(hohl_plot2_fname)
+    if plots:
+        # make plot of raw and corrected spectra:
+        hohl_plot1_fname = os.path.join(OutputDir, name + '_HohlCorr.eps')
+        hohl.plot_file(hohl_plot1_fname)
 
-        t2 = datetime.now()
-        mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
+    t2 = datetime.now()
+    mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
-        # add info to the return dict
-        results['Au'] = hohl.Au
-        results['Au_unc'] = hohl.d_Au
-        results['DU'] = hohl.DU
-        results['DU_unc'] = hohl.d_DU
-        results['Al'] = hohl.Al
-        results['Al_unc'] = hohl.d_Al
-
-        results['Hohl_Y_posunc'] = unc_hohl[0][0]
-        results['Hohl_Y_negunc'] = unc_hohl[0][1]
-        results['Hohl_E_posunc'] = unc_hohl[1][0]
-        results['Hohl_E_negunc'] = unc_hohl[1][1]
-        results['Hohl_sigma_posunc'] = unc_hohl[2][0]
-        results['Hohl_sigma_negunc'] = unc_hohl[2][1]
-
-    # no hohlraum correction:
-    else:
-        corr_data = data
-        hohl = None
-        unc_hohl = None
-        corr_limits = limits
-
-        # add info to the return dict
-        results['Au'] = 0
-        results['Au_unc'] = 0
-        results['DU'] = 0
-        results['DU_unc'] = 0
-        results['Al'] = 0
-        results['Al_unc'] = 0
-
-        results['Hohl_Y_posunc'] = 0
-        results['Hohl_Y_negunc'] = 0
-        results['Hohl_E_posunc'] = 0
-        results['Hohl_E_negunc'] = 0
-        results['Hohl_sigma_posunc'] = 0
-        results['Hohl_sigma_negunc'] = 0
-
+    results['Hohl_Y_posunc'] = unc_hohl[0][0]
+    results['Hohl_Y_negunc'] = unc_hohl[0][1]
+    results['Hohl_E_posunc'] = unc_hohl[1][0]
+    results['Hohl_E_negunc'] = unc_hohl[1][1]
+    results['Hohl_sigma_posunc'] = unc_hohl[2][0]
+    results['Hohl_sigma_negunc'] = unc_hohl[2][1]
 
     # -----------------------------
     # 		Energy analysis
@@ -223,7 +168,6 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     t1 = datetime.now()
     myprint(name + ' energy error analysis...', ProgressBar=ProgressBar)
     unc_fit = FitObj.chi2_fit_unc()
-    unc_fit_raw = FitObjRaw.chi2_fit_unc()
 
     # make a plot of the fit:
     if plots:
@@ -282,7 +226,7 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # set up the rhoR analysis if necessary:
     if model is None:
         model = rhoR_Analysis()
-    temp = model.Calc_rhoR(fit[1], breakout=True)
+    temp = model.Calc_rhoR(fit[1], breakdown=True)
     rhoR = temp[0]
     t2 = datetime.now()
     mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
@@ -338,7 +282,6 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     # -----------------------------
     t1 = datetime.now()
     myprint(name + ' Rcm analysis...', ProgressBar=ProgressBar)
-    E0 = 14.7  # initial proton energy from D3He
     temp = model.Calc_Rcm(fit[1], 0)
     Rcm = temp[0]
     Rcm_model_random = 0
@@ -412,9 +355,5 @@ def Analyze_Spectrum(data, spectrum_random, spectrum_systematic, LOS, hohl_wall=
     t2 = datetime.now()
     mytime((t2-t1).total_seconds(), 10, ProgressBar=ProgressBar)
 
-
     # return hohlraum corrected spectrum if appropriate
-    if hohl_wall is not None:
-        return results, corr_data
-    else:
-        return results, None
+    return results, corr_data
