@@ -1,0 +1,9 @@
+Ri = 1071.5 um
+Ro = 1182.7 um
+shell_material = CH
+shell_thickness = 22.2
+P = 20.0 atm
+fD = 1.00
+f3He = 0.00
+fT = 0.00
+hohlraum = 

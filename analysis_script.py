@@ -19,8 +19,8 @@ from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 matplotlib.use("qtagg")
 
-FOLDERS = ["N230207-001"]
-# FOLDERS = ["I_Stag_Sym_HyECpl"]
+# FOLDERS = ["N230207-003", "N230208-001", "-002"]
+FOLDERS = ["I_MJDD_PDD_HotE"]
 
 SHOW_PLOTS = True
 
@@ -124,23 +124,12 @@ def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound:
 	    their fitting, but I don’t think it’s significant above 7 MeV)
 	"""
 	spectrum = spectrum[(spectrum[:, 0] > lower_bound) & (spectrum[:, 0] < upper_bound), :]
-	plt.figure()
-	plt.plot(spectrum[:, 0], spectrum[:, 1])
-
-	x = np.linspace(spectrum[:, 0].min(), spectrum[:, 0].max())
 	rainge = np.ptp(spectrum[:, 0])
 	center = np.mean(spectrum[:, 0])
-	plt.plot(x, skew_gaussian(x, np.max(spectrum[:, 1])*(upper_bound - lower_bound), (lower_bound + upper_bound)/2, (upper_bound - lower_bound)/4))
-	plt.show()
 	values, covariances = optimize.curve_fit(
 		skew_gaussian, xdata=spectrum[:, 0], ydata=spectrum[:, 1], sigma=spectrum[:, 2],
-		p0=(np.max(spectrum[:, 1])*rainge,
-		    center, rainge/4),
+		p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
 		bounds=(0, inf), absolute_sigma=True)
-	plt.figure()
-	plt.plot(spectrum[:, 0], spectrum[:, 1])
-	plt.plot(x, skew_gaussian(x, *values))
-	plt.show()
 	return Peak(yeeld=Quantity(values[0], sqrt(covariances[0, 0])),
 	            mean=Quantity(values[1], sqrt(covariances[1, 1])),
 	            sigma=Quantity(values[2], sqrt(covariances[2, 2])))
@@ -289,6 +278,7 @@ def main():
 	yields = []
 	rhoRs = []
 	compression_yields = []
+	compression_means = []
 	compression_rhoRs = []
 	spectra = []
 	for i, folder in enumerate(FOLDERS):
@@ -322,7 +312,10 @@ def main():
 							means.append([float(mean_value), float(mean_error), float(mean_error)])
 							sigmas.append([0, 0, 0])
 							yields.append([float(yield_value), float(yield_error), float(yield_error)])
-							rhoRs.append([float(rhoR_value), float(rhoR_error), float(rhoR_error), 0, 0])
+							rhoRs.append([float(rhoR_value), float(rhoR_error), float(rhoR_error)])
+							compression_yields.append([0, 0, 0])
+							compression_means.append([nan, inf, inf])
+							compression_rhoRs.append([nan, inf, inf])
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 
@@ -407,14 +400,16 @@ def main():
 					# clean up the extracted spectrum
 					spectrum = np.array(spectrum)
 					spectrum = spectrum[spectrum[:, 2] != 0, :] # remove any points with sus error bars
-					spectrum = spectrum[1:, :] # remove the lowest bin
+					spectrum = spectrum[2:, :] # remove the two lowest bins because Fredrick’s program calculates them incorrectly
 
 					# try to fit the compression peak
-					compression = None
 					if gaussian_fit:
 						compression = fit_skew_gaussian(spectrum, 0, shock.mean.value - 2*shock.sigma.value)
-					if compression is None or compression.yeeld.value <= shock.yeeld.value:
+					else:
 						compression = Peak(Quantity(0, 0), Quantity(nan, inf), Quantity(nan, inf))
+					good_compression_fit = compression.yeeld.value > shock.yeeld.value and compression.mean.value > spectrum[0, 0]
+					if not good_compression_fit:
+						compression = Peak(Quantity(nan, inf), Quantity(nan, inf), Quantity(nan, inf))
 
 					# think about some flags
 					any_hohlraum = any(parameters["hohlraum"].values())
@@ -466,9 +461,12 @@ def main():
 					shock = perform_correction(hohlraum_layers, shock)
 					shock_rhoR = calculate_rhoR(
 						shock.mean, shot_day+shot_number, parameters)
-					compression = perform_correction(hohlraum_layers, compression)
-					compression_rhoR = calculate_rhoR(
-						compression.mean, shot_day+shot_number, parameters)
+					if good_compression_fit:
+						compression = perform_correction(hohlraum_layers, compression)
+						compression_rhoR = calculate_rhoR(
+							compression.mean, shot_day+shot_number, parameters)
+					else:
+						compression_rhoR = Quantity(nan, nan)
 
 					# test_mean, _, _ = perform_correction(layers, 5, 0, 0)
 					# test_rhoR, _, _, _ = calculate_rhoR(test_mean, 0, shot_day+shot_number, parameters)
@@ -489,6 +487,7 @@ def main():
 					yields.append([shock.yeeld.value, shock.yeeld.error, shock.yeeld.error])
 					rhoRs.append([shock_rhoR.value, shock_rhoR.error, shock_rhoR.error]) # tho the hotspot and shell components are probably not reliable...
 					compression_yields.append([compression.yeeld.value, compression.yeeld.error, compression.yeeld.error])
+					compression_means.append([compression.mean.value, compression.mean.error, compression.mean.error])
 					compression_rhoRs.append([compression_rhoR.value, compression_rhoR.error, compression_rhoR.error])
 
 	assert len(means) > 0, "No datum were found."
@@ -497,6 +496,7 @@ def main():
 	yields = np.array(yields)
 	rhoRs = np.array(rhoRs)
 	compression_yields = np.array(compression_yields)
+	compression_means = np.array(compression_means)
 	compression_rhoRs = np.array(compression_rhoRs)
 	shot_days = np.array(shot_days)
 	shot_numbers = np.array(shot_numbers)
@@ -581,8 +581,9 @@ def main():
 		f.write(
 			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "
 			"Sigma (MeV), Sigma unc. (MeV), Width (keV), Width unc. (keV), "
-			"Compres. yield, Compres. yield unc., Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)"
-			"Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2)"
+			"Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "
+			"Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), "
+			"Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)"
 			"\n")
 		for i in range(len(labels)):
 			label = labels[i]
@@ -593,17 +594,20 @@ def main():
 			width_value, width_error, _ = widths[i]
 			temp_value, temp_error, _ = temps[i]
 			compression_yield_value, compression_yield_error, _ = compression_yields[i]
+			compression_mean_value, compression_mean_error, _ = compression_means[i]
 			compression_rhoR_value, compression_rhoR_error, _ = compression_rhoRs[i]
 			label = label.replace('\n', ' ')
 			print("|  {:15.15s}  |  {:#.2g} ± {:#.2g}  |  {:5.2f} ± {:4.2f}  |  {:5.1f} ± {:4.1f}  |".format(
 				label, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error))
 			if i + 1 < len(labels) and shots[i+1] != shots[i]:
 				print()
-			f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
+			f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
 				label, yield_value, yield_error, mean_value, mean_error,
 				sigma_value, sigma_error, width_value, width_error,
-				compression_yield_value, compression_yield_error, compression_rhoR_value, compression_rhoR_error,
-				rhoR_value, rhoR_error))
+				rhoR_value, rhoR_error,
+				compression_yield_value, compression_yield_error,
+				compression_mean_value, compression_mean_error,
+				compression_rhoR_value, compression_rhoR_error))
 	print()
 
 	# make the error bars asymmetrick if there are issues with the data
@@ -616,13 +620,6 @@ def main():
 		for affected_values in [yields, compression_yields, compression_rhoRs, secondary_rhoRs, secondary_temps, rhoRs]:
 			affected_values[clipd, 1] = 2e20
 		means[clipd, 2] = 2e20
-
-	# for shot in sorted(shots):
-	# 	matching_shot = [shot in label for label in loong_labels]
-	# 	print(f"{shot} ρR breakdown:")
-	# 	print(f"  Total: {np.average(rhoRs[:,0], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
-	# 	print(f"  Fuel: {np.average(rhoRs[:,2], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
-	# 	print(f"  Shell: {np.average(rhoRs[:,3], weights=rhoRs[:,1]**(-2)*matching_shot):.1f}")
 
 	# choose label spacing based on number of shots
 	if len(shot_numbers) <= 6:
@@ -638,12 +635,20 @@ def main():
 			spacing = 0.40
 
 	# create the comparison plots
+	if np.any(np.isfinite(compression_yields[:, 0])):
+		yield_descriptor = "Shock yield"
+		mean_descriptor = "Shock peak energy"
+		rhoR_descriptor = "Shock ρR"
+	else:
+		yield_descriptor = "Yield"
+		mean_descriptor = "Mean energy"
+		rhoR_descriptor = "Total ρR"
 	for label, filetag, values in [
-		("Yield", 'yield', yields),
-		("Compression yield", 'yield_compression', compression_yields),
-		("Mean energy (MeV)", 'mean', means),
-		("Total ρR (mg/cm^2)", 'rhoR_total', rhoRs),
+		(f"{yield_descriptor}", 'yield', yields),
+		(f"{mean_descriptor} (MeV)", 'mean', means),
+		(f"{rhoR_descriptor} (mg/cm^2)", 'rhoR_total', rhoRs),
 		("Fuel ρR (mg/cm^2)", 'rhoR_fuel', secondary_rhoRs),
+		("Compression yield", 'yield_compression', compression_yields),
 		("Compression ρR (mg/cm^2)", 'rhoR_compression', compression_rhoRs),
 		("Electron temperature (keV)", 'temperature_electron', secondary_temps),
 		("Width (keV)", 'width', widths),

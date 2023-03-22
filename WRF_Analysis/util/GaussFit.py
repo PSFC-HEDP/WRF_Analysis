@@ -107,7 +107,7 @@ class GaussFit(object):
         # perform the fit:
         self.fit, self.covariance = self.do_fit(guess=guess)
 
-    def do_fit(self, method='chi^2', guess=[], fixed=[]) -> tuple[NDArray[float], NDArray[float]]:
+    def do_fit(self, method='chi^2', guess=None, fixed=None) -> tuple[NDArray[float], NDArray[float]]:
         """Perform the fit. Called automatically by the constructor.
         Can be invoked again with different initial guess if desired.
 
@@ -122,9 +122,9 @@ class GaussFit(object):
         :param guess: (optional) The initial guess for the fitting routine.
         :returns: tuple containing best fit parameters, and covariance matrix
         """
-        if len(guess) != 3:
+        if guess is None:
             guess = self.GUESS
-        if len(fixed) != len(guess):
+        if fixed is None:
             fixed = []
             for i in guess:
                 fixed.append(False)
@@ -140,7 +140,7 @@ class GaussFit(object):
 
         # least squares minimization in scipy
         if method == 'leastsq':
-            def gaussian(B,x):
+            def gaussian(B, x):
                 return B[0]/(B[2]*np.sqrt(2*np.pi))*np.exp(-((x-B[1])**2/(2*B[2]**2)))
             def func(p, x, y):
                 return y-gaussian(p, x)
@@ -201,7 +201,7 @@ class GaussFit(object):
             # sanity check that error bar is not zero:
             if point[2] != 0:
                 # if we want to restrict chi2, only count if we are within 5 sigma of mean:
-                if ( self.OPT_RESTRICT_CHI2 and math.fabs(point[0] - fit[1]) / fit[2] <= 5 ):
+                if self.OPT_RESTRICT_CHI2 and math.fabs(point[0] - fit[1]) / fit[2] <= 5:
                     chi2 += ( Gaussian(point[0], fit[0], fit[1], fit[2]) - point[1] ) ** 2 / (point[2]) ** 2
                 # otherwise, count all points:
                 else:
@@ -234,7 +234,7 @@ class GaussFit(object):
         import numpy as np
         perr = np.sqrt(np.diag(self.covariance))
 
-        return [[-perr[0],perr[0]], [-perr[1],perr[1]], [-perr[2],perr[2]]]
+        return [[-perr[0], perr[0]], [-perr[1], perr[1]], [-perr[2], perr[2]]]
 
     def plot_file(self, fname):
         """Save a plot to file.

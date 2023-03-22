@@ -6,4 +6,4 @@ P = 26.0 atm
 fD = 0.67
 f3He = 0.33
 fT = 0.00
-hohlraum = 30Au
+hohlraum = 8Au
