@@ -18,6 +18,7 @@ from scipy import integrate, optimize
 from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 
 matplotlib.use("qtagg")
+np.seterr(all="raise", under="warn")
 
 # FOLDERS = ["N230207-003", "N230208-001", "-002"]
 FOLDERS = ["I_MJDD_PDD_HotE"]
@@ -27,242 +28,10 @@ SHOW_PLOTS = True
 ROOT = 'data'
 σWRF = .159
 δσWRF = .014
-np.seterr(all="raise", under="warn")
-
 
 rhoR_objects: dict[str, Any] = {}
 
-
-# thickness (μm), material
 Layer = tuple[float, str]
-
-
-class Quantity:
-	def __init__(self, value: float, error: float):
-		self.value = value
-		self.error = error
-
-	def __str__(self):
-		return f"{self.value} ± {self.error}"
-
-	def __mul__(self, v: float):
-		return Quantity(self.value*v, self.error*v)
-
-
-class Peak:
-	def __init__(self, yeeld: Quantity, mean: Quantity, sigma: Quantity):
-		self.yeeld = yeeld
-		self.mean = mean
-		self.sigma = sigma
-
-	def __str__(self):
-		return f"{self.mean.value:.2f} ± {self.sigma.value:.2f}"
-
-
-class FixedOrderFormatter(ScalarFormatter):
-	"""Formats axis ticks using scientifick notacion with a constant ordre of 
-	magnitude"""
-	def __init__(self, order_of_mag=0, use_offset=True, use_math_text=False):
-		self._order_of_mag = order_of_mag
-		ScalarFormatter.__init__(self, useOffset=use_offset,
-		                         useMathText=use_math_text)
-	def _set_orderOfMagnitude(self, _):
-		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
-		self.orderOfMagnitude = self._order_of_mag
-
-
-def plt_set_locators() -> None:
-	try:
-		plt.locator_params(steps=[1, 2, 5, 10])
-	except TypeError:
-		pass
-
-
-def get_ein_from_eout(eout: float, layers: list[Layer]) -> float:
-	""" do the reverse stopping power calculation """
-	energy = eout # [MeV]
-	for thickness, formula in layers[::-1]:
-		data = np.loadtxt(f"res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
-		energy_axis = data[:, 0]/1e3 # [MeV]
-		dEdx = data[:, 1]/1e3 # [MeV/μm]
-		energy = integrate.odeint(
-			func =lambda E, x: np.interp(E, energy_axis, dEdx),
-			y0   =energy,
-			t    =[0, thickness]
-		)[-1, 0]  # type: ignore
-	return energy
-
-
-def get_σin_from_σout(deout: float, eout: float, layers: list[Layer]) -> float:
-	""" do a derivative of the stopping power calculation """
-	left = get_ein_from_eout(max(0., eout - deout), layers)
-	rite = get_ein_from_eout(max(0., eout + deout), layers)
-	return (rite - left)/2
-
-
-def gaussian(E, yeeld, mean, sigma):
-	""" it’s just a gaussian. """
-	return yeeld*np.exp(-(E - mean)**2/(2*sigma**2))/np.sqrt(2*pi*sigma**2)
-
-
-def skew_gaussian(E_out, yeeld, median, birth_sigma, birth_energy=14.7):
-	""" a spectrum that could result from a gaussian D3He peak getting ranged down thru some
-	    material, approximately speaking (assume dE/dx \\propto E)
-	"""
-	valid = E_out**2 + (birth_energy**2 - median**2) > 0
-	result = np.empty(E_out.shape)
-	E_in = np.sqrt(E_out[valid]**2 + (birth_energy**2 - median**2))
-	dEdE = E_out[valid]/E_in
-	result[valid] = dEdE*gaussian(E_in, yeeld, birth_energy, birth_sigma)
-	result[~valid] = 0
-	return result
-
-
-def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound: float) -> Peak:
-	""" do a gaussian fit, accounting for how the shape changes and the peak shifts when the
-	    spectrum has been ranged down to where σ !<< E (Fredrick and Alex don’t account for this in
-	    their fitting, but I don’t think it’s significant above 7 MeV)
-	"""
-	spectrum = spectrum[(spectrum[:, 0] > lower_bound) & (spectrum[:, 0] < upper_bound), :]
-	rainge = np.ptp(spectrum[:, 0])
-	center = np.mean(spectrum[:, 0])
-	values, covariances = optimize.curve_fit(
-		skew_gaussian, xdata=spectrum[:, 0], ydata=spectrum[:, 1], sigma=spectrum[:, 2],
-		p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
-		bounds=(0, inf), absolute_sigma=True)
-	return Peak(yeeld=Quantity(values[0], sqrt(covariances[0, 0])),
-	            mean=Quantity(values[1], sqrt(covariances[1, 1])),
-	            sigma=Quantity(values[2], sqrt(covariances[2, 2])))
-
-
-def perform_correction(layers: list[Layer], after_wall: Peak) -> Peak:
-	""" correct some spectral properties for a hohlraum """
-	if len(layers) == 0:
-		return after_wall
-
-	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall} becomes ", end='')
-	mean = Quantity(
-		value=get_ein_from_eout(after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.mean.error, after_wall.mean.value, layers))
-	sigma = Quantity(
-		value=get_σin_from_σout(after_wall.sigma.value, after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.sigma.error, after_wall.mean.value, layers))
-	before_wall = Peak(after_wall.yeeld, mean, sigma)
-	print(f"{before_wall} MeV")
-
-	return before_wall
-
-
-def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]) -> Quantity:
-	""" calculate the rhoR using whatever tecneke makes most sense.
-		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
-	"""
-	if shot_name.startswith("O"): # if it's an omega shot
-		if shot_name not in rhoR_objects:
-			rhoR_objects[shot_name] = []
-			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
-				try:
-					data = np.loadtxt(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt", skiprows=4)
-				except IOError:
-					print(f"!\tDid not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
-					rhoR_objects.pop(shot_name)
-					break
-				else:
-					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
-
-		if shot_name in rhoR_objects:
-			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(mean_energy.value, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
-			error_bar = 0
-			for energy in [mean_energy.value - mean_energy.error, mean_energy.value, mean_energy.value + mean_energy.error]:
-				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
-					if abs(perturbd_gess - best_gess) > error_bar:
-						error_bar = abs(perturbd_gess - best_gess)
-			return Quantity(best_gess, error_bar)
-
-		else:
-			return Quantity(nan, nan)
-
-	elif shot_name.startswith("N"): # if it's a NIF shot
-		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
-			rhoR_objects[shot_name] = rhoR_Analysis(
-				shell_mat   = params['shell_material'],
-				Ri          = float(params['Ri'])*1e-4,
-				Ri_err      = 0.1e-4,
-				Ro          = float(params['Ro'])*1e-4,
-				Ro_err      = 0.1e-4,
-				fD          = float(params['fD']),
-				fD_err      = min(float(params['fD']), 1e-2),
-				f3He        = float(params['f3He']),
-				f3He_err    = min(float(params['f3He']), 1e-2),
-				P0          = float(params['P']),
-				P0_err      = 0.1,
-				t_Shell     = float(params['shell_thickness'])*1e-4,
-				t_Shell_err = float(params['shell_thickness'])/2*1e-4,
-				E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
-			)
-
-		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
-			analysis_object = rhoR_objects[shot_name]
-			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy.value, dE=mean_energy.error)
-			# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
-			return Quantity(rhoR, error)*1e3 # convert from g/cm2 to mg/cm2
-		else:
-			return Quantity(nan, nan)
-
-	else:
-		raise NotImplementedError(shot_name)
-
-
-def load_rhoR_parameters(folder: str) -> dict[str, Any]:
-	""" load the analysis parameters given in the rhoR_parameters.txt file
-	    TODO: it would be really neat if, when the file is absent, it automaticly created it and
-	    TODO: opend it in the default text editor.
-	"""
-	params: dict[str, Any] = {}
-
-	# load each line as an attribute
-	with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
-		for line in f.readlines():
-			key, value = re.split(r"\s*=\s*", line.strip())
-			value = re.sub(r" (um|μm|atm)", "", value)  # strip off units
-			params[key] = value
-
-	# parse the hohlraum layers
-	hohlraum_codes = re.split(r",\s*", params["hohlraum"])
-	keyed_layer_sets = OrderedDict()
-	for hohlraum_code in hohlraum_codes:
-		if ":" in hohlraum_code:
-			key, layer_set_code = re.split(r"\s*:\s*", hohlraum_code, maxsplit=2)
-		else:
-			key, layer_set_code = "", hohlraum_code
-		layer_set: list[Layer] = []
-		for layer_code in re.split(r"\s+", layer_set_code):
-			if len(layer_code) == 0:
-				continue
-			thickness, _, material = re.fullmatch(r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
-			layer_set.append((float(thickness), material))
-		keyed_layer_sets[key] = layer_set
-	params["hohlraum"] = keyed_layer_sets
-
-	# parse the comma-separated flags
-	for key in ["clipping", "overlap"]:
-		if key in params:
-			params[key] = set(re.split(r",\s*", params[key]))
-		else:
-			params[key] = set()
-
-	return params
-
-
-def combine_measurements(*args):
-	nume = 0
-	deno = 0
-	for value, unc in args:
-		nume += value/unc**2
-		deno += 1/unc**2
-	return nume/deno, sqrt(1/deno)
 
 
 def main():
@@ -299,7 +68,7 @@ def main():
 
 						for row in f.readlines(): # read all the wrf summaries out of it
 							print(re.sub(r"[|:±]", " ", row).split())
-							line_of_site, position, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error\
+							line_of_site, position, yield_value, yield_error, mean_value, mean_error, rhoR_value, rhoR_error \
 								= re.sub(r"[|:±]", " ", row).split()
 
 							shot_days.append(shot_day)
@@ -422,11 +191,11 @@ def main():
 					if gaussian_fit:
 						x = np.linspace(0, 20, 1000)
 						plt.plot(x, gaussian(
-							         x, shock.yeeld.value, shock.mean.value, shock.sigma.value),
+							x, shock.yeeld.value, shock.mean.value, shock.sigma.value),
 						         color='#C00000')
 						if compression.yeeld.value > 0:
 							plt.plot(x, skew_gaussian(
-								         x, compression.yeeld.value, compression.mean.value, compression.sigma.value),
+								x, compression.yeeld.value, compression.mean.value, compression.sigma.value),
 							         color='#C00000')
 					plt.errorbar(x=spectrum[:, 0],
 					             y=spectrum[:, 1],
@@ -653,7 +422,7 @@ def main():
 		("Electron temperature (keV)", 'temperature_electron', secondary_temps),
 		("Width (keV)", 'width', widths),
 		("Ion temperature (keV)", 'temperature_ion', temps),
-		]:
+	]:
 		if values.size == 0 or np.all(np.isnan(values[:, 0])): # skip if there's noting here
 			continue
 
@@ -681,7 +450,7 @@ def main():
 		measurable = values[:, 0] - np.minimum(values[:, 1], values[:, 2]) >= 0
 
 		if np.any(measurable):
-			valid = (points > -1e20) & (points < 1e20) &\
+			valid = (points > -1e20) & (points < 1e20) & \
 			        np.stack([measurable, np.full(measurable.shape, True), measurable])
 		else:
 			valid = (points > -1e20) & (points < 1e20)
@@ -704,7 +473,7 @@ def main():
 		if filetag == "temperature_electron":
 			plt.ylim(None, 4)
 		plt_set_locators()
-		
+
 		plt.tight_layout()
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.png'), dpi=300)
 		plt.savefig(os.path.join(base_directory, f'summary_{filetag}.eps'))
@@ -745,6 +514,224 @@ def main():
 	if SHOW_PLOTS:
 		plt.show()
 	plt.close('all')
+
+
+def load_rhoR_parameters(folder: str) -> dict[str, Any]:
+	""" load the analysis parameters given in the rhoR_parameters.txt file
+	    TODO: it would be really neat if, when the file is absent, it automaticly created it and opend it in the default text editor.
+	"""
+	params: dict[str, Any] = {}
+
+	# load each line as an attribute
+	with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
+		for line in f.readlines():
+			key, value = re.split(r"\s*=\s*", line.strip())
+			value = re.sub(r" (um|μm|atm)", "", value)  # strip off units
+			params[key] = value
+
+	# parse the hohlraum layers
+	hohlraum_codes = re.split(r",\s*", params["hohlraum"])
+	keyed_layer_sets = OrderedDict()
+	for hohlraum_code in hohlraum_codes:
+		if ":" in hohlraum_code:
+			key, layer_set_code = re.split(r"\s*:\s*", hohlraum_code, maxsplit=2)
+		else:
+			key, layer_set_code = "", hohlraum_code
+		layer_set: list[Layer] = []
+		for layer_code in re.split(r"\s+", layer_set_code):
+			if len(layer_code) == 0:
+				continue
+			thickness, _, material = re.fullmatch(r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
+			layer_set.append((float(thickness), material))
+		keyed_layer_sets[key] = layer_set
+	params["hohlraum"] = keyed_layer_sets
+
+	# parse the comma-separated flags
+	for key in ["clipping", "overlap"]:
+		if key in params:
+			params[key] = set(re.split(r",\s*", params[key]))
+		else:
+			params[key] = set()
+
+	return params
+
+
+def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]) -> Quantity:
+	""" calculate the rhoR using whatever tecneke makes most sense.
+		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
+	"""
+	if shot_name.startswith("O"): # if it's an omega shot
+		if shot_name not in rhoR_objects:
+			rhoR_objects[shot_name] = []
+			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
+				try:
+					data = np.loadtxt(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt", skiprows=4)
+				except IOError:
+					print(f"!\tDid not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
+					rhoR_objects.pop(shot_name)
+					break
+				else:
+					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
+
+		if shot_name in rhoR_objects:
+			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
+			best_gess = np.interp(mean_energy.value, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+			error_bar = 0
+			for energy in [mean_energy.value - mean_energy.error, mean_energy.value, mean_energy.value + mean_energy.error]:
+				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
+					if abs(perturbd_gess - best_gess) > error_bar:
+						error_bar = abs(perturbd_gess - best_gess)
+			return Quantity(best_gess, error_bar)
+
+		else:
+			return Quantity(nan, nan)
+
+	elif shot_name.startswith("N"): # if it's a NIF shot
+		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
+			rhoR_objects[shot_name] = rhoR_Analysis(
+				shell_mat   = params['shell_material'],
+				Ri          = float(params['Ri'])*1e-4,
+				Ri_err      = 0.1e-4,
+				Ro          = float(params['Ro'])*1e-4,
+				Ro_err      = 0.1e-4,
+				fD          = float(params['fD']),
+				fD_err      = min(float(params['fD']), 1e-2),
+				f3He        = float(params['f3He']),
+				f3He_err    = min(float(params['f3He']), 1e-2),
+				P0          = float(params['P']),
+				P0_err      = 0.1,
+				t_Shell     = float(params['shell_thickness'])*1e-4,
+				t_Shell_err = float(params['shell_thickness'])/2*1e-4,
+				E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
+			)
+
+		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
+			analysis_object = rhoR_objects[shot_name]
+			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy.value, dE=mean_energy.error)
+			# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
+			return Quantity(rhoR, error)*1e3 # convert from g/cm2 to mg/cm2
+		else:
+			return Quantity(nan, nan)
+
+	else:
+		raise NotImplementedError(shot_name)
+
+
+def perform_correction(layers: list[Layer], after_wall: Peak) -> Peak:
+	""" correct some spectral properties for a hohlraum """
+	if len(layers) == 0:
+		return after_wall
+
+	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall} becomes ", end='')
+	mean = Quantity(
+		value=get_ein_from_eout(after_wall.mean.value, layers),
+		error=get_σin_from_σout(after_wall.mean.error, after_wall.mean.value, layers))
+	sigma = Quantity(
+		value=get_σin_from_σout(after_wall.sigma.value, after_wall.mean.value, layers),
+		error=get_σin_from_σout(after_wall.sigma.error, after_wall.mean.value, layers))
+	before_wall = Peak(after_wall.yeeld, mean, sigma)
+	print(f"{before_wall} MeV")
+
+	return before_wall
+
+
+def get_ein_from_eout(eout: float, layers: list[Layer]) -> float:
+	""" do the reverse stopping power calculation """
+	energy = eout # [MeV]
+	for thickness, formula in layers[::-1]:
+		data = np.loadtxt(f"res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
+		energy_axis = data[:, 0]/1e3 # [MeV]
+		dEdx = data[:, 1]/1e3 # [MeV/μm]
+		energy = integrate.odeint(
+			func =lambda E, x: np.interp(E, energy_axis, dEdx),
+			y0   =energy,
+			t    =[0, thickness]
+		)[-1, 0]  # type: ignore
+	return energy
+
+
+def get_σin_from_σout(deout: float, eout: float, layers: list[Layer]) -> float:
+	""" do a derivative of the stopping power calculation """
+	left = get_ein_from_eout(max(0., eout - deout), layers)
+	rite = get_ein_from_eout(max(0., eout + deout), layers)
+	return (rite - left)/2
+
+
+def gaussian(E, yeeld, mean, sigma):
+	""" it’s just a gaussian. """
+	return yeeld*np.exp(-(E - mean)**2/(2*sigma**2))/np.sqrt(2*pi*sigma**2)
+
+
+def skew_gaussian(E_out, yeeld, median, birth_sigma, birth_energy=14.7):
+	""" a spectrum that could result from a gaussian D3He peak getting ranged down thru some
+	    material, approximately speaking (assume dE/dx \\propto E)
+	"""
+	valid = E_out**2 + (birth_energy**2 - median**2) > 0
+	result = np.empty(E_out.shape)
+	E_in = np.sqrt(E_out[valid]**2 + (birth_energy**2 - median**2))
+	dEdE = E_out[valid]/E_in
+	result[valid] = dEdE*gaussian(E_in, yeeld, birth_energy, birth_sigma)
+	result[~valid] = 0
+	return result
+
+
+def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound: float) -> Peak:
+	""" do a gaussian fit, accounting for how the shape changes and the peak shifts when the
+	    spectrum has been ranged down to where σ !<< E (Fredrick and Alex don’t account for this in
+	    their fitting, but I don’t think it’s significant above 7 MeV)
+	"""
+	spectrum = spectrum[(spectrum[:, 0] > lower_bound) & (spectrum[:, 0] < upper_bound), :]
+	rainge = np.ptp(spectrum[:, 0])
+	center = np.mean(spectrum[:, 0])
+	values, covariances = optimize.curve_fit(
+		skew_gaussian, xdata=spectrum[:, 0], ydata=spectrum[:, 1], sigma=spectrum[:, 2],
+		p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
+		bounds=(0, inf), absolute_sigma=True)
+	return Peak(yeeld=Quantity(values[0], sqrt(covariances[0, 0])),
+	            mean=Quantity(values[1], sqrt(covariances[1, 1])),
+	            sigma=Quantity(values[2], sqrt(covariances[2, 2])))
+
+
+def plt_set_locators() -> None:
+	try:
+		plt.locator_params(steps=[1, 2, 5, 10])
+	except TypeError:
+		pass
+
+
+class Quantity:
+	def __init__(self, value: float, error: float):
+		self.value = value
+		self.error = error
+
+	def __str__(self):
+		return f"{self.value} ± {self.error}"
+
+	def __mul__(self, v: float):
+		return Quantity(self.value*v, self.error*v)
+
+
+class Peak:
+	def __init__(self, yeeld: Quantity, mean: Quantity, sigma: Quantity):
+		self.yeeld = yeeld
+		self.mean = mean
+		self.sigma = sigma
+
+	def __str__(self):
+		return f"{self.mean.value:.2f} ± {self.sigma.value:.2f}"
+
+
+class FixedOrderFormatter(ScalarFormatter):
+	"""Formats axis ticks using scientifick notacion with a constant ordre of
+	magnitude"""
+	def __init__(self, order_of_mag=0, use_offset=True, use_math_text=False):
+		self._order_of_mag = order_of_mag
+		ScalarFormatter.__init__(self, useOffset=use_offset,
+		                         useMathText=use_math_text)
+	def _set_orderOfMagnitude(self, _):
+		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
+		self.orderOfMagnitude = self._order_of_mag
 
 
 if __name__ == "__main__":
