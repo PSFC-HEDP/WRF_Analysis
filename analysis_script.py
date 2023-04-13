@@ -23,7 +23,7 @@ np.seterr(all="raise", under="warn")
 FOLDERS = ["Om221014"]
 # FOLDERS = ["I_MJDD_PDD_HotE"]
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 ROOT = 'data'
 σWRF = .159
@@ -187,7 +187,8 @@ def main():
 
 					# plot its spectrum
 					plt.figure(figsize=(10, 4))
-					plt.plot([0, 20], [0, 0], 'k', linewidth=1)
+					plt.grid()
+					plt.axhline(0, color='k', linewidth=1)
 					if gaussian_fit:
 						x = np.linspace(0, 20, 1000)
 						plt.plot(x, gaussian(
@@ -494,6 +495,7 @@ def main():
 					los_rhoRs[i, j, :] = nan
 
 		plt.figure(figsize=(4.5, 4.5))
+		plt_set_locators()
 		plt.errorbar(y=los_rhoRs[:, 0, 0],
 		             yerr=los_rhoRs[:, 0, [2, 1]].T,
 		             x=los_rhoRs[:, 1, 0],
@@ -505,7 +507,7 @@ def main():
 		plt.axis('square')
 		plt.xlim(0, 220)
 		plt.ylim(0, 220)
-		plt.grid('on')
+		plt.grid()
 		plt.tight_layout()
 		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.png'), dpi=300)
 		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.eps'))
@@ -518,7 +520,6 @@ def main():
 
 def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	""" load the analysis parameters given in the rhoR_parameters.txt file
-	    TODO: it would be really neat if, when the file is absent, it automaticly created it and opend it in the default text editor.
 	"""
 	params: dict[str, Any] = {}
 
@@ -564,10 +565,11 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		if shot_name not in rhoR_objects:
 			rhoR_objects[shot_name] = []
 			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
+				table_filename = f"res/tables/stopping_range_protons_{params['shell_material']}_plasma_{ρ}gcc_{Te}eV.txt"
 				try:
-					data = np.loadtxt(f"res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt", skiprows=4)
+					data = np.loadtxt(table_filename, skiprows=4)
 				except IOError:
-					print(f"!\tDid not find res/tables/stopping_range_protons_D_plasma_{ρ}gcc_{Te}eV.txt.")
+					print(f"!\tDid not find '{table_filename}'.")
 					rhoR_objects.pop(shot_name)
 					break
 				else:
