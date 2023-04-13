@@ -20,8 +20,8 @@ from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
 matplotlib.use("qtagg")
 np.seterr(all="raise", under="warn")
 
-# FOLDERS = ["N230207-003", "N230208-001", "-002"]
-FOLDERS = ["I_MJDD_PDD_HotE"]
+FOLDERS = ["Om221014"]
+# FOLDERS = ["I_MJDD_PDD_HotE"]
 
 SHOW_PLOTS = True
 

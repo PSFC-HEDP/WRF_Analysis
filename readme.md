@@ -3,23 +3,43 @@
 this code is meant to expedite the process of analyzing Wedge Range Filters (WRFs) for ICF implosions.
 there is a a script that takes a bunch of analysis files from the program Analyze CR39 an consolidates them into useful figures and tables,
 and there is also a GUI that does the same stuff if you want your life to be more difficult.
+
+## Using the script
+
+the code in this repository is rather unfortunately limited.
+ideally it would have scripts for every step of the process,
+but as it currently stands you’ll need to (for NIF WRFs, anyway)
+1. use Brandon’s *NIF_WRF_Database_Tools* Matlab repository to download the shot info and generate the etch/scan requests,
+2. manually download the scan files from the NIF Archive Viewer,
+3. use Fredrick’s *AnalyzeCR39* Windows application to infer the spectrum from the scan file,
+4. use Patrick’s *SecondaryAnalysis* Matlab repository to infer fuel ρR from yield ratios,
+5. use this code to infer total ρR from mean energy and compile the data from a shot day into plots and tables,
+6. and use Google Slides or maybe LaTeX to compile those plots and tables into a document and send it to the PI.
+
+anyone looking at this in the future should feel free to integrate this process better.
+when I got here, step 5 was two different codebases, so I feel that I’ve done my part.
+
+anyway, I’ll write more specific instructions for step 5 later.
+
+## Installation
+
 installation is tricky, as this relies on the stopping power library that is hosted in the StopPow repository.
 here are Graeme's instructions for installing on Linux:
 
--get gsl version 1.x (not 2.x)
-    -./configure
-    -make
-    -make check
-    -make install
--get swig (tested with v 3.something)
--get WRF_Analysis
--StopPow:
-    -get stoppow from github
-    -cd python_swig, make
-    -move \_StopPow.so AND StopPow.py (from python_swig/dist) to WRF_Analysis/util/
--run WRF:
-    -move main.py to WRF_Analysis-master (ie WRF_Analysis/../)
-    -python3 main.py
+1. get gsl version 1.x (not 2.x)
+    - ./configure
+    - make
+    - make check
+    - make install
+2. get swig (tested with v 3.something)
+3. get WRF_Analysis
+4. StopPow:
+    - get stoppow from github
+    - cd python_swig, make
+    - move \_StopPow.so AND StopPow.py (from python_swig/dist) to WRF_Analysis/util/
+5. run WRF:
+    - move main.py to WRF_Analysis-master (ie WRF_Analysis/../)
+    - python3 main.py
 
 this can also be run on Windows, but it's harder because the tools for compiling gsl aren't as readily available.
 basically, instead of \_StopPow.so, you want to end up with the Windows verison,
