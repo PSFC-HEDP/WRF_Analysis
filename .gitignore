@@ -1,13 +1,16 @@
+# compiled Python
 *.pyc
-.idea
-test/runAnalysis/AnalysisOutputs
-build
-*.cpsa
-*.adat
-*.png
-*.jpg
-*.eps
-*.pdf
-*.xlsx
-res/tables/*.csv
 .eggs/*
+
+# IntelliJ Idea files
+.idea/*
+build/*
+
+# unnecessary data files
+data/**/*.cpsa
+data/**/*.adat
+data/**/*.png
+data/**/*.jpg
+data/**/*.eps
+data/**/*.pdf
+data/**/*.xlsx

@@ -81,7 +81,7 @@ def main():
 		try:
 			generate_etch_scan_request(shot_number, shot_subfolder)
 		except PermissionError:
-			print(f"Error! I don’t have permission to copy and edit the etch/scan workorder spreadsheet. please close Microsoft Excel.")
+			print(f"Error! I don't have permission to copy and edit the etch/scan workorder spreadsheet. please close Microsoft Excel.")
 
 
 def load_general_webdav_info(shot_number: str, shot_subfolder: str,
