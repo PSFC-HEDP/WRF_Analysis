@@ -7,6 +7,7 @@ build
 *.png
 *.jpg
 *.eps
+*.pdf
 *.xlsx
 res/tables/*.csv
 .eggs/*

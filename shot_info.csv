@@ -1,0 +1,2 @@
+shot number,PI,DD-n yield,DD-n temperature,ablator material,ablator thickness,ablator radius,ablator density,hohlraum material,fill gas,fill pressure,deuterium fraction,helium-3 fraction,shot name,campaign,subcampaign,platform
+N230510-001-999,ralph5,2e+13,4.02,HDC,83.194,1181.9,3.3025,Au,67% D + 33% He3,2155.3,0.6667,0.3333,I_Stag_Sym_HohlScan_S02a,Stagnation,,Symcap

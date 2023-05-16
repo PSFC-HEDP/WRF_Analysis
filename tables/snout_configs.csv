@@ -1,0 +1,34 @@
+Configuration name, Pinhole-to-small-pin distance, Note
+DISC-H-1200-6.35,                          475.49, Refer to AAA10_114840_AC + AAA10_102784_AC + AAA14-113880_AA
+GXD4-H-563-12.7,                           255.4,  Refer to 1000863225
+GXD4-H-633-12.7,                           325.4,  Refer to AAA14_110305
+GXD4-H-1000-12.7,                          316.8,  Refer to AAA10_106113_AA + AAA10_102784_AC + AAA10-106776_AB
+GXD4-H-1000-25.4,                          316.8,  Refer to AAA10-106113_AA + AAA10-102784_AC + AAA10-106776_AB
+GXD4-H-1200-6.35,                          475.49, Refer to AAA10_114840_AC + AAA10_102784_AC + AAA10_102346_AC
+HGXD2-H-480-88x88,                         172.4,  Refer to 1000335005-AE
+HGXD2-H-640-25.4,                          267.05, Refer to AAA10-115328-AG and AAA10-104427-AC
+HGXD2-H-1000-12.7,                         316.8,  Refer to AAA11-107184-AD
+HGXD2-H-1200-6.35,                         475.4,  Refer to AAA10-104233_AC + AAA10_109067_AA + AAA14-113880_AA
+HGXD2-H-1200-12.7,                         372.1,  Refer to AAA10-115336-AB
+HGXD4-H-480-88x88,                         172.4,  Refer to 1000335005-AE
+HGXD4-H-495-88x88,                         186.2,  Refer to 1000335005
+HGXD4-H-540-12.7,                          382.42, Refer to AAA14-115135-AB and AAA14-100827
+HGXD4-H-633-12.7,                          329.72, Refer to AAA14-110306-AD
+HGXD4-H-640-25.4,                          267.05, Refer to AAA10-115328-AG and AAA10-104427-AC
+HGXD4-H-836-25.4,                          153.4,  Refer to 1000335205
+HGXD4-H-1000-12.7,                         316.8,  Refer to AAA11_107184
+HGXD4-H-1200-6.35,                         475.4,  Refer to AAA10-114487-AG
+HGXD4-HA100-1200-8,                        475.4,  Refer to 1005565381-AD
+HGXD4-HAD-1200-6.35,                       475.4,  Refer to AAA12-108939_AA + AAA10_109067_AA + AAA10_102346_AC
+RDISC-H-1200-1X2,                          466.8,  Refer to AAA13-111553_AB + AAA15-108123 + AAA14-113881
+RDISC-H-1200-6.35,                         475.4,  Refer to AAA10-104233_AC + AAA10_109067_AA + AAA10-102346_AC
+RGXD4-H-495-88x88,                         186.7,  Refer to 1000335005
+RGXD4-H-540-12.7,                          382.42, Refer to AAA14-115135-AB and AAA14-100827
+RGXD4-H-633-12.7,                          325.4,  Refer to AAA11_100085_AA + AAA10_102784_AC + AAA12_108375_AA
+RGXD4-H-640-25.4,                          267.05, Refer to AAA10-115328-AG and AAA10-104427-AC
+RGXD4-H-836-25.4,                          153.4,  Refer to 1000335205
+RGXD4-H-1000-12.7,                         316.8,  Refer to AAA11_107184 
+RGXD4-HAD100-1200-8,                       475.4,  Refer to 1002547475-AE
+RGXD4-HAD-1200-6.35,                       475.4,  Refer to 1001388302
+VNIS-H-640-25.4,                           232.12, Refer to AAA10-109663 + AAA10-104427
+NIS-NIS1_2LOS-594-5X7-1.83X,               200,    ????????????? refer to 1011334205-AA I guess?
