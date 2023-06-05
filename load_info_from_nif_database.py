@@ -12,7 +12,7 @@ import numpy as np
 import openpyxl
 import pandas as pd
 
-from src.util.reactivity import get_reactivity_ratio
+from src.reactivity import get_reactivity_ratio
 
 # the collums and types of shot_info.csv
 SHOT_INFO_HEADER = [
@@ -37,28 +37,18 @@ DOWNLOAD_WARN_TIME = 2  # the amount of time it usually takes to download a WebD
 DOWNLOAD_QUIT_TIME = 30  # the timeout for downloading a file (s)
 
 
-def main():
-	parser = argparse.ArgumentParser(
-		prog="load_info_from_nif_database",
-		description = "Load the information about a given shot number from WebDav and any traveler spreadsheets placed "
-		              "the relevant data/ subdirectory, store the top-level fields in the shot_info.csv file, and "
-		              "generate a simple etch/scan request.")
-	parser.add_argument("shot_number", type=str,
-	                    help="the shot's 9- or 12-digit N number (e.g. N210808-001)")
-	parser.add_argument("--DD_yield", type=float, default=nan,
-	                    help="the approximate DD yield of the implosion in keV, if it's not on WebDav yet")
-	parser.add_argument("--DD_temperature", type=float, default=nan,
-	                    help="the approximate nTOF-measured ion temperature of the implosion, if it's not on WebDav yet")
-	parser.add_argument("--downloads", type=str, default="%USERPROFILE%\\Downloads\\" if os.name == "nt" else "~/Downloads/",
-	                    help="the default directory where files downloaded from your default browser go")
-	args = parser.parse_args()
-
-	shot_number = normalize_shot_number(args.shot_number)
-	shot_subfolder = locate_subfolder_for(shot_number)
-	downloads_folder = evaluate_directory(args.downloads)
-
+def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield: float,
+                                DD_temperature: float, downloads_folder: str):
+	""" Load the information about a given shot number from WebDav and any traveler spreadsheets placed in the relevant
+	    data/ subdirectory, store the top-level fields in the shot_info.csv file, and generate a simple etch/scan request
+	    :param shot_number: the complete 12-digit N number
+	    :param shot_subfolder: the directory in which to put information relevant to this shot
+	    :param DD_yield: the DD-n yield of this shot, or nan if you want me to get it from WebDav
+	    :param DD_temperature: the DD-n ion temperature of this shot, or nan if you want me to get it from WebDav
+	    :param downloads_folder: the default downloads folder for the default browser
+	"""
 	try:
-		load_general_webdav_info(shot_number, shot_subfolder, args.DD_yield, args.DD_temperature, downloads_folder)
+		load_general_webdav_info(shot_number, shot_subfolder, DD_yield, DD_temperature, downloads_folder)
 	except FileNotFoundError as e:
 		print(f"Error! {e}")
 		return
@@ -83,15 +73,17 @@ def main():
 		except PermissionError:
 			print(f"Error! I don't have permission to copy and edit the etch/scan workorder spreadsheet. please close Microsoft Excel.")
 
+	print(f"done! see {shot_subfolder} for the etch/scan workorder.")
+
 
 def load_general_webdav_info(shot_number: str, shot_subfolder: str,
                              DD_yield: float, DD_temperature: float, downloads_folder: str) -> None:
 	""" load all of the information about shot_number on WebDav and store it in `shot_info.csv`
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which to put information relevant to this shot
 	    :param DD_yield: the DD-n yield of this shot, or nan if you want me to get it from WebDav
 	    :param DD_temperature: the DD-n ion temperature of this shot, or nan if you want me to get it from WebDav
-	    :param downloads_folder: the default downloads folder, whither we expect it to
+	    :param downloads_folder: the default downloads folder for the default browser
 	    :raise FileNotFoundError: if you don’t specify DD_yield and DD_temperature of this shot but it’s not on WebDav either
 	"""
 	# start by downloading all of the shot info from WebDAV
@@ -133,7 +125,7 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 			raise FileNotFoundError("I couldn't find an official DD ion temperature on WebDAV, so you need to supply it using `--DD_temperature=...`.")
 		print(f"found DD-n temperature of {DD_temperature:.2f} keV")
 	else:
-		print(f"using user-suplied DD-n temperature of {DD_temperature:.2f} keV")
+		print(f"using user-supplied DD-n temperature of {DD_temperature:.2f} keV")
 
 	# then load the existing CSV and add in the relevant stuff
 	try:
@@ -175,10 +167,10 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepath: str, downloads_folder: str) -> None:
 	""" load all of the information in this traveler spreadsheet and some supplementary information from WebDav and
 	    store it in {shot_subfolder}/aux_info.csv
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which all of the information about this shot can be found
 	    :param filepath: the location and name of the traveler spreadsheet, relative to the working directory
-	    :param downloads_folder: the default downloads folder, whither we expect it to
+	    :param downloads_folder: the default downloads folder for the default browser
 	    :raise SpreadsheetFormatError: if there’s anything wrong or confusing about the traveler spreadsheet
 	    :raise MissingSnoutError: if snout_config is an unrecognized snout configuration
 	"""
@@ -299,11 +291,11 @@ def calculate_aux_coordinates(shot_number: str, dim: str, position: int, snout_c
 	    as a prerequisite, the distance from the pinhole plane to the first auxiliary bracket mounting pin must be
 	    determined from the snout assembly drawing and entered into the `tables/snout_configs.csv` table. luckily, most
 	    snout configurations are used many times, so only infrequently does that need to be updated.
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param dim: the complete six-digit name of the line-of-sight on which the aux is clinging
 	    :param position: the position number on the aux bracket (1, 2, 3, or 4)
 	    :param snout_config: the name of the DIM’s snout configuration
-	    :param downloads_folder: the default downloads folder, whither we expect it to
+	    :param downloads_folder: the default downloads folder for the default browser
 	    :return: the spherical coordinates of the auxiliary diagnostic: r (cm), θ (°), and ф (°)
 	    :raise MissingSnoutError: if snout_config is an unrecognized snout configuration
 	"""
@@ -358,7 +350,7 @@ def calculate_aux_coordinates(shot_number: str, dim: str, position: int, snout_c
 def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 	""" estimate a reasonable etch time and fill in a generic etch/scan request spreadsheet for the given shot, using
 	    the info in {shot_subfolder}/wrf_info.csv and shot_info.csv
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which all of the information about this shot can be found
 	    :raise PermissionError: if I don’t have permission to create and edit the workorder spreadsheet
 	"""
@@ -425,14 +417,14 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 				top_row = -4 + (DIM_LIST.index(aux["DIM"])*4 + aux["position"])*4
 				workorder[f"A{1 + top_row}"] = aux[f"{detector} ID"]
 				workorder[f"E{4 + top_row}"] = scan_type
-				workorder[f"F{3 + top_row}"] = f"{etch_time:.1f}"
-				bottom_row = 62 + (DIM_LIST.index(aux["DIM"])*4 + aux["position"])*3
+				workorder[f"F{3 + top_row}"] = round(etch_time*2)/2  # round etch time to the nearest half hour
+				bottom_row = 62 + DIM_LIST.index(aux["DIM"])*14 + aux["position"]*3
 				workorder[f"A{1 + bottom_row}"] = filter_name
 				workorder[f"B{1 + bottom_row}"] = aux["filter ID"]
 				workorder[f"D{2 + bottom_row}"] = aux[f"{detector} ID"]
 				workorder[f"E{2 + bottom_row}"] = aux["DIM"]
 				workorder[f"F{2 + bottom_row}"] = material
-				workorder[f"G{2 + bottom_row}"] = f"{aux['distance']:.2f}"
+				workorder[f"G{2 + bottom_row}"] = round(aux["distance"], 2)  # round distance to the nearest 100μm
 				rows_with_auxs.append((top_row, bottom_row))
 
 			# do the priorities as well, so that they go top-to-bottom
@@ -448,10 +440,10 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 
 def download_webdav_number(shot_number: str, path: str, key: str, downloads_folder: str, timeout=DOWNLOAD_QUIT_TIME) -> float:
 	""" download a WebDAV file for the given shot number and return the average value of a single column
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param path: the WebDav filepath, relative to shotdata/shots/YY/MM/NYYMMDD-XXX-999/
 	    :param key: the name of the desired number
-	    :param downloads_folder: the default downloads folder, whither we expect it to
+	    :param downloads_folder: the default downloads folder for the default browser
 	    :param timeout: the number of seconds to wait for the file to appear before giving up
 	    :raise TimeoutError: if the file doesn’t appear after timeout seconds
 	    :raise FileNotFoundError: if the file does not exist in WebDav
@@ -468,7 +460,7 @@ def download_webdav_number(shot_number: str, path: str, key: str, downloads_fold
 
 def download_webdav_file(shot_number: str, path: str, downloads_folder: str, timeout=DOWNLOAD_QUIT_TIME) -> pd.DataFrame:
 	""" download a WebDAV file for the given shot number at the given address and return it as a DataFrame
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :param path: the WebDav filepath, relative to shotdata/shots/YY/MM/NYYMMDD-XXX-999/
 	    :param downloads_folder: the default downloads folder, whither we expect it to
 	    :param timeout: the number of seconds to wait for the file to appear before giving up
@@ -519,7 +511,7 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 
 def get_shot_name(shot_number: str) -> str:
 	""" convert a shot number to a shot *name* using the shot_info.csv table
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :return: the full shot name, including the series number
 	"""
 	shot_table = pd.read_csv("shot_info.csv", index_col="shot number", skipinitialspace=True,
@@ -554,7 +546,7 @@ def get_previous_snout_config(shot_number: str, dim: str) -> str:
 
 def locate_subfolder_for(shot_number: str) -> str:
 	""" look at all subfolders of data/ for one whose name matches the given shot number
-	    :param shot_number: the complete fourteen-digit N number
+	    :param shot_number: the complete 12-digit N number
 	    :return: the path to the folder that most closely matches this shot, relative to the working directory
 	    :raise IOError: if you can’t find any subfolder that seems to go with this shot
 	"""
@@ -589,7 +581,7 @@ def evaluate_directory(directory: str) -> str:
 def normalize_shot_number(shot_number: str) -> str:
 	""" take NIF shot numbers in a variety of formats and return an equivalent NXXXXXX-00X-999 version
 	    :param shot_number: the N number of this shot, possible incomplete
-	    :return: the complete fourteen-digit N number
+	    :return: the complete 12-digit N number
 	    :raise ValueError: if shot_number isn’t formatted like any kind of shot number
 	"""
 	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3}))?(-999)?", shot_number)
@@ -625,6 +617,29 @@ def normalize_dim_coordinates(dim_coordinates: str) -> str:
 		raise ValueError(f"{dim_coordinates!r} does not appear to be a DIM")
 	theta, phi = full_match.group(2, 3)
 	return f"TC{int(theta):03d}-{int(phi):03d}"
+
+
+def main():
+	parser = argparse.ArgumentParser(
+		prog="load_info_from_nif_database",
+		description = "Load the information about a given shot number from WebDav and any traveler spreadsheets placed "
+		              "in the relevant data/ subdirectory, store the top-level fields in the shot_info.csv file, and "
+		              "generate a simple etch/scan request.")
+	parser.add_argument("shot_number", type=str,
+	                    help="the shot's 9- or 12-digit N number (e.g. N210808-001)")
+	parser.add_argument("--DD_yield", type=float, default=nan,
+	                    help="the approximate DD yield of the implosion in keV, if it's not on WebDav yet")
+	parser.add_argument("--DD_temperature", type=float, default=nan,
+	                    help="the approximate nTOF-measured ion temperature of the implosion, if it's not on WebDav yet")
+	parser.add_argument("--downloads", type=str, default="%USERPROFILE%\\Downloads\\" if os.name == "nt" else "~/Downloads/",
+	                    help="the default directory where files downloaded from your default browser go")
+	args = parser.parse_args()
+
+	shot_number = normalize_shot_number(args.shot_number)
+	shot_subfolder = locate_subfolder_for(shot_number)
+	downloads_folder = evaluate_directory(args.downloads)
+
+	load_info_from_nif_database(shot_number, shot_subfolder, args.DD_yield, args.DD_temperature, downloads_folder)
 
 
 class SpreadsheetFormatError(ValueError):
