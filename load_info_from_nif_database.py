@@ -21,13 +21,14 @@ SHOT_INFO_HEADER = [
 	("ablator radius", float), ("ablator density", float), ("hohlraum material", str),
 	("fill gas", str), ("fill pressure", float),
 	("deuterium fraction", float), ("helium-3 fraction", float),
-	("shot name", str), ("campaign", str), ("subcampaign", str), ("platform", str)
+	("shot name", str), ("campaign", str), ("subcampaign", str), ("platform", str),
 ]
 # the collums and types of the aux_info.csv files
 AUX_INFO_HEADER = [
 	("type", str), ("DIM", str), ("position", int),
 	("distance", float), ("theta", float), ("phi", float),
-	("filter ID", int), ("bert ID", str), ("ernie ID", str)
+	("filter ID", int), ("bert ID", str), ("ernie ID", str),
+	("snout configuration", str),
 ]
 # the list of DIMs in the order they appear in the work order template
 DIM_LIST = ["TC090-078", "TC090-124", "TC090-315", "TC000-000"]
@@ -57,23 +58,24 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 	for directory, _, filenames in os.walk(shot_subfolder):
 		for filename in filenames:
 			if "Traveler" in filename and filename.endswith(".xlsx"):
-				found_any_travelers = True
 				try:
 					load_traveler_spreadsheet_info(shot_number, shot_subfolder, os.path.join(directory, filename), downloads_folder)
 				except SpreadsheetFormatError as e:
 					print(f"Error! Couldn't read the traveler spreadsheet at {os.path.join(directory, filename)!r} because {e}")
 				except MissingSnoutError as e:
 					print(f"Error! {e}")
+				else:
+					found_any_travelers = True
 
 	if not found_any_travelers:
-		print(f"there are no traveler spreadsheets in {shot_subfolder}/, so I can't get the WRF info or generate a scan request")
+		print(f"there are no valid traveler spreadsheets in {shot_subfolder}/, so I can't get the WRF info or generate a scan request")
 	else:
 		try:
 			generate_etch_scan_request(shot_number, shot_subfolder)
 		except PermissionError:
-			print(f"Error! I don't have permission to copy and edit the etch/scan workorder spreadsheet. please close Microsoft Excel.")
+			print(f"Error! I don't have permission to copy and edit the workorder template spreadsheet. please close Microsoft Excel.")
 
-	print(f"done! see {shot_subfolder} for the etch/scan workorder.")
+	print(f"done! see {shot_subfolder} for the etch and scan workorder.")
 
 
 def load_general_webdav_info(shot_number: str, shot_subfolder: str,
@@ -89,6 +91,7 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 	# start by downloading all of the shot info from WebDAV
 	shot_info = download_webdav_file(shot_number, f"reports/SHOT-INPUTS_{shot_number}.csv", downloads_folder)
 	shot_info = shot_info.iloc[0]  # simplify this from a DataFrame to a Series since we know there’s only one row
+	print(f"loaded {shot_number} ({shot_info['EXPERIMENT_ID']}) inputs from WebDav")
 
 	# extract the atomic fill percentages from the "HIGH_PRESSURE_GAS_FILL"
 	gas_fill_name: Optional[str] = None
@@ -200,13 +203,20 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 			elif re.fullmatch(r"(TC)?(0*9?0)-([0-9]+)([- ][0-9A-Za-z-]+)?", cell):
 				dim = normalize_dim_coordinates(cell)
 			# if this says "Snout Config", look at the next nonempty cell
-			elif re.fullmatch(r"Snout Config.*", cell):
+			elif re.fullmatch(r"Snout( Config.*)?( Name)?:?", cell):
 				i_just_saw_the_word_snout_config = True
 			# if this is the next nonempty cell after "Snout Config",
 			elif i_just_saw_the_word_snout_config:
-				# cut out unnecessary qualifiers
-				full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-DS(BOTH)?)?(-DIXI)?([ ,].*)?", cell)
-				snout_config = full_match.group(1)
+				# check if it's a KB swap
+				if re.fullmatch(r".*SWAP.*", cell):
+					snout_config = "KB swap"
+				# or else read the snout config
+				else:
+					# cut out unnecessary qualifiers
+					full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-DS(BOTH)?)?(-DIXI)?([ ,].*)?", cell)
+					if not full_match:
+						raise SpreadsheetFormatError(f"there's something incomprehensible about the snout config {cell!r}.")
+					snout_config = full_match.group(1)
 				i_just_saw_the_word_snout_config = False
 
 	# make sure we found everything we need
@@ -222,15 +232,12 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 	print(f"reading traveler spreadsheet for DIM {dim}...")
 
 	# if this is a KB swap, fill in information from the previus configuration on this DIM
-	if "swap" in os.path.basename(filepath):
+	if snout_config == "KB swap":
 		try:
 			previus_snout_config = get_previous_snout_config(shot_number, dim)
 		except ValueError as e:
-			raise SpreadsheetFormatError(f"This DIM is a KB swap, so I tried to load the snout config. from the last shot, but {e}")
-		if snout_config is not None and snout_config != previus_snout_config:
-			raise SpreadsheetFormatError(f"This DIM is a KB swap, so I tried to load the snout config. from the last shot, "
-			                             f"but a snout config. was specified ({snout_config} that did not match the one from "
-			                             f"last shot {previus_snout_config})")
+			raise SpreadsheetFormatError(f"This DIM is a KB swap, so I tried to load the snout config from the last shot, but {e}")
+		print(f"  setting snout config to {previus_snout_config}")
 		snout_config = previus_snout_config
 
 	# load any auxiliaries we already have for this shot
@@ -243,10 +250,17 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 			cell = traveler[f"{col}{row + i}"].value
 			if cell is None:
 				break
-			elif type(cell) is not int:
-				raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains {cell!r}, which is not an ID number")
-			else:
+			elif type(cell) is int:
 				components.append(cell)
+			elif type(cell) is str:
+				parsing = re.fullmatch(r"([0-9]+)\s+.*", cell)
+				if parsing is not None:
+					components.append(int(parsing.group(1)))
+				else:
+					raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains {cell!r}, which doesn't parse as an ID number")
+			else:
+				raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains {cell!r}, which is not an ID number")
+
 		if len(components) == 0:
 			continue  # most of the time this part will be blank (nothing fielded)
 		filter_id = components[0]
@@ -275,6 +289,7 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 			"filter ID": filter_id,
 			"bert ID": bert_id,
 			"ernie ID": ernie_id,
+			"snout configuration": snout_config,
 		})])
 
 	if not found_anything:
@@ -369,7 +384,7 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 		if not any_berts and not any_ernies:
 			raise ValueError("no detectors were found on any of these pieces")
 		for detector in ["bert"]*any_berts + ["ernie"]*any_ernies:
-			print(f"generating etch/scan request for {aux_type} {detector}s...")
+			print(f"generating etch and scan request for {aux_type} {detector}s...")
 
 			# set some strings and estimate the yield
 			if aux_type == "SRF":
@@ -392,7 +407,7 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 					print(f"  estimating a primary D3He proton yield of {proton_yield:.2g}")
 				else:
 					proton_yield = secondary_yield
-					print(f"  estimating a secondary D3He proton yield of <={proton_yield:.2g}")
+					print(f"  estimating a secondary D3He proton yield of <{proton_yield:.2g}")
 			else:
 				raise ValueError(f"I don't know how to calculate the relevant yield for {aux_type!r}.")
 
@@ -488,7 +503,7 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 			raise TimeoutError(f"I couldn't get {url!r}. this may be because {downloads_folder!r} is not your "
 			                   f"default downloads directory, or because you're not on the LLNL VPN.")
 		else:
-			time.sleep(0.2)
+			time.sleep(0.5)
 
 	# go find it wherever it ended up
 	try:
@@ -496,13 +511,13 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 			content = f.read()
 	except FileNotFoundError:
 		raise RuntimeError(f"I lost the file {url}. something must have deleted it from {downloads_folder} when I wasn't looking.")
+	# and delete it after you’ve read it
+	os.remove(downloaded_filepath)
 
 	# sometimes they put an extra comma at the end for no reason? so fix that??
 	if content.count(",") % (content.count("\n") + 1) == 1 and content.endswith(","):
 		content = content[:-1]
 
-	# and delete it after you’ve read it
-	os.remove(downloaded_filepath)
 	try:
 		return pd.read_csv(filepath_or_buffer=StringIO(content), na_filter=False)  # type: ignore
 	except pd.errors.EmptyDataError:
@@ -527,20 +542,23 @@ def get_previous_snout_config(shot_number: str, dim: str) -> str:
 	    :raise ValueError: if the previus shot was obviusly unrelated or didn’t use the given DIM
 	"""
 	# look at all the shots from oldest to newest
-	for other_shot_number in reversed(os.listdir("data")):
-		min_len = min(len(shot_number), len(other_shot_number))
-		# skip any that are after or equal to the one in question
-		if other_shot_number[:min_len] >= shot_number[:min_len]:
+	for other_shot_subfolder in reversed(os.listdir("data")):
+		# skip any that are after or equal to the one in question or not NIF shots
+		try:
+			other_shot_number = normalize_shot_number(other_shot_subfolder)
+		except ValueError:
+			continue
+		if other_shot_number >= shot_number:
 			continue
 		# as soon as you find an earlier one, return its snout configuration
 		campaign = get_shot_name(shot_number)[:-4]
 		other_campaign = get_shot_name(other_shot_number)[:-4]
 		if campaign != other_campaign:
 			raise ValueError(f"the previous shot is from a different campaign ({other_campaign}), where I was looking for {campaign}")
-		aux_table = pd.read_csv(f"data/{other_shot_number}/aux_info.csv", skipinitialspace=True, na_filter=False,
+		aux_table = pd.read_csv(f"data/{other_shot_subfolder}/aux_info.csv", skipinitialspace=True, na_filter=False,
 		                        dtype={key: dtype for key, dtype in AUX_INFO_HEADER})
 		if not any(aux_table["DIM"] == dim):
-			raise ValueError(f"the previous shot did not use the given DIM ({dim})")
+			raise ValueError(f"the previous shot ({other_shot_number}) did not use the DIM in question ({dim})")
 		return aux_table[aux_table["DIM"] == dim].iloc[0]["snout configuration"]
 
 
@@ -579,12 +597,12 @@ def evaluate_directory(directory: str) -> str:
 
 
 def normalize_shot_number(shot_number: str) -> str:
-	""" take NIF shot numbers in a variety of formats and return an equivalent NXXXXXX-00X-999 version
-	    :param shot_number: the N number of this shot, possible incomplete
+	""" take a NIF shot number in a variety of formats and return an equivalent NXXXXXX-00X-999 version
+	    :param shot_number: the N number of this shot, possibly incomplete
 	    :return: the complete 12-digit N number
 	    :raise ValueError: if shot_number isn’t formatted like any kind of shot number
 	"""
-	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3}))?(-999)?", shot_number)
+	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3}))?(-999)?( [A-Za-z0-9_-]+)?", shot_number)
 	if parsing is None:
 		raise ValueError(f"I could not parse the shot number {shot_number!r}. It should follow the N210808-001(-999) format.")
 	date, index = parsing.group(1, 3)
@@ -624,7 +642,7 @@ def main():
 		prog="load_info_from_nif_database",
 		description = "Load the information about a given shot number from WebDav and any traveler spreadsheets placed "
 		              "in the relevant data/ subdirectory, store the top-level fields in the shot_info.csv file, and "
-		              "generate a simple etch/scan request.")
+		              "generate a simple etch and scan request.")
 	parser.add_argument("shot_number", type=str,
 	                    help="the shot's 9- or 12-digit N number (e.g. N210808-001)")
 	parser.add_argument("--DD_yield", type=float, default=nan,
