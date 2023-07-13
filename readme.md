@@ -23,7 +23,13 @@ anyway, I’ll write more specific instructions for step 5 later.
 
 ## Installation
 
-installation is tricky, as this relies on the stopping power library that is hosted in the StopPow repository.
+first off, you'll need the Python requirements, which are all on PyPI.
+~~~bash
+pip install -r requirements.txt
+~~~
+
+next, you'll need on the stopping power library that is hosted in the StopPow repository.
+this is where it gets tricky.
 here are Graeme's instructions for installing on Linux:
 
 1. get gsl version 1.x (not 2.x)
