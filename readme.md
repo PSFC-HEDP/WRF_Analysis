@@ -1,34 +1,54 @@
 # WRF analysis
 
 this code is meant to expedite the process of analyzing Wedge Range Filters (WRFs) for ICF implosions.
-there is a a script that takes a bunch of analysis files from the program Analyze CR39 an consolidates them into useful figures and tables,
-and there is also a GUI that does the same stuff if you want your life to be more difficult.
 
-## Using the script
+## Using the code
 
-the code in this repository is rather unfortunately limited.
-ideally it would have scripts for every step of the process,
-but as it currently stands you’ll need to (for NIF WRFs, anyway)
-1. use Brandon’s *NIF_WRF_Database_Tools* Matlab repository to download the shot info and generate the etch/scan requests,
-2. manually download the scan files from the NIF Archive Viewer,
-3. use Fredrick’s *AnalyzeCR39* Windows application to infer the spectrum from the scan file,
-4. use Patrick’s *SecondaryAnalysis* Matlab repository to infer fuel ρR from yield ratios,
-5. use this code to infer total ρR from mean energy and compile the data from a shot day into plots and tables,
-6. and use Google Slides or maybe LaTeX to compile those plots and tables into a document and send it to the PI.
+there are three executable Python scripts here:
+- convert_energy_to_rhoR.py
+- load_info_from_nif_database.py
+- make_plots_from_analysis.py
 
-anyone looking at this in the future should feel free to integrate this process better.
-when I got here, step 5 was two different codebases, so I feel that I’ve done my part.
+the first one is very simple.
+if you have a mean energy and want to know to what ρR it corresponds, just do
+~~~bash
+python convert_energy_to_rhoR.py ENERGY MATERIAL
+~~~
+where `ENERGY` is that energy in MeV and `MATERIAL` is the ablator material.
+you can also specify hohlraum parameters to automaticly apply a hohlraum correction.
+call it with `-h` for the full syntax; I don't want to get into it here.
 
-anyway, I’ll write more specific instructions for step 5 later.
+if you're analyzing NIF data, there's a whole process.
+it looks something like this:
+1. manually download the traveler spreadsheet from the NIF programs server,
+2. use `load_info_from_nif_database.py` to download the shot info and generate the etch/scan requests,
+3. email Michelle and wait for her to process the CR39,
+4. manually download the scan files from the NIF Archive Viewer,
+5. use Fredrick’s *AnalyzeCR39* Windows application to infer the spectrum from the scan file,
+6. optionally, use Patrick’s *SecondaryAnalysis* Matlab repository to infer fuel ρR from yield ratios,
+7. use `make_plots_from_analysis.py` to infer total ρR from mean energy and compile the spectra into plots and tables, and
+8. use Google Slides or maybe LaTeX to compile those plots and tables into a document and send it to the PI.
+
+if it's OMEGA data, the process is similar.
+instead of steps 1 and 2, get all the relevant info from OmegaOps,
+and instead of emailing Michelle, email one of the other etch/scan labs.
+
+more integration would definitely be beneficial.
+in particular, it would be nice to have step 6 be part of this repository as well.
+if you're reading this, maybe you can do that.
+I bet 8 could be done in Python also, but it might be hard to make it look good.
+
+anyway, I'll probably add more specific instructions about each of these steps later.
+for now, just call the python scripts with `-h` and that will tell you what you need to know.
 
 ## Installation
 
-first off, you'll need the Python requirements, which are all on PyPI.
+you'll need the Python requirements, which are all on PyPI.
 ~~~bash
 pip install -r requirements.txt
 ~~~
 
-next, you'll need on the stopping power library that is hosted in the StopPow repository.
+you'll also need the stopping power library that is hosted in the StopPow repository.
 this is where it gets tricky.
 here are Graeme's instructions for installing on Linux:
 
