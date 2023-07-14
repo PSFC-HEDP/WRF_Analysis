@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import os
 import re
@@ -7,34 +8,32 @@ from collections import OrderedDict
 from math import sqrt, pi, nan, inf
 from typing import Any, Optional
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import xlsxwriter as xls
+import openpyxl
+import pandas as pd
 from matplotlib.ticker import ScalarFormatter
 from numpy.typing import NDArray
-from scipy import integrate, optimize
+from scipy import optimize
 
-from WRF_Analysis.Analysis.rhoR_Analysis import rhoR_Analysis
+from load_info_from_nif_database import normalize_shot_number
+from src.calculate_rhoR import perform_hohlraum_correction, calculate_rhoR, Layer
+from src.gaussian import Quantity, Peak
 
-matplotlib.use("qtagg")
+# matplotlib.use("qtagg")
 np.seterr(all="raise", under="warn")
-
-FOLDERS = ["Om221014"]
-# FOLDERS = ["I_MJDD_PDD_HotE"]
-
-SHOW_PLOTS = False
 
 ROOT = 'data'
 σWRF = .159
 δσWRF = .014
 
-rhoR_objects: dict[str, Any] = {}
 
-Layer = tuple[float, str]
-
-
-def main():
+def make_plots_from_analysis(folders: list[str], show_plots: bool):
+	""" take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and
+	    generate a bunch of plots and tables summarizing the information therein.
+	    :param folders: a list of subdirectories in data/ to search for analysis results
+	    :param show_plots: whether to show the plots as they’re generated in addition to saving them to disk
+	"""
 	shot_days = []
 	shot_numbers = []
 	lines_of_site = []
@@ -50,12 +49,12 @@ def main():
 	compression_means = []
 	compression_rhoRs = []
 	spectra = []
-	for i, folder in enumerate(FOLDERS):
+	for i, folder in enumerate(folders):
 		if i > 0 and len(folder) < 7: # allow user to only specify the last few digits when most of the foldername is the same
-			FOLDERS[i] = FOLDERS[i-1][:-len(folder)] + folder
+			folders[i] = folders[i-1][:-len(folder)] + folder
 
 	# first, load the analyzed data
-	for i, folder_name in enumerate(FOLDERS): # for each specified folder
+	for i, folder_name in enumerate(folders): # for each specified folder
 		folder = os.path.join(ROOT, folder_name)
 		assert os.path.isdir(folder), f"El sistema no puede encontrar la ruta espificada: '{folder}'"
 
@@ -216,7 +215,7 @@ def main():
 					plt.tight_layout()
 					plt.savefig(os.path.join(subfolder, filename+'_spectrum.png'), dpi=300)
 					plt.savefig(os.path.join(subfolder, filename+'_spectrum.eps'))
-					if SHOW_PLOTS:
+					if show_plots:
 						plt.show()
 					plt.close()
 
@@ -228,11 +227,11 @@ def main():
 							hohlraum_layers = parameters["hohlraum"][""]
 					else:
 						hohlraum_layers = []
-					shock = perform_correction(hohlraum_layers, shock)
+					shock = perform_hohlraum_correction(hohlraum_layers, shock)
 					shock_rhoR = calculate_rhoR(
 						shock.mean, shot_day+shot_number, parameters)
 					if good_compression_fit:
-						compression = perform_correction(hohlraum_layers, compression)
+						compression = perform_hohlraum_correction(hohlraum_layers, compression)
 						compression_rhoR = calculate_rhoR(
 							compression.mean, shot_day+shot_number, parameters)
 					else:
@@ -307,7 +306,7 @@ def main():
 	temps[:, 1] = np.sqrt((2*sigmas[:, 0]*sigmas[:, 1])**2 + (2*σWRF*δσWRF)**2)/76.68115805e-3**2
 	temps[:, 2] = temps[:, 1]
 
-	base_directory = os.path.join(ROOT, FOLDERS[0])
+	base_directory = os.path.join(ROOT, folders[0])
 
 	# load any results we got from Patrick's secondary analysis
 	try:
@@ -330,18 +329,19 @@ def main():
 		           delimiter=",", comments="")
 
 	# save the spectra in a spreadsheet
-	workbook = xls.Workbook(os.path.join(base_directory, f"{shot_days[0]} WRF spectra.xlsx"))
-	worksheet = workbook.add_worksheet()
+	workbook = openpyxl.Workbook()
+	worksheet = workbook.active
 	for i in range(len(spectra)):
-		worksheet.merge_range(0, 4*i, 0, 4*i+2, labels[i].replace("\n", " "))
-		worksheet.write(1, 4*i,   "Energy (MeV)")
-		worksheet.write(1, 4*i+1, "Spectrum (MeV^-1)")
-		worksheet.write(1, 4*i+2, "Error bar (MeV^-1)")
+		worksheet.cell(1, 4*i + 1).value = labels[i].replace("\n", " ")
+		worksheet.merge_cells(start_row=1, end_row=1, start_column=4*i + 1, end_column=4*i + 3)
+		worksheet.cell(2, 4*i + 1).value = "Energy (MeV)"
+		worksheet.cell(2, 4*i + 2).value = "Spectrum (MeV^-1)"
+		worksheet.cell(2, 4*i + 3).value = "Error bar (MeV^-1)"
 		spectrum = spectra[i]
 		for j in range(spectrum.shape[0]):
-			for k in range(3):
-				worksheet.write(2+j, 4*i+k, spectrum[j, k])
-	workbook.close()
+			for k in range(spectrum.shape[1]):
+				worksheet.cell(3 + j, 4*i + 1 + k).value = spectrum[j, k]
+	workbook.save(os.path.join(base_directory, f"{shot_days[0]} WRF spectra.xlsx"))
 
 	# print out a table, and also save the condensed results in a csv file
 	print()
@@ -513,151 +513,58 @@ def main():
 		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.eps'))
 
 	# show plots
-	if SHOW_PLOTS:
+	if show_plots:
 		plt.show()
 	plt.close('all')
 
 
 def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	""" load the analysis parameters given in the rhoR_parameters.txt file
+	    :param folder: the absolute or relative path to the directory with the data we're considering
+	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
+	    :raise FileNotFoundError: if the hohlraum.txt file hasn't been created
 	"""
+	# start by taking information from shot_info.csv
+	shot_table = pd.read_csv("shot_info.csv", skipinitialspace=True, index_col="shot number",
+	                         dtype={})
+	shot_info = shot_table.loc[normalize_shot_number(os.path.basename(folder))]
 	params: dict[str, Any] = {}
+	for key in ["ablator radius", "ablator thickness", "ablator material", "fill pressure", "deuterium fraction", "helium-3 fraction"]:
+		params[key] = shot_info[key]
 
-	# load each line as an attribute
-	with open(os.path.join(folder, 'rhoR_parameters.txt')) as f:
-		for line in f.readlines():
-			key, value = re.split(r"\s*=\s*", line.strip())
-			value = re.sub(r" (um|μm|atm)", "", value)  # strip off units
-			params[key] = value
+	# calculate the converged shell thickness
+	params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
 
-	# parse the hohlraum layers
-	hohlraum_codes = re.split(r",\s*", params["hohlraum"])
-	keyed_layer_sets = OrderedDict()
+	# parse the hohlraum layers and booleans
+	with open(os.path.join(folder, "hohlraum.txt")) as f:
+		hohlraum_codes = re.split(r",\s*", f.read().strip())
+	params["hohlraum"] = OrderedDict()
+	params["clipping"] = set()
+	params["overlap"] = set()
 	for hohlraum_code in hohlraum_codes:
+		# separate out all of the line of sight keys
 		if ":" in hohlraum_code:
 			key, layer_set_code = re.split(r"\s*:\s*", hohlraum_code, maxsplit=2)
 		else:
 			key, layer_set_code = "", hohlraum_code
-		layer_set: list[Layer] = []
+		# check for clipped spectrum flags
+		if "clip" in layer_set_code:
+			params["clipping"].add(key)
+			layer_set_code = re.sub(r"\s*\(?clip(ping)?\)?\s*", "", layer_set_code)
+		# check for track overlap flags
+		if "overlap" in layer_set_code:
+			params["overlap"].add(key)
+			layer_set_code = re.sub(r"\s*\(?(track[ -]?)?overlap(ping)?\)?\s*", "", layer_set_code)
+		# parse the material thicknesses
+		layers: list[Layer] = []
 		for layer_code in re.split(r"\s+", layer_set_code):
 			if len(layer_code) == 0:
 				continue
 			thickness, _, material = re.fullmatch(r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
-			layer_set.append((float(thickness), material))
-		keyed_layer_sets[key] = layer_set
-	params["hohlraum"] = keyed_layer_sets
-
-	# parse the comma-separated flags
-	for key in ["clipping", "overlap"]:
-		if key in params:
-			params[key] = set(re.split(r",\s*", params[key]))
-		else:
-			params[key] = set()
+			layers.append((float(thickness), material))
+		params["hohlraum"][key] = layers
 
 	return params
-
-
-def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]) -> Quantity:
-	""" calculate the rhoR using whatever tecneke makes most sense.
-		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
-	"""
-	if shot_name.startswith("O"): # if it's an omega shot
-		if shot_name not in rhoR_objects:
-			rhoR_objects[shot_name] = []
-			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
-				table_filename = f"res/tables/stopping_range_protons_{params['shell_material']}_plasma_{ρ}gcc_{Te}eV.txt"
-				try:
-					data = np.loadtxt(table_filename, skiprows=4)
-				except IOError:
-					print(f"!\tDid not find '{table_filename}'.")
-					rhoR_objects.pop(shot_name)
-					break
-				else:
-					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
-
-		if shot_name in rhoR_objects:
-			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(mean_energy.value, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
-			error_bar = 0
-			for energy in [mean_energy.value - mean_energy.error, mean_energy.value, mean_energy.value + mean_energy.error]:
-				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
-					if abs(perturbd_gess - best_gess) > error_bar:
-						error_bar = abs(perturbd_gess - best_gess)
-			return Quantity(best_gess, error_bar)
-
-		else:
-			return Quantity(nan, nan)
-
-	elif shot_name.startswith("N"): # if it's a NIF shot
-		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
-			rhoR_objects[shot_name] = rhoR_Analysis(
-				shell_mat   = params['shell_material'],
-				Ri          = float(params['Ri'])*1e-4,
-				Ri_err      = 0.1e-4,
-				Ro          = float(params['Ro'])*1e-4,
-				Ro_err      = 0.1e-4,
-				fD          = float(params['fD']),
-				fD_err      = min(float(params['fD']), 1e-2),
-				f3He        = float(params['f3He']),
-				f3He_err    = min(float(params['f3He']), 1e-2),
-				P0          = float(params['P']),
-				P0_err      = 0.1,
-				t_Shell     = float(params['shell_thickness'])*1e-4,
-				t_Shell_err = float(params['shell_thickness'])/2*1e-4,
-				E0          = 14.7 if float(params['f3He']) > 0 else 15.0,
-			)
-
-		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
-			analysis_object = rhoR_objects[shot_name]
-			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy.value, dE=mean_energy.error)
-			# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
-			return Quantity(rhoR, error)*1e3 # convert from g/cm2 to mg/cm2
-		else:
-			return Quantity(nan, nan)
-
-	else:
-		raise NotImplementedError(shot_name)
-
-
-def perform_correction(layers: list[Layer], after_wall: Peak) -> Peak:
-	""" correct some spectral properties for a hohlraum """
-	if len(layers) == 0:
-		return after_wall
-
-	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall} becomes ", end='')
-	mean = Quantity(
-		value=get_ein_from_eout(after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.mean.error, after_wall.mean.value, layers))
-	sigma = Quantity(
-		value=get_σin_from_σout(after_wall.sigma.value, after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.sigma.error, after_wall.mean.value, layers))
-	before_wall = Peak(after_wall.yeeld, mean, sigma)
-	print(f"{before_wall} MeV")
-
-	return before_wall
-
-
-def get_ein_from_eout(eout: float, layers: list[Layer]) -> float:
-	""" do the reverse stopping power calculation """
-	energy = eout # [MeV]
-	for thickness, formula in layers[::-1]:
-		data = np.loadtxt(f"res/tables/stopping_power_protons_{formula}.csv", delimiter=',')
-		energy_axis = data[:, 0]/1e3 # [MeV]
-		dEdx = data[:, 1]/1e3 # [MeV/μm]
-		energy = integrate.odeint(
-			func =lambda E, x: np.interp(E, energy_axis, dEdx),
-			y0   =energy,
-			t    =[0, thickness]
-		)[-1, 0]  # type: ignore
-	return energy
-
-
-def get_σin_from_σout(deout: float, eout: float, layers: list[Layer]) -> float:
-	""" do a derivative of the stopping power calculation """
-	left = get_ein_from_eout(max(0., eout - deout), layers)
-	rite = get_ein_from_eout(max(0., eout + deout), layers)
-	return (rite - left)/2
 
 
 def gaussian(E, yeeld, mean, sigma):
@@ -702,26 +609,23 @@ def plt_set_locators() -> None:
 		pass
 
 
-class Quantity:
-	def __init__(self, value: float, error: float):
-		self.value = value
-		self.error = error
+def main():
+	parser = argparse.ArgumentParser(
+		prog="make_plots_from_analysis",
+		description = "take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and "
+		              "generate a bunch of plots and tables summarizing the information therein.")
+	parser.add_argument(
+		"folders", type=str,
+		help="A list of subdirectories in data/ to search for analysis results. If you have multiple folders, separate "
+		     "them with commas. If you're doing multiple shots from the same day, you don't have to include the day "
+		     "part of the shot number after the first one (for example, 'N220420-001,-002,-003').")
+	parser.add_argument(
+		"--show", action="store_true",
+		help="to show the plots as they're generated in addition to saving them in the subdirectory."
+	)
+	args = parser.parse_args()
 
-	def __str__(self):
-		return f"{self.value} ± {self.error}"
-
-	def __mul__(self, v: float):
-		return Quantity(self.value*v, self.error*v)
-
-
-class Peak:
-	def __init__(self, yeeld: Quantity, mean: Quantity, sigma: Quantity):
-		self.yeeld = yeeld
-		self.mean = mean
-		self.sigma = sigma
-
-	def __str__(self):
-		return f"{self.mean.value:.2f} ± {self.sigma.value:.2f}"
+	make_plots_from_analysis(args.folders.split(","), args.show)
 
 
 class FixedOrderFormatter(ScalarFormatter):

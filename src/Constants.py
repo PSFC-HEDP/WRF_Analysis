@@ -1,6 +1,6 @@
 # physical constants, CGS units
 
-r0 = 2.82e-13 #classical electron radius in cm
+r0 = 2.82e-13 # classical electron radius in cm
 mec2 = 511 # keV/c2
 mpc2 = 9.38e5 # keV/c2
 c = 3e10

@@ -42,9 +42,9 @@ here are Graeme's instructions for installing on Linux:
 4. StopPow:
     - get stoppow from github
     - cd python_swig, make
-    - move \_StopPow.so AND StopPow.py (from python_swig/dist) to WRF_Analysis/util/
+    - move \_StopPow.so AND StopPow.py (from python_swig/dist) to src/
 5. run WRF:
-    - move main.py to WRF_Analysis-master (ie WRF_Analysis/../)
+    - move main.py to WRF_Analysis-master (ie src/../)
     - python3 main.py
 
 this can also be run on Windows, but it's harder because the tools for compiling gsl aren't as readily available.

@@ -1,15 +1,11 @@
 import math
 import scipy
 import scipy.interpolate
-#try:
-#    import scipy.interpolate
-#except:
-#    import syslog
-#    syslog.syslog(syslog.LOG_ALERT, 'Error loading scipy submodule(s)')
 import numpy
-from WRF_Analysis.util.Material import Material
-from WRF_Analysis.util.Constants import *
-from WRF_Analysis.util.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
+
+from src.Constants import me, mp
+from src.Material import Material
+from src.StopPow import StopPow_LP, DoubleVector, StopPow_BPS, StopPow_Zimmerman
 
 __author__ = 'Alex Zylstra'
 

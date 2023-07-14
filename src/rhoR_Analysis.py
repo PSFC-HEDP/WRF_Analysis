@@ -1,4 +1,4 @@
-from WRF_Analysis.Analysis.rhoR_Model import rhoR_Model
+from src.rhoR_Model import rhoR_Model
 import numpy
 import math
 
