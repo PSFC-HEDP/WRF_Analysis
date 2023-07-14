@@ -178,6 +178,7 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 		"DD-n yield":         DD_yield,
 		"DD-n temperature":   DD_temperature,
 		})])
+	shot_table = shot_table.sort_index()
 	shot_table.to_csv("shot_info.csv", index_label="shot number", float_format="%.5g")
 
 	# finally, create the aux_info.csv for this shot in its designated subfolder, replacing any previus ones
