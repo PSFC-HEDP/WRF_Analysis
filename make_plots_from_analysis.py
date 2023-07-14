@@ -20,7 +20,7 @@ from load_info_from_nif_database import normalize_shot_number
 from src.calculate_rhoR import perform_hohlraum_correction, calculate_rhoR, Layer, Peak, np_Peak, Quantity, np_Quantity
 
 # matplotlib.use("qtagg")
-np.seterr(all="raise", under="warn")
+np.seterr(all="raise", under="ignore")
 
 # key values that the program needs to know
 ROOT = 'data'
