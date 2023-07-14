@@ -8,9 +8,15 @@ import numpy as np
 from scipy import integrate
 
 from src.rhoR_Analysis import rhoR_Analysis
-from src.gaussian import Quantity, Peak
 
+# a type that represents the thickness and material of a layer
 Layer = tuple[float, str]
+# a type that encodes a value with its error bars
+Quantity = tuple[float, float, float]
+np_Quantity = np.dtype([("value", float), ("lower_err", float), ("upper_err", float)])
+# a type that fully describes a gaussian
+Peak = tuple[Quantity, Quantity, Quantity]
+np_Peak = np.dtype([("yield", np_Quantity), ("mean", np_Quantity), ("sigma", np_Quantity)])
 
 rhoR_objects: dict[str, Any] = {}
 
@@ -35,17 +41,17 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 
 		if shot_name in rhoR_objects:
 			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(mean_energy.value, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+			best_gess = np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
 			error_bar = 0
-			for energy in [mean_energy.value - mean_energy.error, mean_energy.value, mean_energy.value + mean_energy.error]:
+			for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
 				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
 					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
 					if abs(perturbd_gess - best_gess) > error_bar:
 						error_bar = abs(perturbd_gess - best_gess)
-			return Quantity(best_gess, error_bar)
+			return best_gess, error_bar, error_bar
 
 		else:
-			return Quantity(nan, nan)
+			return nan, nan, nan
 
 	elif shot_name.startswith("N"): # if it's a NIF shot
 		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
@@ -68,11 +74,11 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 
 		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
 			analysis_object = rhoR_objects[shot_name]
-			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy.value, dE=mean_energy.error)
+			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy[0], dE=mean_energy[1])
 			# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
-			return Quantity(rhoR, error)*1e3 # convert from g/cm2 to mg/cm2
+			return rhoR*1e3, error*1e3, error*1e3 # convert from g/cm2 to mg/cm2
 		else:
-			return Quantity(nan, nan)
+			return nan, nan, nan
 
 	else:
 		raise NotImplementedError(shot_name)
@@ -83,15 +89,18 @@ def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
 	if len(layers) == 0:
 		return after_wall
 
-	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall} becomes ", end='')
-	mean = Quantity(
-		value=get_ein_from_eout(after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.mean.error, after_wall.mean.value, layers))
-	sigma = Quantity(
-		value=get_σin_from_σout(after_wall.sigma.value, after_wall.mean.value, layers),
-		error=get_σin_from_σout(after_wall.sigma.error, after_wall.mean.value, layers))
-	before_wall = Peak(after_wall.yeeld, mean, sigma)
-	print(f"{before_wall} MeV")
+	yeeld, after_wall_mean, after_wall_sigma = after_wall
+
+	before_wall_mean = (
+		get_ein_from_eout(after_wall_mean[0], layers),
+		get_σin_from_σout(after_wall_mean[1], after_wall_mean[0], layers))
+	before_wall_sigma = (get_σin_from_σout(after_wall_sigma[0], after_wall_mean[0], layers),
+	                     get_σin_from_σout(after_wall_sigma[1], after_wall_mean[0], layers))
+	before_wall = (yeeld,
+	               (before_wall_mean[0], before_wall_mean[1], before_wall_mean[1]),
+	               (before_wall_sigma[0], before_wall_sigma[1], before_wall_sigma[1]))
+	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall_mean[0]:.3f} ± "
+	      f"{after_wall_sigma[0]:.3f} becomes {before_wall_mean[0]:.3f}±{before_wall_sigma[0]:.3f} MeV")
 
 	return before_wall
 

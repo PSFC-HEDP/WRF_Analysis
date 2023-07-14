@@ -40,8 +40,9 @@ DOWNLOAD_QUIT_TIME = 30  # the timeout for downloading a file (s)
 
 def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield: float,
                                 DD_temperature: float, downloads_folder: str):
-	""" Load the information about a given shot number from WebDav and any traveler spreadsheets placed in the relevant
-	    data/ subdirectory, store the top-level fields in the shot_info.csv file, and generate a simple etch/scan request
+	""" Load the information about a given shot number from WebDav and any traveler spreadsheets
+	    placed in the relevant data/ subdirectory, store the top-level fields in the shot_info.csv
+	    file, and generate a simple etch/scan request
 	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which to put information relevant to this shot
 	    :param DD_yield: the DD-n yield of this shot, or nan if you want me to get it from WebDav
@@ -49,7 +50,10 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 	    :param downloads_folder: the default downloads folder for the default browser
 	"""
 	try:
-		load_general_webdav_info(shot_number, shot_subfolder, DD_yield, DD_temperature, downloads_folder)
+		load_general_webdav_info(
+			shot_number, shot_subfolder,
+			DD_yield, DD_temperature,
+			downloads_folder)
 	except FileNotFoundError as e:
 		print(f"Error! {e}")
 		return
@@ -59,23 +63,30 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 		for filename in filenames:
 			if "Traveler" in filename and filename.endswith(".xlsx"):
 				try:
-					load_traveler_spreadsheet_info(shot_number, shot_subfolder, os.path.join(directory, filename), downloads_folder)
+					load_traveler_spreadsheet_info(
+						shot_number, shot_subfolder,
+						os.path.join(directory, filename),
+						downloads_folder)
 				except SpreadsheetFormatError as e:
-					print(f"Error! Couldn't read the traveler spreadsheet at {os.path.join(directory, filename)!r} because {e}")
+					print(f"Error! Couldn't read the traveler spreadsheet at "
+					      f"`{os.path.join(directory, filename)}` because {e}")
 				except MissingSnoutError as e:
 					print(f"Error! {e}")
 				else:
 					found_any_travelers = True
 
 	if not found_any_travelers:
-		print(f"there are no valid traveler spreadsheets in {shot_subfolder}/, so I can't get the WRF info or generate a scan request")
+		print(f"there are no valid traveler spreadsheets in `{shot_subfolder}/`, "
+		      f"so I can't get the WRF info or generate a scan request")
 	else:
 		try:
-			generate_etch_scan_request(shot_number, shot_subfolder)
+			generate_etch_scan_request(
+				shot_number, shot_subfolder)
 		except PermissionError:
-			print(f"Error! I don't have permission to copy and edit the workorder template spreadsheet. please close Microsoft Excel.")
+			print(f"Error! I don't have permission to copy and edit the workorder template spreadsheet. "
+			      f"please close Microsoft Excel.")
 
-	print(f"done! see {shot_subfolder} for the etch and scan workorder.")
+	print(f"done! see `{shot_subfolder}` for the etch and scan workorder.")
 
 
 def load_general_webdav_info(shot_number: str, shot_subfolder: str,
@@ -115,7 +126,8 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 		if shot_info["SHOT_TEMPERATURE"] != "":
 			shot_info["CAPSULE_FILL_PRESSURE"] *= 293/shot_info["SHOT_TEMPERATURE"]
 		else:
-			print(f"Warning? there's no shot temperature given, so I hope {shot_info['CAPSULE_FILL_PRESSURE']:.3g}torr is measured at room temp.")
+			print(f"Warning? there's no shot temperature given, so I hope {shot_info['CAPSULE_FILL_PRESSURE']:.3g}torr "
+			      f"is measured at room temp.")
 
 	# get the neutronics data from webdav as well
 	if isnan(DD_yield):
@@ -123,7 +135,8 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 			DD_yield = download_webdav_number(
 				shot_number, f"reports/AUTH-INSTR-YN_{shot_number}.csv", "Yn", downloads_folder)
 		except FileNotFoundError:
-			raise FileNotFoundError("I couldn't find an official DD-n yield on WebDAV, so you need to supply it using `--DD_yield=...`.")
+			raise FileNotFoundError("I couldn't find an official DD-n yield on WebDAV, so "
+			                        "you need to supply it using `--DD_yield=...`.")
 		print(f"found DD-n yield of {DD_yield:.3g}")
 	else:
 		print(f"using user-supplied DD-n yield of {DD_yield:.3g}")
@@ -132,7 +145,8 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 			DD_temperature = download_webdav_number(
 				shot_number, f"reports/AUTH-INSTR-TION_{shot_number}.csv", "Tion", downloads_folder)
 		except FileNotFoundError:
-			raise FileNotFoundError("I couldn't find an official DD ion temperature on WebDAV, so you need to supply it using `--DD_temperature=...`.")
+			raise FileNotFoundError("I couldn't find an official DD ion temperature on WebDAV, so "
+			                        "you need to supply it using `--DD_temperature=...`.")
 		print(f"found DD-n temperature of {DD_temperature:.2f} keV")
 	else:
 		print(f"using user-supplied DD-n temperature of {DD_temperature:.2f} keV")
@@ -168,15 +182,16 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 
 	# finally, create the aux_info.csv for this shot in its designated subfolder, replacing any previus ones
 	if os.path.isfile(f"{shot_subfolder}/aux_info.csv"):
-		print(f"overwriting the previus {shot_subfolder}/aux_info.csv file")
+		print(f"overwriting the previus `{shot_subfolder}/aux_info.csv` file")
 		os.remove(f"{shot_subfolder}/aux_info.csv")
 	with open(f"{shot_subfolder}/aux_info.csv", "w") as f:
 		f.write(", ".join([key for key, dtype in AUX_INFO_HEADER]) + "\n")
 
 
-def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepath: str, downloads_folder: str) -> None:
-	""" load all of the information in this traveler spreadsheet and some supplementary information from WebDav and
-	    store it in {shot_subfolder}/aux_info.csv
+def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
+                                   filepath: str, downloads_folder: str) -> None:
+	""" load all of the information in this traveler spreadsheet and some supplementary information
+	    from WebDav and store it in {shot_subfolder}/aux_info.csv
 	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which all of the information about this shot can be found
 	    :param filepath: the location and name of the traveler spreadsheet, relative to the working directory
@@ -234,7 +249,8 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 	elif snout_config is None:
 		raise SpreadsheetFormatError("I couldn't find the snout configuration name anywhere in this spreadsheet.")
 	elif shot_name != get_shot_name(shot_number):
-		raise SpreadsheetFormatError(f"This traveler spreadsheet in the {get_shot_name(shot_number)} folder says it's for {shot_name}.")
+		raise SpreadsheetFormatError(f"This traveler spreadsheet in the {get_shot_name(shot_number)} folder "
+		                             f"says it's for {shot_name}.")
 
 	print(f"reading traveler spreadsheet for DIM {dim}...")
 
@@ -243,7 +259,8 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 		try:
 			previus_snout_config = get_previous_snout_config(shot_number, dim)
 		except ValueError as e:
-			raise SpreadsheetFormatError(f"This DIM is a KB swap, so I tried to load the snout config from the last shot, but {e}")
+			raise SpreadsheetFormatError(
+				f"This DIM is a KB swap, so I tried to load the snout config from the last shot, but {e}")
 		print(f"  setting snout config to {previus_snout_config}")
 		snout_config = previus_snout_config
 
@@ -264,9 +281,11 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 				if parsing is not None:
 					components.append(int(parsing.group(1)))
 				else:
-					raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains {cell!r}, which doesn't parse as an ID number")
+					raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains "
+					                             f"{cell!r}, which doesn't parse as an ID number")
 			else:
-				raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains {cell!r}, which is not an ID number")
+				raise SpreadsheetFormatError(f"The list of component IDs on DIM {dim} position {position} contains "
+				                             f"{cell!r}, which is not an ID number")
 
 		if len(components) == 0:
 			continue  # most of the time this part will be blank (nothing fielded)
@@ -286,7 +305,10 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 		found_anything = True
 
 		# calculate the position’s absolute TC coordinates
-		r, θ, ф = calculate_aux_coordinates(shot_number, dim, position, snout_config, downloads_folder)
+		r, θ, ф = calculate_aux_coordinates(
+			shot_number, dim, position,
+			snout_config,
+			downloads_folder)
 
 		aux_table = pd.concat([aux_table, pd.DataFrame(index=[aux_table.index.max() + 1], data={
 			"type": aux_type,
@@ -306,7 +328,9 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str, filepa
 	aux_table.to_csv(f"{shot_subfolder}/aux_info.csv", index=False)
 
 
-def calculate_aux_coordinates(shot_number: str, dim: str, position: int, snout_config: str, downloads_folder: str) -> tuple[float, float, float]:
+def calculate_aux_coordinates(shot_number: str, dim: str, position: int,
+                              snout_config: str, downloads_folder: str
+                              ) -> tuple[float, float, float]:
 	""" in general, the distances of "cling-on" auxiliary diagnostics is not well-known on NIF shots. this function
 	    will attempt to use WebDAV information to calculate it, along with its angular position.
 
@@ -326,11 +350,13 @@ def calculate_aux_coordinates(shot_number: str, dim: str, position: int, snout_c
 	try:
 		snout_config_details = snout_config_table.loc[snout_config]
 	except KeyError:
-		raise MissingSnoutError(f"The snout {snout_config!r} does not exist in tables/snout_config.csv yet. please consult the drawings and fill it in.")
+		raise MissingSnoutError(f"The snout {snout_config!r} does not exist in tables/snout_config.csv yet. "
+		                        f"please consult the drawings and fill it in.")
 	try:
 		pinhole_to_pin_distance = snout_config_details["Pinhole-to-small-pin distance"]
 	except KeyError:
-		raise SpreadsheetFormatError(f"The tables/snout_config.csv is missing its 'Pinhole-to-small-pin' distance column")
+		raise SpreadsheetFormatError(f"The tables/snout_config.csv is missing its "
+		                             f"'Pinhole-to-small-pin' distance column")
 	pinhole_to_pin_distance /= 10  # the table is in mm, so convert to cm
 	theta, phi = float(dim[2:5]), float(dim[6:9])
 	content = download_webdav_file(
@@ -370,17 +396,19 @@ def calculate_aux_coordinates(shot_number: str, dim: str, position: int, snout_c
 
 
 def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
-	""" estimate a reasonable etch time and fill in a generic etch/scan request spreadsheet for the given shot, using
-	    the info in {shot_subfolder}/wrf_info.csv and shot_info.csv
+	""" estimate a reasonable etch time and fill in a generic etch/scan request spreadsheet for the
+	    given shot, using the info in {shot_subfolder}/wrf_info.csv and shot_info.csv
 	    :param shot_number: the complete 12-digit N number
 	    :param shot_subfolder: the directory in which all of the information about this shot can be found
 	    :raise PermissionError: if I don’t have permission to create and edit the workorder spreadsheet
 	"""
 	# load the tables
-	shot_info = pd.read_csv("shot_info.csv", index_col="shot number", skipinitialspace=True,
+	shot_info = pd.read_csv("shot_info.csv", index_col="shot number",
+	                        skipinitialspace=True,
 	                        dtype={key: dtype for key, dtype in SHOT_INFO_HEADER}
 	                        ).loc[shot_number]
-	full_aux_table = pd.read_csv(f"{shot_subfolder}/aux_info.csv", skipinitialspace=True, na_filter=False,
+	full_aux_table = pd.read_csv(f"{shot_subfolder}/aux_info.csv",
+	                             skipinitialspace=True, na_filter=False,
 	                             dtype={key: dtype for key, dtype in AUX_INFO_HEADER})
 	# make a work order for each type of aux present
 	for aux_type in full_aux_table["type"].unique():
@@ -405,7 +433,8 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 				material = "WRF:CR-39"
 				scan_type = "Al WRF"
 				overlap_limit = 40  # tracks per frame
-				reactivity_ratio = get_reactivity_ratio("D3He-p", "DD-n", shot_info["DD-n temperature"])
+				reactivity_ratio = get_reactivity_ratio(
+					"D3He-p", "DD-n", shot_info["DD-n temperature"])
 				number_ratio = 2*shot_info["helium-3 fraction"]/shot_info["deuterium fraction"]
 				primary_yield = shot_info["DD-n yield"]*reactivity_ratio*number_ratio
 				secondary_yield = shot_info["DD-n yield"]*2e-3  # 2×10^-3 is the max possible yield ratio for Te ~= 3keV
@@ -433,7 +462,8 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 				# calculate the recommended etch time
 				fluence = proton_yield/(4*pi*aux["distance"]**2)*FRAME_AREA
 				etch_time = max(1.5, min(5.0, 5*sqrt(overlap_limit/fluence)))
-				print(f"  the {aux_type} on {aux['DIM']}:{aux['position']} will see ~{fluence:.2g} track/frame; I suggest a {etch_time:.1f} hour etch.")
+				print(f"  the {aux_type} on {aux['DIM']}:{aux['position']} will see ~{fluence:.2g} track/frame; "
+				      f"I suggest a {etch_time:.1f} hour etch.")
 
 				# fill in the relevant boxen
 				top_row = -4 + (DIM_LIST.index(aux["DIM"])*4 + aux["position"])*4
@@ -480,7 +510,8 @@ def download_webdav_number(shot_number: str, path: str, key: str, downloads_fold
 	return np.average(data[key], weights=1/data[uncertainty_key]**2)
 
 
-def download_webdav_file(shot_number: str, path: str, downloads_folder: str, timeout=DOWNLOAD_QUIT_TIME) -> pd.DataFrame:
+def download_webdav_file(shot_number: str, path: str,
+                         downloads_folder: str, timeout=DOWNLOAD_QUIT_TIME) -> pd.DataFrame:
 	""" download a WebDAV file for the given shot number at the given address and return it as a DataFrame
 	    :param shot_number: the complete 12-digit N number
 	    :param path: the WebDav filepath, relative to shotdata/shots/YY/MM/NYYMMDD-XXX-999/
@@ -493,7 +524,7 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 	url = f"https://nifit.llnl.gov/ArchiveWebDav/export/shotdata/shots/{year}/{month}/{shot_number}/{path}"
 
 	# in order to authenticate properly, we have to download this file from a browser that supports JS
-	webbrowser.open(url, autoraise=True)  # always autoraise unless it prompts the user for a password
+	webbrowser.open(url, autoraise=True)  # always autoraise in case it prompts the user for a password
 	downloaded_filepath = os.path.join(downloads_folder, os.path.basename(path))
 
 	# wait for our downloaded file to appear
@@ -504,10 +535,10 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 		if os.path.isfile(downloaded_filepath):
 			break
 		elif not user_has_been_warned and current_time - start_time > DOWNLOAD_WARN_TIME:
-			print(f"downloading {path!r}...")
+			print(f"downloading `{path}`...")
 			user_has_been_warned = True
 		elif current_time - start_time > timeout:
-			raise TimeoutError(f"I couldn't get {url!r}. this may be because {downloads_folder!r} is not your "
+			raise TimeoutError(f"I couldn't get `{url}`. this may be because `{downloads_folder}` is not your "
 			                   f"default downloads directory, or because you're not on the LLNL VPN.")
 		else:
 			time.sleep(0.2)
@@ -518,7 +549,8 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 		with open(downloaded_filepath, "r") as f:
 			content = f.read()
 	except FileNotFoundError:
-		raise RuntimeError(f"I lost the file {url}. something must have deleted it from {downloads_folder} when I wasn't looking.")
+		raise RuntimeError(f"I lost the file `{url}`. something must have deleted it from "
+		                   f"`{downloads_folder}` when I wasn't looking.")
 	# and delete it after you’ve read it
 	os.remove(downloaded_filepath)
 
@@ -529,7 +561,8 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 	try:
 		return pd.read_csv(filepath_or_buffer=StringIO(content), na_filter=False)  # type: ignore
 	except pd.errors.EmptyDataError:
-		raise FileNotFoundError(f"the file {url!r} does not exist in WebDav (or it does but it's just empty)")
+		raise FileNotFoundError(f"the file `{url}` does not exist in WebDav "
+		                        f"(or it does but it's just empty)")
 
 
 def get_shot_name(shot_number: str) -> str:
@@ -562,8 +595,10 @@ def get_previous_snout_config(shot_number: str, dim: str) -> str:
 		campaign = get_shot_name(shot_number)[:-4]
 		other_campaign = get_shot_name(other_shot_number)[:-4]
 		if campaign != other_campaign:
-			raise ValueError(f"the previous shot is from a different campaign ({other_campaign}), where I was looking for {campaign}")
-		aux_table = pd.read_csv(f"data/{other_shot_subfolder}/aux_info.csv", skipinitialspace=True, na_filter=False,
+			raise ValueError(f"the previous shot is from a different campaign ({other_campaign}), "
+			                 f"whereas I was looking for {campaign}")
+		aux_table = pd.read_csv(f"data/{other_shot_subfolder}/aux_info.csv",
+		                        skipinitialspace=True, na_filter=False,
 		                        dtype={key: dtype for key, dtype in AUX_INFO_HEADER})
 		if not any(aux_table["DIM"] == dim):
 			raise ValueError(f"the previous shot ({other_shot_number}) did not use the DIM in question ({dim})")
@@ -612,7 +647,8 @@ def normalize_shot_number(shot_number: str) -> str:
 	"""
 	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3}))?(-999)?( [A-Za-z0-9_-]+)?", shot_number)
 	if parsing is None:
-		raise ValueError(f"I could not parse the shot number {shot_number!r}. It should follow the N210808-001(-999) format.")
+		raise ValueError(f"I could not parse the shot number {shot_number!r}. "
+		                 f"It should follow the N210808-001(-999) format.")
 	date, index = parsing.group(1, 3)
 	if index is None:
 		index = "001"
@@ -621,7 +657,8 @@ def normalize_shot_number(shot_number: str) -> str:
 
 def normalize_shot_name(shot_name: str) -> str:
 	""" take a DIM name in a variety of formats and return an equivalent TC0XX-XXX version
-	    :param shot_name: the name of the shot (e.g. "I_Stag_Sym_HohlScan_S01a"), possibly missing part or all of the S01a
+	    :param shot_name: the name of the shot (e.g. "I_Stag_Sym_HohlScan_S01a"),
+	                      possibly missing part or all of the S01a
 	    :return: the complete shot name as it appears in WebDav
 	"""
 	if re.search(r"_S[0-9]{2}[a-z]$", shot_name):
@@ -649,8 +686,8 @@ def main():
 	parser = argparse.ArgumentParser(
 		prog="load_info_from_nif_database",
 		description = "Load the information about a given shot number from WebDav and any traveler spreadsheets placed "
-		              "in the relevant data/ subdirectory, store the top-level fields in the shot_info.csv file, and "
-		              "generate a simple etch and scan request.")
+		              "in the relevant `data/` subdirectory, store the top-level fields in the `shot_info.csv` file, "
+		              "and generate a simple etch and scan request.")
 	parser.add_argument("shot_number", type=str,
 	                    help="the shot's 9- or 12-digit N number (e.g. N210808-001)")
 	parser.add_argument("--DD_yield", type=float, default=nan,
