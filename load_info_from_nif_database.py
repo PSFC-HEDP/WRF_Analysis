@@ -99,7 +99,7 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 		if "GAS_FILL" in key and len(shot_info[key]) > 0:
 			gas_fill_name = shot_info[key]
 	if gas_fill_name is None:
-		raise ValueError("I couldn't find the gas fill fractions in the shot info")
+		gas_fill_name = ""
 	atomic_fill_fractions: dict[str, float] = {}
 	for component in ["H", "D", "T", "He3", "He4", "N", "O", "Ne", "Ar", "Kr"]:
 		percentage = re.search(rf"([0-9.]+)% ?{component}\b", gas_fill_name)
@@ -109,6 +109,13 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 			atomic_fill_fractions[component] = 0
 	gas_fill_name = " + ".join(
 		[f"{frac:.0%} {key}" for key, frac in atomic_fill_fractions.items() if frac > 0])
+
+	# correct the pressure for temperature
+	if shot_info["CAPSULE_FILL_PRESSURE"] != "":
+		if shot_info["SHOT_TEMPERATURE"] != "":
+			shot_info["CAPSULE_FILL_PRESSURE"] *= 293/shot_info["SHOT_TEMPERATURE"]
+		else:
+			print(f"Warning? there's no shot temperature given, so I hope {shot_info['CAPSULE_FILL_PRESSURE']:.3g}torr is measured at room temp.")
 
 	# get the neutronics data from webdav as well
 	if isnan(DD_yield):
@@ -503,7 +510,8 @@ def download_webdav_file(shot_number: str, path: str, downloads_folder: str, tim
 			raise TimeoutError(f"I couldn't get {url!r}. this may be because {downloads_folder!r} is not your "
 			                   f"default downloads directory, or because you're not on the LLNL VPN.")
 		else:
-			time.sleep(0.5)
+			time.sleep(0.2)
+	time.sleep(0.2)  # give it a sec after it appears, to ensure it's populated
 
 	# go find it wherever it ended up
 	try:
