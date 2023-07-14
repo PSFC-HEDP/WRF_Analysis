@@ -374,7 +374,7 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
 	    :return: an Analysis object summarizing the analysis file
 	"""
-	# load info from hohlraum.txt and the
+	# load info from hohlraum.txt and the shot table
 	parameters = load_rhoR_parameters(folder)
 
 	# read the filename for top-level metadata
@@ -598,9 +598,19 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	# calculate the converged shell thickness
 	params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
 
-	# parse the hohlraum layers and booleans
+	# read hohlraum.txt if it exists
+	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):
+		with open(os.path.join(folder, "hohlraum.txt"), "w"):
+			pass  # create a blank file if there is none
 	with open(os.path.join(folder, "hohlraum.txt")) as f:
-		hohlraum_codes = re.split(r",\s*", f.read().strip())
+		hohlraum_codes = f.readlines()
+	if len(hohlraum_codes) == 0:  # but don't proceed if the file is blank
+		raise FileNotFoundError(f"you need to fill out the `{folder}/hohlraum.txt` file with the hohlraum information.  "
+		                        f"if there is no hohlraum, just put 'none'.")
+	elif hohlraum_codes[0].lower().strip() == "none":
+		hohlraum_codes = []
+
+	# parse the hohlraum layers and booleans
 	params["hohlraum"] = OrderedDict()
 	params["clipping"] = set()
 	params["overlap"] = set()
@@ -621,11 +631,10 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 		# parse the material thicknesses
 		layers: list[Layer] = []
 		for layer_code in re.split(r"\s+", layer_set_code):
-			if len(layer_code) == 0:
-				continue
-			thickness, _, material = re.fullmatch(
-				r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
-			layers.append((float(thickness), material))
+			if len(layer_code) > 0:
+				thickness, _, material = re.fullmatch(
+					r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
+				layers.append((float(thickness), material))
 		params["hohlraum"][key] = layers
 
 	return params
