@@ -1,1 +1,0 @@
-py2applet -p WRF_Analysis,numpy,scipy,PIL -r WRF_Analysis/util/_StopPow.so --matplotlib-backends=tkagg,ps --iconfile=res/logo/WRF_logo.icns --optimize --make-setup WRF_Analysis/main.py
