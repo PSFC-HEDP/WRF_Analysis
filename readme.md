@@ -25,7 +25,7 @@ it looks something like this:
 3. email Michelle and wait for her to process the CR39,
 4. manually download the scan files from the NIF Archive Viewer,
 5. use Fredrick’s *AnalyzeCR39* Windows application to infer the spectrum from the scan file,
-6. optionally, use Patrick’s *SecondaryAnalysis* Matlab repository to infer fuel ρR from yield ratios,
+6. optionally, use Patrick’s *[SecondaryAnalysis](https://github.com/PSFC-HEDP/SecondaryAnalysis)* Matlab repository to infer fuel ρR from yield ratios,
 7. use `make_plots_from_analysis.py` to infer total ρR from mean energy and compile the spectra into plots and tables, and
 8. use Google Slides or maybe LaTeX to compile those plots and tables into a document and send it to the PI.
 
@@ -40,6 +40,20 @@ I bet 8 could be done in Python also, but it might be hard to make it look good.
 
 anyway, I'll probably add more specific instructions about each of these steps later.
 for now, just call the python scripts with `-h` and that will tell you what you need to know.
+
+### other notes to organize later
+
+for NIF shots you have to specify the hohlraum with a `hohlraum.txt` file.
+it can be the thickness and material ("30μmAu") or multiple thicknesses and materials ("10Au 216Al")
+or multiple lines of sight with multiple thicknesses and materials ("90-78 1: 10Au\\n90-78 4: 10Au 216Al\\n00-00:").
+the hohlraum is always ignored on the polar DIM, so you usually don't need to specify the lines of sight.
+
+NIF ablators are often doped with silicon or germanium or something.
+the database won't volunteer that information, but you can look on the Archive.
+I(Justin)'ve compared some analyses including or ignoring the doping,
+and the difference is typically smaller than the errorbars,
+so in general I don't think you should worry about it.
+if the PI emails you and is like "what about the doping?" just say "no".
 
 ## Installation
 
