@@ -27,6 +27,8 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 	"""
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
+			if params["ablator material"] is None:
+				raise ValueError("You need to specify the shell material for OMEGA shots")
 			rhoR_objects[shot_name] = []
 			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
 				table_filename = f"tables/stopping_range_protons_{params['ablator material']}_plasma_{ρ}gcc_{Te}eV.txt"

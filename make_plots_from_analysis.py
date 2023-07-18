@@ -41,7 +41,7 @@ SecondaryAnalysis = tuple[Quantity, Quantity]
 np_SecondaryAnalysis = np.dtype([("rhoR", np_Quantity), ("temperature", np_Quantity)])
 
 
-def make_plots_from_analysis(folders: list[str], show_plots: bool):
+def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_material: Optional[None]):
 	""" take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and
 	    generate a bunch of plots and tables summarizing the information therein.
 	    :param folders: a list of subdirectories in data/ to search for analysis results
@@ -66,7 +66,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool):
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 					analyses.append(
-						read_analysis_file(folder, os.path.join(subfolder, filename), show_plots))
+						read_analysis_file(folder, os.path.join(subfolder, filename), show_plots, shell_material))
 
 	if len(analyses) == 0:
 		print("no datum were found.")
@@ -367,20 +367,19 @@ def read_shot_summary_file(filepath: str) -> list[Analysis]:
 	return analyses
 
 
-def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis:
+def read_analysis_file(folder: str, filepath: str,
+                       show_plots: bool, shell_material: Optional[str]) -> Analysis:
 	""" read an analysis file that came out of AnalyzeCR39 and pull out the key details in an Analysis struct
 	    :param folder: the main folder to which this analysis file belongs
 	    :param filepath: the relative or absolute path to the analysis file
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
+	    :param shell_material: the material of the shell, for ρR purposes, if it's not already known
 	    :return: an Analysis object summarizing the analysis file
 	"""
-	# load info from hohlraum.txt and the shot table
-	parameters = load_rhoR_parameters(folder)
-
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
 	label = ''
-	identifiers = re.split(r"[_/\\.]", filepath)
+	identifiers = re.split(r"[_/\\. ]", filepath)
 	for identifier in reversed(identifiers):
 		if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
 			shot_day, shot_number, _ = identifier.split('-')
@@ -401,11 +400,13 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 		raise ValueError(f"no shot number found in {identifiers}")
 	if line_of_site is None:
 		raise ValueError(f"no line of sight found in {identifiers}")
-	if re.fullmatch(r"TIM[1-6]-(4|8|12)", line_of_site):
+	if re.fullmatch(r"TIM[1-6]-(4|8|12)", line_of_site):  # extract the position from the line of site if relevant
 		line_of_site, position = re.fullmatch(r"(TIM[1-6])-(4|8|12)", line_of_site).group(1, 2)
 	elif re.fullmatch(r"\D*\d+-\d+", line_of_site): # standardize the DIM names if they're too long
 		theta, phi = re.fullmatch(r"\D*(\d+)-(\d+)", line_of_site).group(1, 2)
 		line_of_site = f"{int(theta):02d}-{int(phi):03d}"
+	elif position is None:
+		position = ""
 
 	print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{position} {label}")
 
@@ -471,7 +472,8 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 		compression_yield, compression_mean, compression_sigma = \
 			(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
 
-	# think about some flags
+	# load info from hohlraum.txt and the shot table
+	parameters = load_rhoR_parameters(folder, shell_material)
 	any_hohlraum = any(parameters["hohlraum"].values())
 	any_clipping_here = any(indicator in filepath for indicator in parameters["clipping"])
 	any_overlap_here = any(indicator in filepath for indicator in parameters["overlap"])
@@ -499,7 +501,7 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 	plt.ylabel("Yield (MeV⁻¹)")
 	if label != '':
 		plt.title(f"{line_of_site}, position {position} ({label})")
-	elif position is not None:
+	elif position != "":
 		plt.title(f"{line_of_site}, position {position}")
 	else:
 		plt.title(f"{shot_number}, {line_of_site}")
@@ -511,7 +513,7 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 		plt.show()
 	plt.close()
 
-	# do the ρR analysis for both the shock and compression peak
+	# figure out the hohlraum correction for this LOS and position
 	if '90' in line_of_site and any(parameters["hohlraum"].values()) > 0:
 		if position in parameters["hohlraum"]:
 			hohlraum_layers = parameters["hohlraum"][position]
@@ -520,6 +522,7 @@ def read_analysis_file(folder: str, filepath: str, show_plots: bool) -> Analysis
 	else:
 		hohlraum_layers = []
 	yeeld, mean, sigma = perform_hohlraum_correction(hohlraum_layers, (yeeld, mean, sigma))
+	# do the ρR analysis for both the shock and compression peak
 	rhoR = calculate_rhoR(mean, shot_day+shot_number, parameters)
 	if good_compression_fit:
 		compression_yield, compression_mean, compression_sigma = \
@@ -557,14 +560,14 @@ def assign_label(item: np_Analysis, multiple_days: bool, multiple_shots: bool) -
 	    :param multiple_shots: whether we need to specify which shot we're talking about
 	    :return: a label for the shot and a label for the analysis
 	"""
-	if item["position"] is None:
+	if item["position"] == "":
 		location = item["line_of_site"]
 	else:
 		location = f"{item['line_of_site']}:{item['position']}"
 	if multiple_days and len(item["shot_number"]) < 4:
 		shot_label = f"{item['shot_day']}-{item['shot_number']}"
 	else:
-		shot_label = item['shot_day']
+		shot_label = item['shot_number']
 
 	if multiple_shots:
 		analysis_label = f"{shot_label}\n{location}"
@@ -580,23 +583,34 @@ def assign_label(item: np_Analysis, multiple_days: bool, multiple_shots: bool) -
 	return shot_label, analysis_label
 
 
-def load_rhoR_parameters(folder: str) -> dict[str, Any]:
+def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[str, Any]:
 	""" load the analysis parameters given in the rhoR_parameters.txt file
 	    :param folder: the absolute or relative path to the directory with the data we're considering
+	    :param ablator_material: a manual specification of the ablator material
 	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
 	    :raise FileNotFoundError: if the hohlraum.txt file hasn't been created
 	"""
-	# start by taking information from shot_info.csv
-	shot_table = pd.read_csv("shot_info.csv", skipinitialspace=True, index_col="shot number",
-	                         dtype={})
-	shot_info = shot_table.loc[normalize_shot_number(os.path.basename(folder))]
+	# start by taking any relevant information from shot_info.csv
 	params: dict[str, Any] = {}
-	for key in ["ablator radius", "ablator thickness", "ablator material",
-	            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
-		params[key] = shot_info[key]
+	try:
+		nif_shot_number = normalize_shot_number(os.path.basename(folder))
+	except ValueError:
+		nif_shot = False
+	else:
+		nif_shot = True
+		nif_shot_table = pd.read_csv(
+			"shot_info.csv", skipinitialspace=True, index_col="shot number", dtype={})
+		shot_info = nif_shot_table.loc[nif_shot_number]
+		for key in ["ablator radius", "ablator thickness", "ablator material",
+		            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
+			params[key] = shot_info[key]
 
-	# calculate the converged shell thickness
-	params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
+		# calculate the converged shell thickness
+		params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
+
+	# use the manually specified ablator material, if there is one
+	if ablator_material is not None or "ablator material" not in params:
+		params["ablator material"] = ablator_material
 
 	# read hohlraum.txt if it exists
 	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):
@@ -604,10 +618,11 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 			pass  # create a blank file if there is none
 	with open(os.path.join(folder, "hohlraum.txt")) as f:
 		hohlraum_codes = f.readlines()
-	if len(hohlraum_codes) == 0:  # but don't proceed if the file is blank
+	# NIF shots usually have hohlraeume, so complain if it looks like the user forgot to add it
+	if nif_shot and len(hohlraum_codes) == 0:
 		raise FileNotFoundError(f"you need to fill out the `{folder}/hohlraum.txt` file with the hohlraum information.  "
 		                        f"if there is no hohlraum, just put 'none'.")
-	elif hohlraum_codes[0].lower().strip() == "none":
+	if len(hohlraum_codes) > 0 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum
 		hohlraum_codes = []
 
 	# parse the hohlraum layers and booleans
@@ -693,12 +708,17 @@ def main():
 		     "them with commas. If you're doing multiple shots from the same day, you don't have to include the day "
 		     "part of the shot number after the first one (for example, 'N220420-001,-002,-003').")
 	parser.add_argument(
+		"--shell_material", type=str, default=None,
+		help="The name of the capsule material, if it's not in shot_info.csv (for instance if it's an OMEGA shot). "
+		     "Must be one of 'CH', 'CH2', 'HDC', 'SiO2', or 'Be'."
+	)
+	parser.add_argument(
 		"--show", action="store_true",
 		help="to show the plots as they're generated in addition to saving them in the subdirectory."
 	)
 	args = parser.parse_args()
 
-	make_plots_from_analysis(args.folders.split(","), args.show)
+	make_plots_from_analysis(args.folders.split(","), args.show, args.shell_material)
 
 
 class FixedOrderFormatter(ScalarFormatter):
