@@ -144,6 +144,30 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 				worksheet.cell(3 + j, 4*i + 1 + k).value = analysis["spectrum"][j, k]
 	workbook.save(os.path.join(base_directory, "WRF spectra.xlsx"))
 
+	# save the condensed results in a spreadsheet for each folder
+	workbooks = {}
+	for item, secondary_stuff in zip(analyses, secondary_analyses):
+		if not item["shot_day"].startswith("N"):
+			continue  # only NIF shots do this part
+		filename = f"{item['shot_day']}-{item['shot_number']}-999 {item['line_of_site']} WRF report.xlsx"
+		if filename not in workbooks:
+			workbooks[filename] = openpyxl.load_workbook("templates/report.xlsx")
+		worksheet = workbooks[filename].active
+		worksheet.cell(2, 2).value = f"{item['shot_day']}-{item['shot_number']}-999"
+		worksheet.cell(3, 2).value = f"TC0{item['line_of_site']}"
+		header_row = {"1": 9, "2": 19, "3": 39, "4": 29}[item["position"]]
+		report_quantities = {
+			1: item["peak"]["yield"], 2: item["compression"]["yield"],
+			3: item["rhoR"], 4: item["compression_rhoR"]}
+		for row, quantity in report_quantities.items():
+			worksheet.cell(header_row + row, 2).value = quantity["value"]
+			if worksheet.cell(header_row + row, 7).value == "perc":
+				worksheet.cell(header_row + row, 6).value = quantity["upper_err"]/quantity["value"]
+			else:
+				worksheet.cell(header_row + row, 6).value = quantity["upper_err"]
+	for filename, workbook in workbooks.items():
+		workbook.save(os.path.join(base_directory, filename + ".xlsx"))
+
 	# print out a table, and also save the condensed results in a csv file
 	print()
 	with open(os.path.join(base_directory, 'wrf_analysis.csv'), 'w') as f:
