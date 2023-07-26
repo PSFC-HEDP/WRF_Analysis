@@ -65,8 +65,11 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 					analyses += read_shot_summary_file(os.path.join(subfolder, filename))
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
-					analyses.append(
-						read_analysis_file(folder, os.path.join(subfolder, filename), show_plots, shell_material))
+					try:
+						analyses.append(
+							read_analysis_file(folder, os.path.join(subfolder, filename), show_plots, shell_material))
+					except FileNotFoundError as e:
+						print(e)
 
 	if len(analyses) == 0:
 		print("no datum were found.")
@@ -163,8 +166,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 
 			if last_shot_label is not None and last_shot_label != shot_label:
 				print("")
-			print("|  {:15.15s}  |  {:#.2g} ± {:#.2g}  |  {:5.2f} ± {:4.2f}  |  {:5.1f} ± {:4.1f}  |".format(
-				label,
+			print("|  {:s}  |  {:#.2g} ± {:#.2g}  |  {:5.2f} ± {:4.2f}  |  {:5.1f} ± {:4.1f}  |".format(
+				label[-15:],
 				yeeld["value"], yeeld["upper_err"],
 				mean["value"], mean["upper_err"],
 				rhoR["value"], rhoR["upper_err"]))
@@ -375,6 +378,7 @@ def read_analysis_file(folder: str, filepath: str,
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
 	    :param shell_material: the material of the shell, for ρR purposes, if it's not already known
 	    :return: an Analysis object summarizing the analysis file
+	    :raise FileNotFoundError: if the analysis file or an auxiliary file (like hohlraum.txt) is missing
 	"""
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
@@ -620,8 +624,8 @@ def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[s
 		hohlraum_codes = f.readlines()
 	# NIF shots usually have hohlraeume, so complain if it looks like the user forgot to add it
 	if nif_shot and len(hohlraum_codes) == 0:
-		raise FileNotFoundError(f"you need to fill out the `{folder}/hohlraum.txt` file with the hohlraum information.  "
-		                        f"if there is no hohlraum, just put 'none'.")
+		raise FileNotFoundError(f"you need to fill out `{os.path.join(os.getcwd(), folder, 'hohlraum.txt')}` with the "
+		                        f"hohlraum information.  if there is no hohlraum, just put 'none'.")
 	if len(hohlraum_codes) > 0 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum
 		hohlraum_codes = []
 
