@@ -305,7 +305,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 					los_rhoRs["lower_err"][i, j] = np.min(analyses["rhoR"]["lower_err"][here])
 					los_rhoRs["upper_err"][i, j] = np.min(analyses["rhoR"]["upper_err"][here])
 				else:
-					los_rhoRs[i, j, :] = nan
+					los_rhoRs[i, j] = (nan, nan, nan)
 
 		plt.figure(figsize=(4.5, 4.5))
 		plt_set_locators()
