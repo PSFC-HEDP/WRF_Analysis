@@ -162,7 +162,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 		for row, quantity in report_quantities.items():
 			worksheet.cell(header_row + row, 2).value = quantity["value"]
 			if worksheet.cell(header_row + row, 7).value == "perc":
-				worksheet.cell(header_row + row, 6).value = quantity["upper_err"]/quantity["value"]
+				if quantity["value"] != 0:
+					worksheet.cell(header_row + row, 6).value = quantity["upper_err"]/quantity["value"]
 			else:
 				worksheet.cell(header_row + row, 6).value = quantity["upper_err"]
 	for filename, workbook in workbooks.items():
@@ -322,7 +323,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 		for i, shot in enumerate(compared_shots):
 			for j, line_of_site in enumerate(compared_lines_of_site[:2]):
 				here = (analyses["line_of_site"] == line_of_site) & (shot_labels == shot)
-				if np.sum(here) > 0 and not np.any(analyses["rhoR"]["lower_err"][here] == 0):
+				if np.any(here) and not np.any(analyses["rhoR"]["lower_err"][here] == 0):
 					los_rhoRs["value"][i, j] = np.average(
 						analyses["rhoR"]["value"][here],
 						weights=analyses["rhoR"]["lower_err"][here]**(-2))
@@ -331,25 +332,26 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 				else:
 					los_rhoRs[i, j] = (nan, nan, nan)
 
-		plt.figure(figsize=(4.5, 4.5))
-		plt_set_locators()
-		plt.errorbar(y=los_rhoRs["value"][:, 0],
-		             yerr=[los_rhoRs["lower_err"][:, 0],
-		                   los_rhoRs["upper_err"][:, 0]],
-		             x=los_rhoRs["value"][:, 1],
-		             xerr=[los_rhoRs["lower_err"][:, 1],
-		                   los_rhoRs["upper_err"][:, 1]],
-		             fmt='.', color='#000000', markersize=12)
-		plt.axline((0, 0), slope=1, color='k', linewidth=1)
-		plt.ylabel(f"ρR on {compared_lines_of_site[0]}")
-		plt.xlabel(f"ρR on {compared_lines_of_site[1]}")
-		plt.axis('square')
-		plt.xlim(0, 220)
-		plt.ylim(0, 220)
-		plt.grid()
-		plt.tight_layout()
-		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.png'), dpi=300)
-		plt.savefig(os.path.join(base_directory, f'summary_asymmetry.eps'))
+		if np.all(np.isfinite(los_rhoRs["value"])):
+			plt.figure(figsize=(4.5, 4.5))
+			plt_set_locators()
+			plt.errorbar(y=los_rhoRs["value"][:, 0],
+			             yerr=[los_rhoRs["lower_err"][:, 0],
+			                   los_rhoRs["upper_err"][:, 0]],
+			             x=los_rhoRs["value"][:, 1],
+			             xerr=[los_rhoRs["lower_err"][:, 1],
+			                   los_rhoRs["upper_err"][:, 1]],
+			             fmt='.', color='#000000', markersize=12)
+			plt.axline((0, 0), slope=1, color='k', linewidth=1)
+			plt.ylabel(f"ρR on {compared_lines_of_site[0]}")
+			plt.xlabel(f"ρR on {compared_lines_of_site[1]}")
+			plt.axis('square')
+			plt.xlim(0, np.max(los_rhoRs["value"])*1.4)
+			plt.ylim(0, np.max(los_rhoRs["value"])*1.4)
+			plt.grid()
+			plt.tight_layout()
+			plt.savefig(os.path.join(base_directory, f'summary_asymmetry.png'), dpi=300)
+			plt.savefig(os.path.join(base_directory, f'summary_asymmetry.eps'))
 
 	# show plots
 	if show_plots:
@@ -363,33 +365,33 @@ def read_shot_summary_file(filepath: str) -> list[Analysis]:
 	    :param filepath: the relative or absolute path to the summary file
 	    :return: a list with an Analysis object describing each row
 	"""
-	with open(filepath, encoding="utf8") as f:
-		shot_day, shot_number = os.path.splitext(os.path.basename(filepath))[0].split('-')
+	shot_day, shot_number = os.path.splitext(os.path.basename(filepath))[0].split('-')
 
 	analyses: list[Analysis] = []
-	for row in f.readlines(): # read all the wrf summaries out of it
-		values = re.sub(r"[|:±]", " ", row).split()
-		line_of_site, position, yield_value, yield_error, \
-			mean_value, mean_error, rhoR_value, rhoR_error = values
+	with open(filepath, encoding="utf8") as f:
+		for row in f.readlines(): # read all the wrf summaries out of it
+			values = re.sub(r"[|:±]", " ", row).split()
+			line_of_site, position, yield_value, yield_error, \
+				mean_value, mean_error, rhoR_value, rhoR_error = values
 
-		analyses.append((
-			shot_day, shot_number,
-			line_of_site, position,
-			"", False, False,
-			(
-				(float(yield_value), float(yield_error), float(yield_error)),
-				(float(mean_value), float(mean_error), float(mean_error)),
-				(inf, inf, inf),
-			),
-			(float(rhoR_value), float(rhoR_error), float(rhoR_error)),
-			(
-				(0., 0., 0.),
+			analyses.append((
+				shot_day, shot_number,
+				line_of_site, position,
+				"", False, False,
+				(
+					(float(yield_value), float(yield_error), float(yield_error)),
+					(float(mean_value), float(mean_error), float(mean_error)),
+					(nan, inf, inf),
+				),
+				(float(rhoR_value), float(rhoR_error), float(rhoR_error)),
+				(
+					(nan, inf, inf),
+					(nan, inf, inf),
+					(nan, inf, inf),
+				),
 				(nan, inf, inf),
-				(nan, inf, inf),
-			),
-			(nan, inf, inf),
-			np.empty(0),
-		))
+				np.empty(0),
+			))
 
 	return analyses
 

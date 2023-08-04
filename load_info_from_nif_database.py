@@ -51,12 +51,17 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 	"""
 	try:
 		load_general_webdav_info(
-			shot_number, shot_subfolder,
+			shot_number,
 			DD_yield, DD_temperature,
 			downloads_folder)
-	except FileNotFoundError as e:
+	except (TimeoutError, FileNotFoundError) as e:
 		print(f"Error! {e}")
 		return
+
+	# clear aux_info.csv if it already exists
+	if os.path.isfile(f"{shot_subfolder}/aux_info.csv"):
+		print(f"overwriting the previus `{shot_subfolder}/aux_info.csv` file")
+		os.remove(f"{shot_subfolder}/aux_info.csv")
 
 	found_any_travelers = False
 	for directory, _, filenames in os.walk(shot_subfolder):
@@ -89,11 +94,9 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 	print(f"done! see `{shot_subfolder}` for the etch and scan workorder.")
 
 
-def load_general_webdav_info(shot_number: str, shot_subfolder: str,
-                             DD_yield: float, DD_temperature: float, downloads_folder: str) -> None:
+def load_general_webdav_info(shot_number: str, DD_yield: float, DD_temperature: float, downloads_folder: str) -> None:
 	""" load all of the information about shot_number on WebDav and store it in `shot_info.csv`
 	    :param shot_number: the complete 12-digit N number
-	    :param shot_subfolder: the directory in which to put information relevant to this shot
 	    :param DD_yield: the DD-n yield of this shot, or nan if you want me to get it from WebDav
 	    :param DD_temperature: the DD-n ion temperature of this shot, or nan if you want me to get it from WebDav
 	    :param downloads_folder: the default downloads folder for the default browser
@@ -181,13 +184,6 @@ def load_general_webdav_info(shot_number: str, shot_subfolder: str,
 	shot_table = shot_table.sort_index()
 	shot_table.to_csv("shot_info.csv", index_label="shot number", float_format="%.5g")
 
-	# finally, create the aux_info.csv for this shot in its designated subfolder, replacing any previus ones
-	if os.path.isfile(f"{shot_subfolder}/aux_info.csv"):
-		print(f"overwriting the previus `{shot_subfolder}/aux_info.csv` file")
-		os.remove(f"{shot_subfolder}/aux_info.csv")
-	with open(f"{shot_subfolder}/aux_info.csv", "w") as f:
-		f.write(", ".join([key for key, dtype in AUX_INFO_HEADER]) + "\n")
-
 
 def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
                                    filepath: str, downloads_folder: str) -> None:
@@ -267,8 +263,12 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 
 	# load any auxiliaries we already have for this shot
 	found_anything = False
-	aux_table = pd.read_csv(f"{shot_subfolder}/aux_info.csv", skipinitialspace=True, na_filter=False,
-	                        dtype={key: dtype for key, dtype in AUX_INFO_HEADER})
+	try:
+		aux_table = pd.read_csv(f"{shot_subfolder}/aux_info.csv", skipinitialspace=True, na_filter=False,
+		                        dtype={key: dtype for key, dtype in AUX_INFO_HEADER})
+	except FileNotFoundError:
+		aux_table = pd.DataFrame(columns=[key for key, dtype in AUX_INFO_HEADER])
+
 	for position, (col, row) in component_list_headers.items():
 		components = []
 		for i in range(1, 5):
@@ -613,13 +613,14 @@ def locate_subfolder_for(shot_number: str) -> str:
 	    :raise IOError: if you can’t find any subfolder that seems to go with this shot
 	"""
 	# start by trying to find a shot that matches the YYMMDD-00N part of it
-	for item in os.listdir("data"):
-		if os.path.isdir(os.path.join("data", item)) and shot_number[1:11] in item:
-			return f"data/{item}"
-	# if you can’t, see if there’s one that just matches the YYMMDD part
-	for item in os.listdir("data"):
-		if os.path.isdir(os.path.join("data", item)) and shot_number[1:7] in item:
-			return f"data/{item}"
+	for subfolder in os.listdir("data"):
+		if os.path.isdir(os.path.join("data", subfolder)) and shot_number[1:11] in subfolder:
+			return f"data/{subfolder}"
+	# if you can’t, see if there’s one that just matches the YYMMDD part (but make sure it doesn't have a different -00N)
+	for subfolder in os.listdir("data"):
+		if os.path.isdir(os.path.join("data", subfolder)) and shot_number[1:7] in subfolder and \
+				f"{shot_number[1:7]}-0" not in subfolder:
+			return f"data/{subfolder}"
 	# otherwise, give up
 	raise IOError(f"you need to create the subdirectory for shot {shot_number}")
 
@@ -699,9 +700,21 @@ def main():
 	                    help="the default directory where files downloaded from your default browser go")
 	args = parser.parse_args()
 
-	shot_number = normalize_shot_number(args.shot_number)
-	shot_subfolder = locate_subfolder_for(shot_number)
-	downloads_folder = evaluate_directory(args.downloads)
+	try:
+		shot_number = normalize_shot_number(args.shot_number)
+	except ValueError as e:
+		print(f"Error! {e}")
+		return
+	try:
+		shot_subfolder = locate_subfolder_for(shot_number)
+	except IOError as e:
+		print(f"Error! {e}")
+		return
+	try:
+		downloads_folder = evaluate_directory(args.downloads)
+	except ValueError as e:
+		print(f"Error! {e}")
+		return
 
 	load_info_from_nif_database(shot_number, shot_subfolder, args.DD_yield, args.DD_temperature, downloads_folder)
 
