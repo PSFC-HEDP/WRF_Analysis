@@ -154,8 +154,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 			workbooks[filename] = openpyxl.load_workbook("templates/report.xlsx")
 		worksheet = workbooks[filename].active
 		worksheet.cell(2, 2).value = f"{item['shot_day']}-{item['shot_number']}-999"
-		worksheet.cell(3, 2).value = f"TC0{item['line_of_site']}"
-		header_row = {"1": 9, "2": 19, "3": 39, "4": 29}[item["position"]]
+		worksheet.cell(3, 2).value = f"0{item['line_of_site']}"
+		header_row = {"1": 10, "2": 20, "3": 40, "4": 30}[item["position"]]
 		report_quantities = {
 			1: item["peak"]["yield"], 2: item["compression"]["yield"],
 			3: item["rhoR"], 4: item["compression_rhoR"]}
@@ -167,7 +167,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 			else:
 				worksheet.cell(header_row + row, 6).value = quantity["upper_err"]
 	for filename, workbook in workbooks.items():
-		workbook.save(os.path.join(base_directory, filename + ".xlsx"))
+		workbook.save(os.path.join(base_directory, filename))
 
 	# print out a table, and also save the condensed results in a csv file
 	print()
