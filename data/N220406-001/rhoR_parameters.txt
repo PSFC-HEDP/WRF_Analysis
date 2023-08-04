@@ -1,8 +1,0 @@
-Ri = 1685.2 um
-Ro = 1708.8 um
-shell_material = CH
-shell_thickness = 4.7
-P = 6.0 atm
-fD = 1.00
-f3He = 0.00
-fT = 0.00

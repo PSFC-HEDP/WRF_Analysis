@@ -1,2 +1,2 @@
-WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), Sigma (MeV), Sigma unc. (MeV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), Hot-spot rho-R (mg/cm^2), Shell rho-R (mg/cm^2)
-090-078:1,44740000.0,127683486.0,14.079,0.16191355718407277,2.605,26.364,36.90902314824363,8.122702215706308,3.2728398388900546,15.244392254556509
+WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), Sigma (MeV), Sigma unc. (MeV), Width (keV), Width unc. (keV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)
+90-078:1,44740000.0,127683486.0,14.079,0.16191355718407277,2.605,26.364,6134.775,62087.22,36.81591821809718,8.106967423270094,nan,inf,nan,inf,nan,nan

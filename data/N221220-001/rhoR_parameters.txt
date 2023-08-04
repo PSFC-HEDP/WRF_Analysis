@@ -1,8 +1,0 @@
-Ri = 1099.3 um
-Ro = 1176.2 um
-shell_material = HDC
-shell_thickness = 15.4
-P = 26.3 atm
-fD = 0.67
-f3He = 0.33
-fT = 0.00
