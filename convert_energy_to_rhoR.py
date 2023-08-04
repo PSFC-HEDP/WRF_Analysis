@@ -32,7 +32,7 @@ def convert_energy_to_rhoR(
 
 def main():
 	parser = argparse.ArgumentParser(
-		prog="convert_energy_to_rhoR",
+		prog="python convert_energy_to_rhoR.py",
 		description = "return the ρR that approximately corresponds to a given measured D3He-p energy, given some hohlraum parameters.")
 	parser.add_argument("energy", type=float,
 	                    help="the final energy of the D3He protons, in MeV")

@@ -727,7 +727,7 @@ def plt_set_locators() -> None:
 
 def main():
 	parser = argparse.ArgumentParser(
-		prog="make_plots_from_analysis",
+		prog="python make_plots_from_analysis.py",
 		description = "take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and "
 		              "generate a bunch of plots and tables summarizing the information therein.")
 	parser.add_argument(

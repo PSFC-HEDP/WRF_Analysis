@@ -685,7 +685,7 @@ def normalize_dim_coordinates(dim_coordinates: str) -> str:
 
 def main():
 	parser = argparse.ArgumentParser(
-		prog="load_info_from_nif_database",
+		prog="python load_info_from_nif_database.py",
 		description = "Load the information about a given shot number from WebDav and any traveler spreadsheets placed "
 		              "in the relevant `data/` subdirectory, store the top-level fields in the `shot_info.csv` file, "
 		              "and generate a simple etch and scan request.")
