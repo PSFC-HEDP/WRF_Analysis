@@ -492,13 +492,20 @@ def read_analysis_file(folder: str, filepath: str,
 
 	# try to fit the compression peak
 	if gaussian_fit:
-		compression_yield, compression_mean, compression_sigma = \
-			fit_skew_gaussian(spectrum, 0, mean[0] - 2*sigma[0])
+		try:
+			compression_fit = \
+				fit_skew_gaussian(spectrum, 0, mean[0] - 2*sigma[0])
+		except RuntimeError:
+			compression_fit = None
 	else:
-		compression_yield, compression_mean, compression_sigma = \
-			(0., 0., 0.), (nan, inf, inf), (nan, inf, inf)
-	good_compression_fit = compression_yield[0] > yeeld[0] and compression_mean[0] > spectrum[0, 0]
-	if not good_compression_fit:
+		compression_fit = None
+	good_compression_fit = compression_fit is not None
+	if compression_fit is not None:
+		if compression_fit[0][0] <= yeeld[0] or compression_fit[1][0] <= spectrum[0][0]:
+			good_compression_fit = False
+	if good_compression_fit:
+		compression_yield, compression_mean, compression_sigma = compression_fit
+	else:
 		compression_yield, compression_mean, compression_sigma = \
 			(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
 
@@ -614,7 +621,7 @@ def assign_label(item: np_Analysis, multiple_days: bool, multiple_shots: bool) -
 
 
 def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[str, Any]:
-	""" load the analysis parameters given in the rhoR_parameters.txt file
+	""" load the analysis parameters given in shot_info.csv and hohlraum.txt file
 	    :param folder: the absolute or relative path to the directory with the data we're considering
 	    :param ablator_material: a manual specification of the ablator material
 	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
@@ -646,7 +653,7 @@ def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[s
 	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):
 		with open(os.path.join(folder, "hohlraum.txt"), "w"):
 			pass  # create a blank file if there is none
-	with open(os.path.join(folder, "hohlraum.txt")) as f:
+	with open(os.path.join(folder, "hohlraum.txt"), encoding="utf-8") as f:
 		hohlraum_codes = f.readlines()
 	# NIF shots usually have hohlraeume, so complain if it looks like the user forgot to add it
 	if nif_shot and len(hohlraum_codes) == 0:
@@ -668,17 +675,20 @@ def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[s
 		# check for clipped spectrum flags
 		if "clip" in layer_set_code:
 			params["clipping"].add(key)
-			layer_set_code = re.sub(r"\s*\(?clip(ping)?\)?\s*", "", layer_set_code)
+			layer_set_code = re.sub(r"\s*\(?clip(ped|ping)?\)?\s*", "", layer_set_code)
 		# check for track overlap flags
 		if "overlap" in layer_set_code:
 			params["overlap"].add(key)
-			layer_set_code = re.sub(r"\s*\(?(track[ -]?)?overlap(ping)?\)?\s*", "", layer_set_code)
+			layer_set_code = re.sub(r"\s*\(?(track[ -]?)?overlap(ped|ping)?\)?\s*", "", layer_set_code)
 		# parse the material thicknesses
 		layers: list[Layer] = []
 		for layer_code in re.split(r"\s+", layer_set_code):
 			if len(layer_code) > 0:
-				thickness, _, material = re.fullmatch(
-					r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
+				try:
+					thickness, _, material = re.fullmatch(
+						r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
+				except AttributeError:
+					raise ValueError(f"I can't read '{layer_code}'.")
 				layers.append((float(thickness), material))
 		params["hohlraum"][key] = layers
 
@@ -709,12 +719,19 @@ def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound:
 	    their fitting, but I don’t think it’s significant above 7 MeV)
 	"""
 	spectrum = spectrum[(spectrum[:, 0] > lower_bound) & (spectrum[:, 0] < upper_bound), :]
+	if spectrum.size == 0:
+		raise RuntimeError("the shock peak is too close to the edge for us to even try to see a compression peak")
 	rainge = np.ptp(spectrum[:, 0])
 	center = np.mean(spectrum[:, 0])
-	values, covariances = optimize.curve_fit(
-		skew_gaussian, xdata=spectrum[:, 0], ydata=spectrum[:, 1], sigma=spectrum[:, 2],
-		p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
-		bounds=(0, inf), absolute_sigma=True)
+
+	try:
+		values, covariances = optimize.curve_fit(
+			skew_gaussian, xdata=spectrum[:, 0], ydata=spectrum[:, 1], sigma=spectrum[:, 2],
+			p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
+			bounds=(0, inf), absolute_sigma=True)
+	except (ValueError, RuntimeError) as e:
+		raise RuntimeError(f"the shock peak could not be fit because {e}")
+
 	return ((values[0], sqrt(covariances[0, 0]), sqrt(covariances[0, 0])),
 	        (values[1], sqrt(covariances[1, 1]), sqrt(covariances[1, 1])),
 	        (values[2], sqrt(covariances[2, 2]), sqrt(covariances[2, 2])))
