@@ -1,0 +1,6 @@
+nan nan nan nan nan nan
+19.9 5.48 2.03 2 .673596 0
+nan nan nan nan nan nan
+nan nan nan nan nan nan
+22.67 6.71 4.68 1.81913 .789061 .18087
+20.98 3.94 2.66 2 .396845 0

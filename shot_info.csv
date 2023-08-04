@@ -1,7 +1,60 @@
 shot number,PI,DD-n yield,DD-n temperature,ablator material,ablator thickness,ablator radius,ablator density,hohlraum material,fill gas,fill pressure,deuterium fraction,helium-3 fraction,shot name,campaign,subcampaign,platform
 N181127-001-999,zylstra1,2.9587e+10,8.7964,HDC,50,1000,,,50% D + 50% He3,13680,0.5,0.5,D_Nuc_dEdx_C_S01a,Nuclear,Proton Stopping Power,dEdx
 N181128-001-999,zylstra1,3.9698e+10,10.557,Be,50,1000,,,50% D + 50% He3,13680,0.5,0.5,D_Nuc_dEdx_Be_S01a,Nuclear,Proton Stopping Power,dEdx
+N210810-002-999,zylstra1,8.3482e+10,1.9065,CH,132.61,906.6,1.0511,Au,50% D + 50% He3,33669,0.5,0.5,D_Nuc_Sym_ElecScr_S04b,Nuclear,,Symcap
+N210810-003-999,zylstra1,4.4925e+11,2.4517,CH,131.9,899.74,1.0382,Au,50% D + 50% He3,34418,0.5,0.5,D_Nuc_Sym_ElecScr_S03b,Nuclear,,Symcap
+N210912-001-999,pollock6,6.8101e+12,2.7142,HDC,63.46,912.91,3.4499,Au,100% D,18308,1,0,Fa_Mag_Hohl_S02a,Magnetized Drive,,Hohl
+N210912-002-999,doeppner1,1.423e+13,3.7137,HDC,78.962,1178.5,3.3062,AuDU,67% D + 33% He3,20057,0.67,0.33,I_Hohl_Sym_LEHHware_S02a,Hohlraum,Predictive Capability,Symcap
+N210928-004-999,doeppner1,2.102e+13,3.9089,HDC,78.318,1177.1,3.3908,Au,67% D + 33% He3,20066,0.6667,0.3333,I_Hohl_Sym_LEHHware_S03a,Hohlraum,Predictive Capability,Symcap
+N211026-001-999,hohenberger1,5.5842e+13,10.298,CH,18.07,1472,1.2,,100% D,6015.6,1,0,H_Surv_Neutron_Sdev_S03a,Survivability,Neutron-Sdev,Neutron
+N211026-002-999,hohenberger1,5.3352e+13,10.922,CH,18.576,1501.9,1.0062,,100% D,6170.2,1,0,H_Surv_Neutron_Sdev_S05a,Survivability,Neutron-Sdev,Neutron
+N211026-003-999,hohenberger1,5.7789e+13,10.555,CH,17.972,1438.8,1.2147,,100% D,6093.6,1,0,H_Surv_Neutron_Sdev_S04a,Survivability,Neutron-Sdev,Neutron
+N211109-002-999,rosenberg10,2.8495e+11,2.1691,CH,98.173,1107.1,1.045,,100% D,15117,1,0,I_MJDD_PDD_DDShap_S01a,Mega Joule Direct Drive,Direct Drive,PDD
+N211110-001-999,rosenberg10,1.432e+11,1.757,CH,98.053,1101.1,1.0459,,100% D,15216,1,0,I_MJDD_PDD_DDShap_S02b,Mega Joule Direct Drive,Direct Drive,PDD
+N211116-001-999,rinderknecht1,3.5671e+13,6.8278,CH,23.403,1694.4,1.0498,,100% D,7569,1,0,I_MJDD_PDD_DDExpPush_S13a,Mega Joule Direct Drive,Direct Drive,PDD
+N211116-002-999,rinderknecht1,4.6993e+13,7.3455,CH,23.403,1687.7,1.0457,,100% D,7588.2,1,0,I_MJDD_PDD_DDExpPush_S14a,Mega Joule Direct Drive,Direct Drive,PDD
+N211117-001-999,rinderknecht1,5.3509e+13,7.6355,CH,23.502,1686.7,1.0508,,100% D,7597.7,1,0,I_MJDD_PDD_DDExpPush_S15a,Mega Joule Direct Drive,Direct Drive,PDD
+N211129-001-999,izumi2,3.0096e+11,2.4252,CH,170.34,984.13,1.0677,Au,30% D + 70% He3,36880,0.3,0.7,I_Adia_Sym_BPhase_S01a,Adiabat,CH Ablator,Symcap
+N211226-001-999,casey21,6.4841e+12,3.7132,HDC,69.416,913.15,3.3657,Au,67% D + 33% He3,19887,0.6667,0.3333,I_Adia_Sym_SQN_S01a,Adiabat,HDC Ablator,Symcap
+N211229-002-999,izumi2,1.5126e+11,2.2017,CH,169.27,990.56,1.0687,Au,30% D + 70% He3,36528,0.3,0.7,I_DPI_Sym_BPhase_S01b,Disruptive Initiative,Beam Phasing,Symcap
+N220207-001-999,rosenberg10,1.4706e+11,1.4989,CH,92.545,1168.8,1.2861,,100% D,16457,1,0,I_MJDD_PDD_HotE_S22a,Mega Joule Direct Drive,Hot Electron,PDD
+N220208-001-999,rosenberg10,1.7057e+11,1.6002,CH,105.98,1172.2,1.1822,,100% D,15494,1,0,I_MJDD_PDD_HotE_S20a,Mega Joule Direct Drive,Hot Electron,PDD
+N220208-002-999,rosenberg10,1.9804e+11,1.6307,CH,118.5,1170.2,1.0617,,100% D,15200,1,0,I_MJDD_PDD_HotE_S21a,Mega Joule Direct Drive,Hot Electron,PDD
+N220222-001-999,izumi2,2.8832e+11,2.3205,CH,170.77,992.49,1.0677,Au,30% D + 70% He3,35338,0.3,0.7,I_DPI_Sym_BPhase_S02a,Disruptive Initiative,Beam Phasing,Symcap
+N220223-001-999,schaeffer2,4e+09,3.2,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S27a,Astrophysics,,Magnetic Reconnection
+N220223-003-999,schaeffer2,4e+09,3.2,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S28a,Astrophysics,,Magnetic Reconnection
+N220223-004-999,schaeffer2,4e+09,3.2,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S29a,Astrophysics,,Magnetic Reconnection
+N220301-003-999,izumi2,3e+11,2.3,CH,169.09,980.84,1.0697,Au,30% D + 70% He3,32927,0.3,0.7,I_Adia_2DConA_BPhase_S02a,Adiabat,CH Ablator,2D ConA
+N220405-002-999,rosenberg10,4.919e+13,7.2052,CH,23.699,1683.3,1.0631,,100% D,7603.3,1,0,I_MJDD_PDD_DDExpPush_S16a,Mega Joule Direct Drive,Direct Drive,PDD
+N220405-003-999,rosenberg10,2.0723e+13,5.8973,CH,23.6,1685.5,1.0616,,100% D,,1,0,I_MJDD_PDD_DDExpPush_S17a,Mega Joule Direct Drive,Direct Drive,PDD
+N220406-001-999,rosenberg10,1.935e+13,6.9061,CH,23.304,1687.3,1.0579,,100% D,4530.9,1,0,I_MJDD_PDD_DDExpPush_S18a,Mega Joule Direct Drive,Direct Drive,PDD
+N220410-001-999,hohenberger1,2.1993e+13,3.7081,HDC,77.702,1128.1,3.4581,DU,67% D + 33% He3,19775,0.6667,0.3333,I_Stag_Sym_HyEMerge_S01a,Stagnation,,Symcap
+N220511-001-999,rosenberg10,3.9516e+13,7.1765,CH,23.502,1693.4,1.045,,100% D,7471.4,1,0,I_MJDD_PDD_DDExpPush_S19a,Mega Joule Direct Drive,Exploding Pusher,PDD
+N220627-001-999,baker7,9.8358e+12,4.173,HDC,77.102,1176.8,3.4318,Au,67% D + 33% He3,20082,0.6667,0.3333,I_Hohl_Sym_Frus1100_S01a,Hohlraum,,Symcap
+N220905-002-999,rosenberg10,5.7191e+11,1.8836,CH,122.44,1498.5,1.2263,,100% D,14789,1,0,I_MJDD_PDD_HotE_S23a,Mega Joule Direct Drive,Hot Electron,PDD
+N220906-001-999,rosenberg10,6.6846e+11,1.9154,CH,146.14,1505.9,1.0675,,100% D,15118,1,0,I_MJDD_PDD_HotE_S24a,Mega Joule Direct Drive,Hot Electron,PDD
+N220913-002-999,ceurvorst1,5.2207e+13,9.0356,CH,22.514,1693.7,1.0766,,100% D,4552.1,1,0,I_MJDD_PDD_DDExpPush_S24a,Mega Joule Direct Drive,Exploding Pusher,PDD
+N220914-001-999,ceurvorst1,5.8232e+13,7.88,CH,22.712,1687.8,1.0722,,100% D,7602.2,1,0,I_MJDD_PDD_DDExpPush_S22a,Mega Joule Direct Drive,Exploding Pusher,PDD
+N220914-002-999,ceurvorst1,6.1789e+13,7.8927,CH,23.107,1690.3,1.0769,,100% D,7610.3,1,0,I_MJDD_PDD_DDExpPush_S23a,Mega Joule Direct Drive,Exploding Pusher,PDD
+N221011-001-999,kostick1,3.4282e+10,1.2609,CH,98.185,1106.5,1.0486,,100% D,15157,1,0,I_MJDD_PDD_DDShap_S04a,Mega Joule Direct Drive,,PDD
+N221025-001-999,zylstra1,6.9878e+12,3.1408,HDC,68.079,917.08,3.2796,DU,67% D + 33% He3,19754,0.6667,0.3333,I_Comprs_Sym_BigDip_S01a,Compression,,Symcap
+N221110-001-999,schaeffer2,1e+09,3,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S30a,Astrophysics,,Magnetic Reconnection
+N221110-002-999,schaeffer2,1e+09,3,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S31a,Astrophysics,,Magnetic Reconnection
+N221110-003-999,schaeffer2,1e+09,3,SiO2,,,,,,,0,0,D_Astro_Mag_Recon_S32a,Astrophysics,,Magnetic Reconnection
+N221113-002-999,baker7,1.006e+13,3.9076,HDC,77.401,1176.4,3.4396,Au,67% D + 33% He3,19802,0.6667,0.3333,I_Stag_Sym_Frus1100_S01a,Stagnation,,Symcap
+N221126-001-999,ralph5,2.3426e+13,4.2839,HDC,76.056,1124.9,3.466,DU,67% D + 33% He3,19788,0.6667,0.3333,I_Stag_Sym_HyECpl_S04a,Stagnation,,Symcap
+N221128-001-999,doeppner1,3.0115e+13,4.3382,HDC,87.645,1138.2,3.3018,DU,67% D + 33% He3,19811,0.6667,0.3333,I_Stag_Sym_HyECpl_S05a,Stagnation,,Symcap
+N221220-001-999,mariscal2,1.3869e+13,4.0626,HDC,76.947,1176,3.4546,Au,67% D + 33% He3,19971,0.6667,0.3333,I_Stag_2DConA_Frus1100_S01a,Stagnation,,2D ConA
+N230102-003-999,zylstra1,5.407e+12,3.025,HDC,68.111,917.04,3.2652,DU,67% D + 33% He3,19745,0.6667,0.3333,I_Comprs_Sym_BigDip_S02a,Compression,,Symcap
+N230103-004-999,ralph5,3.0508e+13,4.4162,HDC,87.291,1137.7,3.3072,DU,67% D + 33% He3,19579,0.6667,0.3333,I_Stag_Sym_HyECpl_S07a,Stagnation,,Symcap
+N230131-002-999,hohenberger1,2.5306e+10,1.8031,CH,17.478,1463,1.0497,,100% D,1810.7,1,0,H_Surv_Neutron_Sdev_S06b,Survivability,Neutron Platform Development,Neutron
+N230201-001-999,baker7,9.0501e+12,3.9262,HDC,69.457,912.4,3.3851,Au,67% D + 33% He3,19744,0.6667,0.3333,I_Comprs_Sym_SQN_S01a,Compression,,Symcap
+N230207-001-999,swadling1,2.3234e+12,3.031,HDC,65.004,909.29,3.4568,Au,67% D + 33% He3,19738,0.6667,0.3333,I_Hohl_BuildUp_Sym_S03a,Hohlraum,,BuildUp
+N230207-003-999,rosenberg10,7.6166e+10,1.4547,CH,109.87,1167.7,1.0964,,100% D,15159,1,0,I_MJDD_PDD_HotE_S25a,Mega Joule Direct Drive,,PDD
+N230208-001-999,rosenberg10,1.5769e+11,1.7767,CH,94.367,1168.9,1.2828,,100% D,15191,1,0,I_MJDD_PDD_HotE_S26a,Mega Joule Direct Drive,,PDD
+N230208-002-999,rosenberg10,2.1263e+11,1.6089,CH,109.84,1167.9,1.0963,,100% D,15212,1,0,I_MJDD_PDD_HotE_S27a,Mega Joule Direct Drive,,PDD
 N230510-001-999,ralph5,2e+13,4.02,HDC,83.194,1181.9,3.3025,Au,67% D + 33% He3,2155.3,0.6667,0.3333,I_Stag_Sym_HohlScan_S02a,Stagnation,,Symcap
 N230709-001-999,ceurvorst1,4.4e+13,8.277,CH,22.909,1688.2,1.0567,,100% D,4799.7,1,0,I_MJDD_PDD_DDExpPush_S25a,Mega Joule Direct Drive,,PDD
 N230710-001-999,ceurvorst1,4.4e+13,7.2992,CH,23.403,1674.8,1.1122,,100% D,7645.1,1,0,I_MJDD_PDD_DDExpPush_S26a,Mega Joule Direct Drive,,PDD
 N230710-002-999,ceurvorst1,4.4e+13,7.1539,CH,23.403,1664,1.1138,,100% D,7677,1,0,I_MJDD_PDD_DDExpPush_S27a,Mega Joule Direct Drive,,PDD
+N230710-003-999,mariscal2,1e+20,10,,,,,,,,0,0,D_Astro_ARC_ProtBoost_S01a,Astrophysics,,ARC
