@@ -28,7 +28,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
 			if params["ablator material"] is None:
-				raise ValueError("You need to specify the shell material for OMEGA shots")
+				raise ValueError("You need to specify the shell material with --shell_material= for OMEGA shots")
 			rhoR_objects[shot_name] = []
 			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
 				table_filename = f"tables/stopping_range_protons_{params['ablator material']}_plasma_{ρ}gcc_{Te}eV.txt"
@@ -42,12 +42,15 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
 
 		if shot_name in rhoR_objects:
+			initial_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
 			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+			best_gess = np.interp(mean_energy[0], energy_ref, rhoR_ref) - \
+			            np.interp(initial_energy, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
 			error_bar = 0
 			for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
 				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref)
+					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref) - \
+					                np.interp(initial_energy, energy_ref, rhoR_ref)
 					if abs(perturbd_gess - best_gess) > error_bar:
 						error_bar = abs(perturbd_gess - best_gess)
 			return best_gess, error_bar, error_bar

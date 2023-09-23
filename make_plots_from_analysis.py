@@ -30,7 +30,7 @@ ROOT = 'data'
 # define an analysis type that combines all the information about one WRF spectrum
 Analysis = tuple[str, str, str, str, str, bool, bool, Peak, Quantity, Peak, Quantity, NDArray[float]]
 np_Analysis = np.dtype([
-	("shot_day", np.str_, 11), ("shot_number", np.str_, 5),
+	("shot_day", np.str_, 11), ("shot_number", np.str_, 7),
 	("line_of_site", np.str_, 7), ("position", np.str_, 2),
 	("tag", np.str_, 16), ("overlapd", bool), ("clipd", bool),
 	("peak", np_Peak), ("rhoR", np_Quantity),
@@ -68,8 +68,9 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 					try:
 						analyses.append(
 							read_analysis_file(folder, os.path.join(subfolder, filename), show_plots, shell_material))
-					except FileNotFoundError as e:
+					except (FileNotFoundError, ValueError) as e:
 						print(e)
+						return
 
 	if len(analyses) == 0:
 		print("no datum were found.")
@@ -303,7 +304,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 			plt.ylim(plot_bottom/rainge**0.15, plot_top*rainge**0.15)
 		else:
 			rainge = plot_top - plot_bottom
-			plt.ylim(plot_bottom - 0.15*rainge, plot_top + 0.15*rainge)
+			plt.ylim(max(0, plot_bottom - 0.15*rainge), plot_top + 0.15*rainge)
 
 		# if filetag == "yield":
 		# 	plt.ylim(-.1e11, 2e11)
@@ -408,23 +409,23 @@ def read_analysis_file(folder: str, filepath: str,
 	"""
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
-	label = ''
-	identifiers = re.split(r"[_/\\. ]", filepath)
+	tag = ''
+	identifiers = re.split(r"[_/\\. ]", filepath.upper())
 	for identifier in reversed(identifiers):
 		if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
 			shot_day, shot_number, _ = identifier.split('-')
-		elif re.fullmatch(r'O[mM]?2\d{5}', identifier):
+		elif re.fullmatch(r'OM?2\d{5}', identifier):
 			shot_day = identifier
 		elif re.fullmatch(r'O?1?\d{5}', identifier):
 			shot_number = identifier
 		elif re.fullmatch(r'(DIM-?)?(0+-0+|0?90-(0?78|124|315))|TIM[1-6](-(4|8|12))?|(NDI-)?P2', identifier):
 			line_of_site = identifier
-		elif re.fullmatch(r'(Pos-?)?[1-4]|(4|8|12):00', identifier):
+		elif re.fullmatch(r'(POS-?)?[1-4]|(4|8|12):00', identifier):
 			position = identifier[-1]
-		elif re.fullmatch(r'134\d{5}|[gG][0-2]\d{2}', identifier):
+		elif re.fullmatch(r'134\d{5}|G[0-2]\d{2}', identifier):
 			wrf_number = identifier
-		elif re.fullmatch(r'(left|right|top|bottom|full)', identifier):
-			label = identifier
+		elif re.fullmatch(r'(LEFT|RIGHT|TOP|BOTTOM|MIDDLE|FULL)', identifier):
+			tag = identifier
 
 	if shot_number is None:
 		raise ValueError(f"no shot number found in {identifiers}")
@@ -438,7 +439,7 @@ def read_analysis_file(folder: str, filepath: str,
 	elif position is None:
 		position = ""
 
-	print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{position} {label}")
+	print(f"{wrf_number} – {shot_day}-{shot_number} {line_of_site}:{position} {tag}")
 
 	# read thru the analysis file
 	with open(filepath, newline='') as f:
@@ -536,8 +537,8 @@ def read_analysis_file(folder: str, filepath: str,
 	plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 	plt.xlabel("Energy after hohlraum wall (MeV)" if any_hohlraum else "Energy (MeV)")
 	plt.ylabel("Yield (MeV⁻¹)")
-	if label != '':
-		plt.title(f"{line_of_site}, position {position} ({label})")
+	if tag != '':
+		plt.title(f"{line_of_site}, position {position} ({tag})")
 	elif position != "":
 		plt.title(f"{line_of_site}, position {position}")
 	else:
@@ -577,7 +578,7 @@ def read_analysis_file(folder: str, filepath: str,
 	return (
 		shot_day, shot_number,
 		line_of_site, position,
-		label, any_overlap_here, any_clipping_here,
+		tag, any_overlap_here, any_clipping_here,
 		(yeeld,
 		 mean,
 		 sigma),
@@ -659,7 +660,7 @@ def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[s
 	if nif_shot and len(hohlraum_codes) == 0:
 		raise FileNotFoundError(f"you need to fill out `{os.path.join(os.getcwd(), folder, 'hohlraum.txt')}` with the "
 		                        f"hohlraum information.  if there is no hohlraum, just put 'none'.")
-	if len(hohlraum_codes) > 0 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum
+	if len(hohlraum_codes) == 1 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum
 		hohlraum_codes = []
 
 	# parse the hohlraum layers and booleans
