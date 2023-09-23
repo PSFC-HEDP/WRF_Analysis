@@ -55,6 +55,17 @@ and the difference is typically smaller than the errorbars,
 so in general I don't think you should worry about it.
 if the PI emails you and is like "what about the doping?" just say "no".
 
+the plots and tables label the wedges with varying levels of specificity depending on how many different wedges are present.
+so, for example, the shot number won't be listed on the x-axis if only one shot is being plotted,
+because it would be redundant.
+you don't generally need to worry about that,
+but one rare edge case is where you want to analyze two or more parts of a WRF separately because of clipping or something.
+what you can do then is analyze it multiple times with different area limits or whatever,
+and distinguish the resulting analysis files by putting
+"\_left\_", "\_right\_", "\_top\_", "\_bottom\_", "\_middle\_", and/or "\_full\_"
+in the filenames.
+the code will notice these tags and include them in the plots and tables to uniquely identify each analysis.
+
 ## Installation
 
 you'll need the Python requirements, which are all on PyPI.
