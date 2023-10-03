@@ -1,10 +1,12 @@
 # a file for top-level ρR calculation functions.  the reason this file is separate from rhoR_Analysis.py despite the
-# passingly similar topic scope is that Alex wrote his fancy calculations OOPly and the script onto which I grafted it
-# is entirely procedural, so the interface is a little awkward semanticly.
+# passingly similar semantic scope is that Alex wrote his fancy calculations OOPly and the script onto which I grafted it
+# is entirely procedural, so the interface is a little awkward.
 from math import nan
 from typing import Any
 
 import numpy as np
+from matplotlib import pyplot as plt
+from numpy.typing import NDArray
 from scipy import integrate
 
 from src.rhoR_Analysis import rhoR_Analysis
@@ -23,34 +25,43 @@ rhoR_objects: dict[str, Any] = {}
 
 def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]) -> Quantity:
 	""" calculate the rhoR using whatever tecneke makes most sense.
+	    for a NIF shot, this will use Alex's fancy calculations.
+	    for an OMEGA shot, this will simply interpolate off a table loaded from disk.
 		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
 	"""
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
-			if params["ablator material"] is None:
-				raise ValueError("You need to specify the shell material with --shell_material= for OMEGA shots")
-			rhoR_objects[shot_name] = []
-			for ρ, Te in [(20, 500), (30, 500), (10, 500), (20, 250), (20, 750)]:
-				table_filename = f"tables/stopping_range_protons_{params['ablator material']}_plasma_{ρ}gcc_{Te}eV.txt"
-				try:
-					data = np.loadtxt(table_filename, skiprows=4)
-				except IOError:
-					print(f"!\tDid not find '{table_filename}'.")
+			if "ablator material" not in params:
+				raise ValueError("For OMEGA shots, you need to specify the shell material with '--shell_material=_'")
+			if "shell density" not in params:
+				raise ValueError("For OMEGA shots, you need to specify the shell density (in g/cm3) with '--shell_density=_'")
+			if "shell electron temperature" not in params:
+				raise ValueError("For OMEGA shots, you need to specify the shell material (in eV) with '--shell_temperature=_'")
+			material = params["ablator material"]
+			nominal_density = params["shell density"]
+			nominal_temperature = params["shell electron temperature"]
+			try:
+				rhoR_objects[shot_name] = [
+					load_stopping_range_table(material, nominal_density, nominal_temperature)]
+				for density in [nominal_density*0.5, nominal_density*1.5]:
+					for temperature in [nominal_temperature*0.5, nominal_temperature*1.5]:
+						rhoR_objects[shot_name].append(
+							load_stopping_range_table(material, density, temperature))
+			except IOError as e:
+				print(f"!\t{e}")
+				if shot_name in rhoR_objects:
 					rhoR_objects.pop(shot_name)
-					break
-				else:
-					rhoR_objects[shot_name].append([data[::-1, 1], data[::-1, 0]*1000]) # load a table from Frederick's program
 
 		if shot_name in rhoR_objects:
-			initial_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
+			birth_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
 			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(mean_energy[0], energy_ref, rhoR_ref) - \
-			            np.interp(initial_energy, energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+			best_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
+			            np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
 			error_bar = 0
 			for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
 				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-					perturbd_gess = np.interp(energy, energy_ref, rhoR_ref) - \
-					                np.interp(initial_energy, energy_ref, rhoR_ref)
+					perturbd_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
+					                np.interp(energy, energy_ref, rhoR_ref)
 					if abs(perturbd_gess - best_gess) > error_bar:
 						error_bar = abs(perturbd_gess - best_gess)
 			return best_gess, error_bar, error_bar
@@ -89,6 +100,20 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		raise NotImplementedError(shot_name)
 
 
+def load_stopping_range_table(material: str, density: float, electron_temperature: float
+                              ) -> tuple[NDArray[float], NDArray[float]]:
+	""" load a plasma stopping range table (produced by Fredrick's program) from disk.  there must
+	    be a preexisting table for this exact material/density/temperature combination or else
+	    you'll just get a FileNotFoundError.
+	    :param material: the material name (CD, SiO2, or cetera)
+	    :param density: the plasma density in g/cm³
+	    :param electron_temperature: the electron temperature in eV
+	"""
+	table_filename = f"tables/stopping_range_protons_{material}_plasma_{density:.0f}gcc_{electron_temperature:.0f}eV.txt"
+	data = np.loadtxt(table_filename, skiprows=4)
+	return data[:, 0], data[:, 1]*1000
+
+
 def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
 	""" correct some spectral properties for a hohlraum """
 	if len(layers) == 0:
@@ -111,7 +136,7 @@ def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
 
 
 def get_ein_from_eout(eout: float, layers: list[Layer]) -> float:
-	""" do the reverse stopping power calculation """
+	""" do the reverse cold matter stopping power calculation """
 	energy = eout # [MeV]
 	for thickness, formula in layers[::-1]:
 		data = np.loadtxt(f"tables/stopping_power_protons_{formula}.csv", delimiter=',')
@@ -126,7 +151,7 @@ def get_ein_from_eout(eout: float, layers: list[Layer]) -> float:
 
 
 def get_σin_from_σout(deout: float, eout: float, layers: list[Layer]) -> float:
-	""" do a derivative of the stopping power calculation """
+	""" do a derivative of the cold matter stopping power calculation """
 	left = get_ein_from_eout(max(0., eout - deout), layers)
 	rite = get_ein_from_eout(max(0., eout + deout), layers)
 	return (rite - left)/2

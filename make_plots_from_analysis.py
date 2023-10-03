@@ -41,11 +41,12 @@ SecondaryAnalysis = tuple[Quantity, Quantity]
 np_SecondaryAnalysis = np.dtype([("rhoR", np_Quantity), ("temperature", np_Quantity)])
 
 
-def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_material: Optional[None]):
+def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_options: dict[str, Any]):
 	""" take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and
 	    generate a bunch of plots and tables summarizing the information therein.
 	    :param folders: a list of subdirectories in data/ to search for analysis results
 	    :param show_plots: whether to show the plots as they’re generated in addition to saving them to disk
+	    :param command_line_options: additional values specified in the original command
 	"""
 	analyses = []
 	for i, folder in enumerate(folders):
@@ -66,8 +67,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, shell_materia
 
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 					try:
-						analyses.append(
-							read_analysis_file(folder, os.path.join(subfolder, filename), show_plots, shell_material))
+						analyses.append(read_analysis_file(
+							folder, os.path.join(subfolder, filename), show_plots, command_line_options))
 					except (FileNotFoundError, ValueError) as e:
 						print(e)
 						return
@@ -398,12 +399,12 @@ def read_shot_summary_file(filepath: str) -> list[Analysis]:
 
 
 def read_analysis_file(folder: str, filepath: str,
-                       show_plots: bool, shell_material: Optional[str]) -> Analysis:
+                       show_plots: bool, command_line_parameters: dict[str, Any]) -> Analysis:
 	""" read an analysis file that came out of AnalyzeCR39 and pull out the key details in an Analysis struct
 	    :param folder: the main folder to which this analysis file belongs
 	    :param filepath: the relative or absolute path to the analysis file
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
-	    :param shell_material: the material of the shell, for ρR purposes, if it's not already known
+	    :param command_line_parameters: any ρR calculation information specified on the command line
 	    :return: an Analysis object summarizing the analysis file
 	    :raise FileNotFoundError: if the analysis file or an auxiliary file (like hohlraum.txt) is missing
 	"""
@@ -511,7 +512,8 @@ def read_analysis_file(folder: str, filepath: str,
 			(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
 
 	# load info from hohlraum.txt and the shot table
-	parameters = load_rhoR_parameters(folder, shell_material)
+	parameters = load_rhoR_parameters(folder)
+	parameters.update(command_line_parameters)
 	any_hohlraum = any(parameters["hohlraum"].values())
 	any_clipping_here = any(indicator in filepath for indicator in parameters["clipping"])
 	any_overlap_here = any(indicator in filepath for indicator in parameters["overlap"])
@@ -621,12 +623,11 @@ def assign_label(item: np_Analysis, multiple_days: bool, multiple_shots: bool) -
 	return shot_label, analysis_label
 
 
-def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[str, Any]:
+def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	""" load the analysis parameters given in shot_info.csv and hohlraum.txt file
 	    :param folder: the absolute or relative path to the directory with the data we're considering
-	    :param ablator_material: a manual specification of the ablator material
 	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
-	    :raise FileNotFoundError: if the hohlraum.txt file hasn't been created
+	    :raise FileNotFoundError: if the hohlraum.txt file hasn't been created but this is a NIF shot
 	"""
 	# start by taking any relevant information from shot_info.csv
 	params: dict[str, Any] = {}
@@ -645,10 +646,6 @@ def load_rhoR_parameters(folder: str, ablator_material: Optional[str]) -> dict[s
 
 		# calculate the converged shell thickness
 		params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
-
-	# use the manually specified ablator material, if there is one
-	if ablator_material is not None or "ablator material" not in params:
-		params["ablator material"] = ablator_material
 
 	# read hohlraum.txt if it exists
 	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):
@@ -761,12 +758,28 @@ def main():
 		     "Must be one of 'CH', 'CH2', 'HDC', 'SiO2', or 'Be'."
 	)
 	parser.add_argument(
+		"--shell_density", type=float, default=None,
+		help="The nominal shell density at bang-time, in g/mL. Only needed for OMEGA shots."
+	)
+	parser.add_argument(
+		"--shell_temperature", type=float, default=None,
+		help="The nominal electron temperature in the shell at bang-time, in eV. Only needed for OMEGA shots."
+	)
+	parser.add_argument(
 		"--show", action="store_true",
 		help="to show the plots as they're generated in addition to saving them in the subdirectory."
 	)
 	args = parser.parse_args()
 
-	make_plots_from_analysis(args.folders.split(","), args.show, args.shell_material)
+	options = dict()
+	if args.shell_material is not None:
+		options["ablator material"] = args.shell_material
+	if args.shell_density is not None:
+		options["shell density"] = args.shell_density
+	if args.shell_temperature is not None:
+		options["shell electron temperature"] = args.shell_temperature
+
+	make_plots_from_analysis(args.folders.split(","), args.show, options)
 
 
 class FixedOrderFormatter(ScalarFormatter):
