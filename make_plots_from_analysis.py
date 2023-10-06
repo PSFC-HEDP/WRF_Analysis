@@ -21,6 +21,7 @@ from src.calculate_rhoR import perform_hohlraum_correction, calculate_rhoR, Laye
 
 # matplotlib.use("qtagg")
 np.seterr(all="raise", under="ignore")
+plt.rcParams["font.size"] = 12
 
 # key values that the program needs to know
 ROOT = 'data'
@@ -421,7 +422,7 @@ def read_analysis_file(folder: str, filepath: str,
 			shot_number = identifier
 		elif re.fullmatch(r'(DIM-?)?(0+-0+|0?90-(0?78|124|315))|TIM[1-6](-(4|8|12))?|(NDI-)?P2', identifier):
 			line_of_site = identifier
-		elif re.fullmatch(r'(POS-?)?[1-4]|(4|8|12):00', identifier):
+		elif re.fullmatch(r'((POS|Pos)-?)?[1-4]|(4|8|12):00', identifier):
 			position = identifier[-1]
 		elif re.fullmatch(r'134\d{5}|G[0-2]\d{2}', identifier):
 			wrf_number = identifier
@@ -562,14 +563,22 @@ def read_analysis_file(folder: str, filepath: str,
 	else:
 		hohlraum_layers = []
 	yeeld, mean, sigma = perform_hohlraum_correction(hohlraum_layers, (yeeld, mean, sigma))
+
 	# do the ρR analysis for both the shock and compression peak
-	rhoR = calculate_rhoR(mean, shot_day+shot_number, parameters)
+	try:
+		rhoR = calculate_rhoR(mean, shot_day+shot_number, parameters)
+	except ValueError as e:
+		print(f"setting ρR to nan because {e}")
+		rhoR = (nan, nan, nan)
 	if good_compression_fit:
 		compression_yield, compression_mean, compression_sigma = \
 			perform_hohlraum_correction(hohlraum_layers,
 			                            (compression_yield, compression_mean, compression_sigma))
-		compression_rhoR = calculate_rhoR(
-			compression_mean, shot_day+shot_number, parameters)
+		try:
+			compression_rhoR = calculate_rhoR(
+				compression_mean, shot_day+shot_number, parameters)
+		except ValueError:
+			compression_rhoR = (nan, nan, nan)
 	else:
 		compression_rhoR = (nan, nan, nan)
 
@@ -642,10 +651,12 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 		shot_info = nif_shot_table.loc[nif_shot_number]
 		for key in ["ablator radius", "ablator thickness", "ablator material",
 		            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
-			params[key] = shot_info[key]
+			if not pd.isnull(shot_info[key]):
+				params[key] = shot_info[key]
 
 		# calculate the converged shell thickness
-		params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
+		if "shell thickness" in params:
+			params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
 
 	# read hohlraum.txt if it exists
 	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):

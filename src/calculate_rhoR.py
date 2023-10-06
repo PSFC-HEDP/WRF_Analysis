@@ -28,76 +28,69 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 	    for a NIF shot, this will use Alex's fancy calculations.
 	    for an OMEGA shot, this will simply interpolate off a table loaded from disk.
 		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
+		:raise ValueError: if not enuff information is available to make an inference
 	"""
 	if shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
 			if "ablator material" not in params:
-				raise ValueError("For OMEGA shots, you need to specify the shell material with '--shell_material=_'")
+				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material with '--shell_material=_'.")
 			if "shell density" not in params:
-				raise ValueError("For OMEGA shots, you need to specify the shell density (in g/cm3) with '--shell_density=_'")
+				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell density (in g/cm3) with '--shell_density=_'")
 			if "shell electron temperature" not in params:
-				raise ValueError("For OMEGA shots, you need to specify the shell material (in eV) with '--shell_temperature=_'")
+				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material (in eV) with '--shell_temperature=_'")
 			material = params["ablator material"]
 			nominal_density = params["shell density"]
 			nominal_temperature = params["shell electron temperature"]
-			try:
-				rhoR_objects[shot_name] = [
-					load_stopping_range_table(material, nominal_density, nominal_temperature)]
-				for density in [nominal_density*0.5, nominal_density*1.5]:
-					for temperature in [nominal_temperature*0.5, nominal_temperature*1.5]:
-						rhoR_objects[shot_name].append(
-							load_stopping_range_table(material, density, temperature))
-			except IOError as e:
-				print(f"!\t{e}")
-				if shot_name in rhoR_objects:
-					rhoR_objects.pop(shot_name)
+			rhoR_objects[shot_name] = [  # TODO: use StopPow to calculate this rather than loading a table
+				load_stopping_range_table(material, nominal_density, nominal_temperature)]
+			for density in [nominal_density*0.5, nominal_density*1.5]:
+				for temperature in [nominal_temperature*0.5, nominal_temperature*1.5]:
+					rhoR_objects[shot_name].append(
+						load_stopping_range_table(material, density, temperature))
 
-		if shot_name in rhoR_objects:
-			birth_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
-			energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-			best_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
-			            np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
-			error_bar = 0
-			for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
-				for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-					perturbd_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
-					                np.interp(energy, energy_ref, rhoR_ref)
-					if abs(perturbd_gess - best_gess) > error_bar:
-						error_bar = abs(perturbd_gess - best_gess)
-			return best_gess, error_bar, error_bar
-
-		else:
-			return nan, nan, nan
+		birth_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
+		energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
+		best_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
+		            np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
+		error_bar = 0
+		for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
+			for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+				perturbd_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
+				                np.interp(energy, energy_ref, rhoR_ref)
+				if abs(perturbd_gess - best_gess) > error_bar:
+					error_bar = abs(perturbd_gess - best_gess)
+		return best_gess, error_bar, error_bar
 
 	elif shot_name.startswith("N"): # if it's a NIF shot
 		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
-			rhoR_objects[shot_name] = rhoR_Analysis(
-				shell_mat   = params['ablator material'],
-				Ri          = (params['ablator radius'] - params['ablator thickness'])*1e-4,  # convert to cm
-				Ri_err      = 0.1e-4,
-				Ro          = params['ablator radius']*1e-4,  # convert to cm
-				Ro_err      = 0.1e-4,
-				fD          = params['deuterium fraction'],
-				fD_err      = min(params['deuterium fraction'], 1e-2),
-				f3He        = params['helium-3 fraction'],
-				f3He_err    = min(params['helium-3 fraction'], 1e-2),
-				P0          = params['fill pressure']/760,  # convert to atm
-				P0_err      = 0.1,
-				t_Shell     = params['shell thickness']*1e-4,  # convert to cm
-				t_Shell_err = params['shell thickness']/2*1e-4,
-				E0          = 14.7 if params['helium-3 fraction'] > 0 else 15.0,  # MeV
-			)
+			try:
+				rhoR_objects[shot_name] = rhoR_Analysis(
+					shell_mat   = params['ablator material'],
+					Ri          = (params['ablator radius'] - params['ablator thickness'])*1e-4,  # convert to cm
+					Ri_err      = 0.1e-4,
+					Ro          = params['ablator radius']*1e-4,  # convert to cm
+					Ro_err      = 0.1e-4,
+					fD          = params['deuterium fraction'],
+					fD_err      = min(params['deuterium fraction'], 1e-2),
+					f3He        = params['helium-3 fraction'],
+					f3He_err    = min(params['helium-3 fraction'], 1e-2),
+					P0          = params['fill pressure']/760,  # convert to atm
+					P0_err      = 0.1,
+					t_Shell     = params['shell thickness']*1e-4,  # convert to cm
+					t_Shell_err = params['shell thickness']/2*1e-4,
+					E0          = 14.7 if params['helium-3 fraction'] > 0 else 15.0,  # MeV
+				)
+			except KeyError as e:
+				raise ValueError(f"inferring ρR on NIF shots requires that the {e} be in the shot_info.csv table")
 
-		if shot_name in rhoR_objects: # if you did or they were already there, calculate the rhoR
-			analysis_object = rhoR_objects[shot_name]
-			rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy[0], dE=mean_energy[1])
-			# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
-			return rhoR*1e3, error*1e3, error*1e3 # convert from g/cm2 to mg/cm2
-		else:
-			return nan, nan, nan
+		# then calculate the ρR
+		analysis_object = rhoR_objects[shot_name]
+		rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy[0], dE=mean_energy[1])
+		# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
+		return rhoR*1e3, error*1e3, error*1e3 # convert from g/cm2 to mg/cm2
 
 	else:
-		raise NotImplementedError(shot_name)
+		raise ValueError(f"I don't know what facility {shot_name} is supposed to be")
 
 
 def load_stopping_range_table(material: str, density: float, electron_temperature: float
