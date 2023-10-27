@@ -196,14 +196,17 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 				print("")
 			print("|  {:s}  |  {:#.2g} ± {:#.2g}  |  {:5.2f} ± {:4.2f}  |  {:5.1f} ± {:4.1f}  |".format(
 				label[-15:],
-				yeeld["value"], yeeld["upper_err"],
-				mean["value"], mean["upper_err"],
-				rhoR["value"], rhoR["upper_err"]))
+				yeeld["value"], (yeeld["lower_err"] + yeeld["upper_err"])/2,
+				mean["value"], (mean["lower_err"] + mean["upper_err"])/2,
+				rhoR["value"], (rhoR["lower_err"] + rhoR["upper_err"])/2))
 
 			f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
-				label, yeeld["value"], yeeld["upper_err"], mean["value"], mean["upper_err"],
-				sigma["value"], sigma["upper_err"], width["value"], width["upper_err"],
-				rhoR["value"], rhoR["upper_err"],
+				label,
+				yeeld["value"], (yeeld["lower_err"] + yeeld["upper_err"])/2,
+				mean["value"], (mean["lower_err"] + mean["upper_err"])/2,
+				sigma["value"], (sigma["lower_err"] + sigma["upper_err"])/2,
+				width["value"], (width["lower_err"] + width["upper_err"])/2,
+				rhoR["value"], (rhoR["lower_err"] + rhoR["upper_err"])/2,
 				compression_yield["value"], compression_yield["upper_err"],
 				compression_mean["value"], compression_mean["upper_err"],
 				compression_rhoR["value"], compression_rhoR["upper_err"]))
@@ -774,7 +777,7 @@ def main():
 	)
 	parser.add_argument(
 		"--shell_temperature", type=float, default=None,
-		help="The nominal electron temperature in the shell at bang-time, in eV. Only needed for OMEGA shots."
+		help="The nominal electron temperature in the shell at bang-time, in keV. Only needed for OMEGA shots."
 	)
 	parser.add_argument(
 		"--show", action="store_true",

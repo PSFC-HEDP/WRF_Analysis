@@ -4,6 +4,7 @@
 # Do not make changes to this file unless you know what you are doing--modify
 # the SWIG interface file instead.
 
+from __future__ import annotations
 from sys import version_info as _swig_python_version_info
 if _swig_python_version_info < (2, 7, 0):
     raise RuntimeError("Python 2.7 or later required")
@@ -581,6 +582,13 @@ class DoubleVector(object):
 
     def capacity(self):
         return _StopPow.DoubleVector_capacity(self)
+
+    def __mul__(self, factor: float) -> DoubleVector:
+        other = DoubleVector(len(self))
+        for i in range(len(self)):
+            other[i] = self[i]*factor
+        return other
+
     __swig_destroy__ = _StopPow.delete_DoubleVector
 
 # Register DoubleVector in _StopPow:

@@ -30,9 +30,12 @@ __element_Z__ = {'H': 1,
                  'Ge': 32,
                  'W': 74}
 
+from src.Constants import me, mp
+from src.StopPow import DoubleVector
+
 
 class Material:
-    def __init__(self, specifier):
+    def __init__(self, specifier: str):
         """ figure out the stopping-power-relevant material properties given
             a specification string.  the string should be hyphen-separated
             values, where each value is an optional number (the molecular
@@ -97,3 +100,35 @@ class Material:
         # compute average A and Z
         self.AvgA = np.average(self.A, weights=self.f)
         self.AvgZ = np.average(self.Z, weights=self.f)
+
+
+def plasma_conditions(material_specifier: str, density: float, temperature: float
+                      ) -> tuple[DoubleVector, DoubleVector, DoubleVector, DoubleVector]:
+    """ represent a plasma as the arrays of species parameters needed to do plasma stopping-power calculations
+        :param material_specifier: the name of the material, to be passed to Material()
+        :param density: the mass density of the plasma in g/cm^3
+        :param temperature: the ion and electron temperature in keV
+        :return: the arrays containing the properties of each species (including electrons):
+                 mass (Da), charge (e), temperature (keV), and number density (cm^-3)
+    """
+    material = Material(material_specifier)
+    ion_density = density/(material.AvgA*mp)
+    electron_density = ion_density*material.AvgZ
+    num_species = len(material.Z) + 1
+
+    masses = DoubleVector(num_species)
+    charges = DoubleVector(num_species)
+    temperatures = DoubleVector(num_species)
+    densities = DoubleVector(num_species)
+    for i in range(num_species):
+        if i < len(material.Z):
+            masses[i] = material.A[i]
+            charges[i] = material.Z[i]
+            densities[i] = ion_density*material.f[i]
+        else:
+            masses[i] = me/mp
+            charges[i] = -1
+            densities[i] = electron_density
+        temperatures[i] = temperature
+
+    return masses, charges, temperatures, densities

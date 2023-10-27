@@ -1,14 +1,13 @@
 # a file for top-level ρR calculation functions.  the reason this file is separate from rhoR_Analysis.py despite the
 # passingly similar semantic scope is that Alex wrote his fancy calculations OOPly and the script onto which I grafted it
 # is entirely procedural, so the interface is a little awkward.
-from math import nan
 from typing import Any
 
 import numpy as np
-from matplotlib import pyplot as plt
-from numpy.typing import NDArray
 from scipy import integrate
 
+from src.Material import plasma_conditions
+from src.StopPow import StopPow_LP
 from src.rhoR_Analysis import rhoR_Analysis
 
 # a type that represents the thickness and material of a layer
@@ -37,32 +36,36 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 			if "shell density" not in params:
 				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell density (in g/cm3) with '--shell_density=_'")
 			if "shell electron temperature" not in params:
-				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material (in eV) with '--shell_temperature=_'")
-			material = params["ablator material"]
-			nominal_density = params["shell density"]
-			nominal_temperature = params["shell electron temperature"]
-			rhoR_objects[shot_name] = [  # TODO: use StopPow to calculate this rather than loading a table
-				load_stopping_range_table(material, nominal_density, nominal_temperature)]
-			for density in [nominal_density*0.5, nominal_density*1.5]:
-				for temperature in [nominal_temperature*0.5, nominal_temperature*1.5]:
+				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material (in keV) with '--shell_temperature=_'")
+			elif params["shell electron temperature"] > 50:
+				raise ValueError("you clearly passed a shell temperature in eV.  read the instructions; it should be in keV.  try again.")
+			# do a simple stopping power calculation through a uniform plasma
+			masses, charges, temperatures, densities = plasma_conditions(
+				params["ablator material"], params["shell density"], params["shell electron temperature"])
+			rhoR_objects[shot_name] = [
+				(1., StopPow_LP(1, 1, masses, charges, temperatures, densities))]  # the 1, 1 at the beginning specifies that these are protons
+			for density_factor in [0.5, 1.5]:
+				for temperature_factor in [0.5, 1.5]:
 					rhoR_objects[shot_name].append(
-						load_stopping_range_table(material, density, temperature))
+						(density_factor, StopPow_LP(1, 1, masses, charges,
+						                            temperatures*temperature_factor,
+						                            densities*density_factor)))
 
-		birth_energy = 14.7  # assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
-		energy_ref, rhoR_ref = rhoR_objects[shot_name][0]
-		best_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
-		            np.interp(mean_energy[0], energy_ref, rhoR_ref) # calculate the best guess based on 20g/cc and 500eV
-		error_bar = 0
-		for energy in [mean_energy[0] - mean_energy[1], mean_energy[0], mean_energy[0] + mean_energy[2]]:
-			for energy_ref, rhoR_ref in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-				perturbd_gess = np.interp(birth_energy, energy_ref, rhoR_ref) - \
-				                np.interp(energy, energy_ref, rhoR_ref)
-				if abs(perturbd_gess - best_gess) > error_bar:
-					error_bar = abs(perturbd_gess - best_gess)
-		return best_gess, error_bar, error_bar
+		birth_energy = 15.0  # XXX assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
+		guesses = []
+		for energy in [mean_energy[0], mean_energy[0] - mean_energy[1], mean_energy[0] + mean_energy[2]]:
+			for density_factor, stopping_power in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+				thickness = stopping_power.Thickness(birth_energy, energy)*1e-4  # (convert μm to cm)
+				density = density_factor*params["shell density"]
+				guesses.append(thickness*density/1e-3)  # convert
+		best_gess = guesses[0]
+		lower_error = guesses[0] - np.min(guesses)
+		upper_error = np.max(guesses) - guesses[0]
+		return best_gess, lower_error, upper_error
 
 	elif shot_name.startswith("N"): # if it's a NIF shot
-		if shot_name not in rhoR_objects: # try to load the rhoR analysis parameters
+		# use Alex's fancy implosion stopping model
+		if shot_name not in rhoR_objects:
 			try:
 				rhoR_objects[shot_name] = rhoR_Analysis(
 					shell_mat   = params['ablator material'],
@@ -91,20 +94,6 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 
 	else:
 		raise ValueError(f"I don't know what facility {shot_name} is supposed to be")
-
-
-def load_stopping_range_table(material: str, density: float, electron_temperature: float
-                              ) -> tuple[NDArray[float], NDArray[float]]:
-	""" load a plasma stopping range table (produced by Fredrick's program) from disk.  there must
-	    be a preexisting table for this exact material/density/temperature combination or else
-	    you'll just get a FileNotFoundError.
-	    :param material: the material name (CD, SiO2, or cetera)
-	    :param density: the plasma density in g/cm³
-	    :param electron_temperature: the electron temperature in eV
-	"""
-	table_filename = f"tables/stopping_range_protons_{material}_plasma_{density:.0f}gcc_{electron_temperature:.0f}eV.txt"
-	data = np.loadtxt(table_filename, skiprows=4)
-	return data[:, 0], data[:, 1]*1000
 
 
 def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
