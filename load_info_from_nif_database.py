@@ -219,7 +219,7 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 			elif re.fullmatch(r"\s*\w+_\w+_\w+_\w+_[\w0-9]+\s*", cell):
 				shot_name = normalize_shot_name(cell.strip())
 			# if this looks like a DIM specifier, note it
-			elif re.fullmatch(r"(TC)?(0*9?0)-([0-9]+)([- ][0-9A-Za-z-]+)?", cell):
+			elif re.fullmatch(r"(TC)?(0*9?0)-([0-9]+)([ -][0-9A-Za-z -]+)?", cell):
 				dim = normalize_dim_coordinates(cell)
 			# if this says "Snout Config", look at the next nonempty cell
 			elif re.fullmatch(r"Snout( Config.*)?( Name)?:?", cell):
@@ -227,12 +227,12 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 			# if this is the next nonempty cell after "Snout Config",
 			elif i_just_saw_the_word_snout_config:
 				# check if it's a KB swap
-				if re.fullmatch(r".*SWAP.*", cell):
+				if "KB Swap" in filepath or re.fullmatch(r".*SWAP.*", cell):
 					snout_config = "KB swap"
 				# or else read the snout config
 				else:
 					# cut out unnecessary qualifiers
-					full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-DS(BOTH)?)?(-DIXI)?([ ,].*)?", cell)
+					full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-DS(BOTH)?)?(-DIXI)?(-NRLOS)?([ ,].*)?", cell)
 					if not full_match:
 						raise SpreadsheetFormatError(f"there's something incomprehensible about the snout config {cell!r}.")
 					snout_config = full_match.group(1)
@@ -677,7 +677,7 @@ def normalize_dim_coordinates(dim_coordinates: str) -> str:
 	    :return: the complete six-digit name of the line-of-sight on which the aux is clinging
 	    :raise ValueError: if dim_coordinates isn’t formatted like any kind of DIM name
 	"""
-	full_match = re.fullmatch(r"(TC)?(0*9?0)-([0-9]+)([- ][0-9A-Za-z-]+)?", dim_coordinates)
+	full_match = re.fullmatch(r"(TC)?(0*9?0)-([0-9]+)([ -][0-9A-Za-z -]+)?", dim_coordinates)
 	if full_match is None:
 		raise ValueError(f"{dim_coordinates!r} does not appear to be a DIM")
 	theta, phi = full_match.group(2, 3)

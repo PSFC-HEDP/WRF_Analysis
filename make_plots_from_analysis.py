@@ -415,7 +415,7 @@ def read_analysis_file(folder: str, filepath: str,
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
 	tag = ''
-	identifiers = re.split(r"[_/\\. ]", filepath.upper())
+	identifiers = re.split(r"[_/\\ ]", filepath.upper())
 	for identifier in reversed(identifiers):
 		if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
 			shot_day, shot_number, _ = identifier.split('-')
