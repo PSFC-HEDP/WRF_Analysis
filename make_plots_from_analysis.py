@@ -179,16 +179,16 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 		print("|-------------------|---------------------|----------------|----------------|")
 		f.write(
 			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "
-			"Sigma (MeV), Sigma unc. (MeV), Width (keV), Width unc. (keV), "
+			"Temperature (MeV), Temperature unc. (MeV), Width (keV), Width unc. (keV), "
 			"Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "
 			"Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), "
 			"Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)"
 			"\n")
 
 		last_shot_label = None
-		for shot_label, label, item, width in zip(shot_labels, labels, analyses, widths):
+		for shot_label, label, item, width, temperature in zip(shot_labels, labels, analyses, widths, temperatures):
 			label = label.replace('\n', ' ')
-			yeeld, mean, sigma = item["peak"]
+			yeeld, mean, _ = item["peak"]
 			compression_yield, compression_mean, compression_sigma = item["compression"]
 			rhoR, compression_rhoR = item["rhoR"], item["compression_rhoR"]
 
@@ -204,7 +204,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 				label,
 				yeeld["value"], (yeeld["lower_err"] + yeeld["upper_err"])/2,
 				mean["value"], (mean["lower_err"] + mean["upper_err"])/2,
-				sigma["value"], (sigma["lower_err"] + sigma["upper_err"])/2,
+				temperature["value"], (temperature["lower_err"] + temperature["upper_err"])/2,
 				width["value"], (width["lower_err"] + width["upper_err"])/2,
 				rhoR["value"], (rhoR["lower_err"] + rhoR["upper_err"])/2,
 				compression_yield["value"], compression_yield["upper_err"],
