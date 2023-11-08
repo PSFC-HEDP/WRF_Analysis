@@ -54,10 +54,13 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		birth_energy = 15.0  # XXX assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
 		guesses = []
 		for energy in [mean_energy[0], mean_energy[0] - mean_energy[1], mean_energy[0] + mean_energy[2]]:
-			for density_factor, stopping_power in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
-				thickness = stopping_power.Thickness(birth_energy, energy)*1e-4  # (convert μm to cm)
-				density = density_factor*params["shell density"]
-				guesses.append(thickness*density/1e-3)  # convert
+			if energy >= birth_energy:
+				guesses.append(0)
+			else:
+				for density_factor, stopping_power in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+					thickness = stopping_power.Thickness(birth_energy, energy)*1e-4  # (convert μm to cm)
+					density = density_factor*params["shell density"]
+					guesses.append(thickness*density/1e-3)  # convert
 		best_gess = guesses[0]
 		lower_error = guesses[0] - np.min(guesses)
 		upper_error = np.max(guesses) - guesses[0]
