@@ -38,7 +38,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 			if "shell electron temperature" not in params:
 				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material (in keV) with '--shell_temperature=_'")
 			elif params["shell electron temperature"] > 50:
-				raise ValueError("you clearly passed a shell temperature in eV.  read the instructions; it should be in keV.  try again.")
+				raise ValueError("you clearly passed a shell temperature in eV.  read the instructions, baka; it should be in keV.  try again.")
 			# do a simple stopping power calculation through a uniform plasma
 			masses, charges, temperatures, densities = plasma_conditions(
 				params["ablator material"], params["shell density"], params["shell electron temperature"])
@@ -51,7 +51,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 						                            temperatures*temperature_factor,
 						                            densities*density_factor)))
 
-		birth_energy = 15.0  # XXX assume all OMEGA shots are primary protons; it should be 15.0 for secondaries.
+		birth_energy = 15.0 if params["secondary"] else 14.7
 		guesses = []
 		for energy in [mean_energy[0], mean_energy[0] - mean_energy[1], mean_energy[0] + mean_energy[2]]:
 			if energy >= birth_energy:

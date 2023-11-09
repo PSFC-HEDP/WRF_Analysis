@@ -12,11 +12,12 @@ there are three executable Python scripts here:
 the first one is very simple.
 if you have a mean energy and want to know to what ρR it corresponds, just do
 ~~~bash
-python convert_energy_to_rhoR.py ENERGY MATERIAL
+python convert_energy_to_rhoR.py ENERGY --shell_material=MATERIAL --shell_density=DENSITY --shell_temperature=TEMPERATURE [--secondary]
 ~~~
-where `ENERGY` is that energy in MeV and `MATERIAL` is the ablator material.
+where `ENERGY` is that energy in MeV and
+the remaining arguments describe the shell plasma conditions to assume.
 you can also specify hohlraum parameters to automaticly apply a hohlraum correction.
-call it with `-h` for the full syntax; I don't want to get into it here.
+call it with `-h` for more details; I don't want to get into it here.
 
 if you're analyzing NIF data, there's a whole process.
 it looks something like this:

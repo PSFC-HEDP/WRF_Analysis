@@ -780,6 +780,9 @@ def main():
 		help="The nominal electron temperature in the shell at bang-time, in keV. Only needed for OMEGA shots."
 	)
 	parser.add_argument(
+		"--secondary", action="store_true",
+		help="to treat the protons as secondary reactions (in which case the assumed mean birth energy is 15.0 MeV instead of 14.7)")
+	parser.add_argument(
 		"--show", action="store_true",
 		help="to show the plots as they're generated in addition to saving them in the subdirectory."
 	)
@@ -792,6 +795,7 @@ def main():
 		options["shell density"] = args.shell_density
 	if args.shell_temperature is not None:
 		options["shell electron temperature"] = args.shell_temperature
+	options["secondary"] = args.secondary
 
 	make_plots_from_analysis(args.folders.split(","), args.show, options)
 
