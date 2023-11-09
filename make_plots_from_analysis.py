@@ -179,7 +179,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 		print("|-------------------|---------------------|----------------|----------------|")
 		f.write(
 			"WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), "
-			"Temperature (MeV), Temperature unc. (MeV), Width (keV), Width unc. (keV), "
+			"Temperature (keV), Temperature unc. (keV), Width (keV), Width unc. (keV), "
 			"Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), "
 			"Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), "
 			"Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)"
