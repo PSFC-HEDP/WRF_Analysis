@@ -1,0 +1,8 @@
+WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), Sigma (MeV), Sigma unc. (MeV), Width (keV), Width unc. (keV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)
+O109373 P2,92960000.0,14445984.0,15.316,0.062481997407253236,0.258,0.01,607.59,23.55,nan,nan,nan,inf,nan,inf,nan,nan
+O109374 P2,32580000.0,5580954.0,15.351,0.06931089380465383,0.261,0.017,614.655,40.035000000000004,nan,nan,nan,inf,nan,inf,nan,nan
+O109375 P2,55850000.0,8014475.0,15.205,0.06184658438426491,0.234,0.009,551.07,21.194999999999997,nan,nan,nan,inf,nan,inf,nan,nan
+O109378 P2,20330000.0,3240602.0,15.093,0.071449282711585,0.247,0.059,581.685,138.945,nan,nan,nan,inf,nan,inf,nan,nan
+O109380 P2,52970000.0,5392346.0,15.427,0.062481997407253236,0.257,0.008,605.235,18.84,nan,nan,nan,inf,nan,inf,nan,nan
+O109383 P2,6497000.0,2733937.6,14.982,0.10247438704378768,0.211,0.107,496.905,251.98499999999999,nan,nan,nan,inf,nan,inf,nan,nan
+O109386 P2,20550000.0,3000300.0,15.332,0.06859300255857008,0.233,0.048,548.715,113.04,nan,nan,nan,inf,nan,inf,nan,nan

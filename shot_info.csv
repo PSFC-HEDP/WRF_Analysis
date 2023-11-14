@@ -1,4 +1,6 @@
 shot number,PI,DD-n yield,DD-n temperature,ablator material,ablator thickness,ablator radius,ablator density,hohlraum material,fill gas,fill pressure,deuterium fraction,helium-3 fraction,shot name,campaign,subcampaign,platform
+N160731-001-999,rygg1,0,10,,,,,,50% D + 50% He3,,0.5,0.5,D_Nuc_dEdx_HDC_S02a,Nuclear,Proton Stopping Power,dEdx
+N160731-003-999,rygg1,0,10,,,,,,50% D + 50% He3,,0.5,0.5,D_Nuc_dEdx_HDC_S04a,Nuclear,Proton Stopping Power,dEdx
 N181127-001-999,zylstra1,2.9587e+10,8.7964,HDC,50,1000,,,50% D + 50% He3,13680,0.5,0.5,D_Nuc_dEdx_C_S01a,Nuclear,Proton Stopping Power,dEdx
 N181128-001-999,zylstra1,3.9698e+10,10.557,Be,50,1000,,,50% D + 50% He3,13680,0.5,0.5,D_Nuc_dEdx_Be_S01a,Nuclear,Proton Stopping Power,dEdx
 N210810-002-999,zylstra1,8.3482e+10,1.9065,CH,132.61,906.6,1.0511,Au,50% D + 50% He3,33669,0.5,0.5,D_Nuc_Sym_ElecScr_S04b,Nuclear,,Symcap
@@ -58,3 +60,5 @@ N230709-001-999,ceurvorst1,4.4e+13,8.277,CH,22.909,1688.2,1.0567,,100% D,4799.7,
 N230710-001-999,ceurvorst1,4.4e+13,7.2992,CH,23.403,1674.8,1.1122,,100% D,7645.1,1,0,I_MJDD_PDD_DDExpPush_S26a,Mega Joule Direct Drive,,PDD
 N230710-002-999,ceurvorst1,4.4e+13,7.1539,CH,23.403,1664,1.1138,,100% D,7677,1,0,I_MJDD_PDD_DDExpPush_S27a,Mega Joule Direct Drive,,PDD
 N230710-003-999,mariscal2,1e+20,10,,,,,,,,0,0,D_Astro_ARC_ProtBoost_S01a,Astrophysics,,ARC
+N231025-001-999,rosenberg10,1.8e+11,1.7,CH,114.89,1502.7,1.2789,,100% D,15111,1,0,I_MJDD_PDD_HotE_S28a,Mega Joule Direct Drive,,PDD
+N231025-002-999,rosenberg10,2.2e+11,1.7,CH,137.74,1499.4,1.0986,,100% D,15200,1,0,I_MJDD_PDD_HotE_S29a,Mega Joule Direct Drive,,PDD

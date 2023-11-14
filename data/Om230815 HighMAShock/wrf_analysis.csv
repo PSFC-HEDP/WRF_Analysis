@@ -1,0 +1,3 @@
+WRF, Yield, Yield unc., Mean energy (MeV), Mean energy unc. (MeV), Sigma (MeV), Sigma unc. (MeV), Width (keV), Width unc. (keV), Rho-R (mg/cm^2), Rho-R unc. (mg/cm^2), Compres. yield, Compres. yield unc., Compres. mean (MeV), Compres. mean unc. (MeV), Compres. rho-R (mg/cm^2), Compres. rho-R unc. (mg/cm^2)
+O109335 P2,54000000.0,7657200.0,14.95,0.06389053137985315,0.261,0.014,614.655,32.97,nan,nan,nan,inf,nan,inf,nan,nan
+O109340 P2,107600000.0,30397000.0,14.794,0.06652818951391959,0.267,0.02,628.7850000000001,47.1,nan,nan,nan,inf,nan,inf,nan,nan

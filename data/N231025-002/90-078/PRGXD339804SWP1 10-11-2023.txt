@@ -1,0 +1,36 @@
+NIF  C_SHPKR                                                                                              10/11/23 09:26  PAGE 1
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:      PRGXD339804SWP1  LRU Location:
+Experiment ID: I_MJDD_PDD_HotE_S29                       FFO ID: 
+ASSEMBLY KIT SWAP
+RO:                       IO:
+Line: 0001  Item: 1013723970                              Rev   AA                     Type: STK             Cost Method: STD
+                  AUXILIARY 2 WRF, NAD and KB
+SEIBAN:
+Open Date : 10/11/2023  Release Date  : 10/11/2023 Order Qty:           1.0000    Nettable?: Y   BOM Used  : W
+Start Date: 10/16/2023  Mfg Close Date:            Compl Qty:                     Movable? : Y   RTG Used  : N   Priority   :
+Due Date  : 10/25/2023  Fin Close Date:            Scrap Qty:                     Rework?  :     Sched Code: B   Duplicate? :
+Deliv Date: 10/19/2023
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+   30    AAA10-108020-08                        Y      1.0000   AUX1            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   20    AAA10-108020-06                        Y      1.0000   AUX3            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   40    AAA10-108020-08                        Y      1.0000   AUX4            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   10    1005408881                             Y      1.0000   KBASE1          Y    Y    Y                  1.0000 
+         FILTER, 500um Cu, 2mm  Al, 75um BLK POLY, 375 POLY
+
+
+         * = Unreleased Drawing
