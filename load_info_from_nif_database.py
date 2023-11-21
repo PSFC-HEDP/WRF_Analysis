@@ -75,8 +75,10 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 				except SpreadsheetFormatError as e:
 					print(f"Error! Couldn't read the traveler spreadsheet at "
 					      f"`{os.path.join(directory, filename)}` because {e}")
+					return
 				except MissingSnoutError as e:
 					print(f"Error! {e}")
+					return
 				else:
 					found_any_travelers = True
 
@@ -211,8 +213,10 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 			cell = traveler[f"{col}{row}"].value
 			if cell is None or type(cell) is not str:
 				continue
+			else:
+				cell = cell.strip()
 			# if this looks like a position header, record it
-			elif re.fullmatch(r"Position #([0-9])", cell):
+			if re.fullmatch(r"Position #([0-9])", cell):
 				position = int(cell[-1])
 				component_list_headers[position] = (col, row)
 			# if it looks like a shot name, note it
