@@ -468,7 +468,7 @@ def generate_etch_scan_request(shot_number: str, shot_subfolder: str) -> None:
 
 			# iterate thru the WRFs
 			rows_with_auxs = []
-			for _, aux in full_aux_table.iterrows():
+			for _, aux in aux_table.iterrows():
 				# calculate the recommended etch time
 				fluence = proton_yield/(4*pi*aux["distance"]**2)*FRAME_AREA
 				etch_time = max(1.5, min(5.0, 5*sqrt(overlap_limit/fluence)))
