@@ -250,8 +250,13 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 	elif snout_config is None:
 		raise SpreadsheetFormatError("I couldn't find the snout configuration name anywhere in this spreadsheet.")
 	elif shot_name != get_shot_name(shot_number):
-		raise SpreadsheetFormatError(f"This traveler spreadsheet in the {get_shot_name(shot_number)} folder "
-		                             f"says it's for {shot_name}.")
+		if shot_name.endswith("SXXx"):  # if the shot name ends with a bunch of xs, that means the number is indeterminate; replace it
+			shot_name = shot_name[:-4] + get_shot_name(shot_number)[-4:]
+		elif shot_name.endswith("x"):  # if the shot name ends with "x", that means the letter is indeterminate; replace it
+			shot_name = shot_name[:-1] + get_shot_name(shot_number)[-1]
+		if shot_name != get_shot_name(shot_number):
+			raise SpreadsheetFormatError(f"this traveler spreadsheet in the {get_shot_name(shot_number)} folder "
+			                             f"but says it's for {shot_name}.")
 
 	print(f"reading traveler spreadsheet for DIM {dim}...")
 
@@ -670,9 +675,9 @@ def normalize_shot_name(shot_name: str) -> str:
 	if re.search(r"_S[0-9]{2}[a-z]$", shot_name):
 		return shot_name
 	elif re.search(r"_S[0-9]{2}$", shot_name):
-		return shot_name + "a"
+		return shot_name + "x"
 	else:
-		return shot_name + "S01a"
+		return shot_name + "SXXx"
 
 
 def normalize_dim_coordinates(dim_coordinates: str) -> str:
