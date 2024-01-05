@@ -83,8 +83,9 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 					found_any_travelers = True
 
 	if not found_any_travelers:
-		print(f"there are no valid traveler spreadsheets in `{shot_subfolder}/`, "
+		print(f"Error! there are no valid traveler spreadsheets in `{shot_subfolder}/`, "
 		      f"so I can't get the WRF info or generate a scan request")
+		return
 	else:
 		try:
 			generate_etch_scan_request(
@@ -92,6 +93,7 @@ def load_info_from_nif_database(shot_number: str, shot_subfolder: str, DD_yield:
 		except PermissionError:
 			print(f"Error! I don't have permission to copy and edit the workorder template spreadsheet. "
 			      f"please close Microsoft Excel.")
+			return
 
 	print(f"done! see `{shot_subfolder}` for the etch and scan workorder.")
 
