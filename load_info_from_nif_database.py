@@ -308,13 +308,15 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 		# if the first item is a WRF ID
 		if 13425000 <= filter_id < 13426000:
 			aux_type = "WRF"
-		elif 14042000 <= filter_id < 14046000:
+		elif 14042000 <= filter_id < 14047000:
 			aux_type = "SRF"
 		else:
-			continue  # ignore anything that looks like pTOF or SRC
-
+			aux_type = "something else"
 		print(f"  found {aux_type} at position {position} ({filter_id})")
-		found_anything = True
+		if aux_type == "something else":
+			continue  # ignore anything that looks like pTOF or SRC
+		else:
+			found_anything = True
 
 		# calculate the position’s absolute TC coordinates
 		r, θ, ф = calculate_aux_coordinates(
