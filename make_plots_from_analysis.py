@@ -70,8 +70,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 					try:
 						analyses.append(read_analysis_file(
 							folder, os.path.join(subfolder, filename), show_plots, command_line_options))
-					except (FileNotFoundError, ValueError) as e:
-						print(e)
+					except FileNotFoundError as e:
+						print(f"could not find the file {str(e)}")
 						return
 
 	if len(analyses) == 0:
