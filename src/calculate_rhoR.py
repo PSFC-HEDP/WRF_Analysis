@@ -4,6 +4,7 @@
 from typing import Any
 
 import numpy as np
+from numpy import inf
 from scipy import integrate
 
 from src.Material import plasma_conditions
@@ -56,6 +57,8 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		for energy in [mean_energy[0], mean_energy[0] - mean_energy[1], mean_energy[0] + mean_energy[2]]:
 			if energy >= birth_energy:
 				guesses.append(0)
+			elif energy <= 0:
+				guesses.append(inf)
 			else:
 				for density_factor, stopping_power in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
 					thickness = stopping_power.Thickness(birth_energy, energy)*1e-4  # (convert μm to cm)
