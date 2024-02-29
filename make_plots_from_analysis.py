@@ -505,15 +505,18 @@ def read_analysis_file(folder: str, filepath: str,
 			compression_fit = None
 	else:
 		compression_fit = None
-	good_compression_fit = compression_fit is not None
 	if compression_fit is not None:
-		if compression_fit[0][0] <= yeeld[0] or compression_fit[1][0] <= spectrum[0][0]:
-			good_compression_fit = False
-	if good_compression_fit:
 		compression_yield, compression_mean, compression_sigma = compression_fit
+		good_compression_fit = (compression_yield[0] > yeeld[0] and
+		                        compression_mean[0] > spectrum[0][0] and
+		                        compression_mean[0] < mean[0])
+		if not good_compression_fit:
+			compression_yield, compression_mean, compression_sigma = \
+				(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
 	else:
 		compression_yield, compression_mean, compression_sigma = \
 			(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
+		good_compression_fit = False
 
 	# load info from hohlraum.txt and the shot table
 	parameters = load_rhoR_parameters(folder)
