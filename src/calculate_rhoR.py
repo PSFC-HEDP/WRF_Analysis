@@ -104,7 +104,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 
 def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
 	""" correct some spectral properties for a hohlraum """
-	if len(layers) == 0:
+	if not any(thickness > 0 for thickness, material in layers):
 		return after_wall
 
 	yeeld, after_wall_mean, after_wall_sigma = after_wall
@@ -117,7 +117,12 @@ def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
 	before_wall = (yeeld,
 	               (before_wall_mean[0], before_wall_mean[1], before_wall_mean[1]),
 	               (before_wall_sigma[0], before_wall_sigma[1], before_wall_sigma[1]))
-	print(f"\tCorrecting for a {''.join(map(lambda t:t[1], layers))} hohlraum: {after_wall_mean[0]:.3f} ± "
+
+	hohlraum_material_name = ""
+	for thickness, layer_material_name in layers:
+		if thickness > 0:
+			hohlraum_material_name += layer_material_name
+	print(f"\tCorrecting for a {hohlraum_material_name} hohlraum: {after_wall_mean[0]:.3f} ± "
 	      f"{after_wall_sigma[0]:.3f} becomes {before_wall_mean[0]:.3f}±{before_wall_sigma[0]:.3f} MeV")
 
 	return before_wall
