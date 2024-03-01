@@ -661,7 +661,7 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 				params[key] = shot_info[key]
 
 		# calculate the converged shell thickness
-		if "shell thickness" in params:
+		if "shell thickness" not in params:
 			params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
 
 	# read hohlraum.txt if it exists
