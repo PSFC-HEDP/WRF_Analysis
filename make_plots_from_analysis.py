@@ -70,8 +70,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 					try:
 						analyses.append(read_analysis_file(
 							folder, os.path.join(subfolder, filename), show_plots, command_line_options))
-					except FileNotFoundError as e:
-						print(f"could not find the file {str(e)}")
+					except HohlraumFileError as e:
+						print(e)
 						return
 
 	if len(analyses) == 0:
@@ -410,7 +410,8 @@ def read_analysis_file(folder: str, filepath: str,
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
 	    :param command_line_parameters: any ρR calculation information specified on the command line
 	    :return: an Analysis object summarizing the analysis file
-	    :raise FileNotFoundError: if the analysis file or an auxiliary file (like hohlraum.txt) is missing
+	    :raise HohlraumFileError: if hohlraum.txt is missing or invalid
+	    :raise IncompleteFilenameError: if the analysis filename is missing some of the necessary metadata
 	"""
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
@@ -433,9 +434,9 @@ def read_analysis_file(folder: str, filepath: str,
 			tag = identifier
 
 	if shot_number is None:
-		raise ValueError(f"no shot number found in {identifiers}")
+		raise MetadataNotFoundError(f"no shot number found in {identifiers}")
 	if line_of_site is None:
-		raise ValueError(f"no line of sight found in {identifiers}")
+		raise MetadataNotFoundError(f"no line of sight found in {identifiers}")
 	if re.fullmatch(r"TIM[1-6]-(4|8|12)", line_of_site):  # extract the position from the line of site if relevant
 		line_of_site, position = re.fullmatch(r"(TIM[1-6])-(4|8|12)", line_of_site).group(1, 2)
 	elif re.fullmatch(r"\D*\d+-\d+", line_of_site): # standardize the DIM names if they're too long
@@ -501,7 +502,7 @@ def read_analysis_file(folder: str, filepath: str,
 		try:
 			compression_fit = \
 				fit_skew_gaussian(spectrum, 0, mean[0] - 2*sigma[0])
-		except RuntimeError:
+		except FitError:
 			compression_fit = None
 	else:
 		compression_fit = None
@@ -642,7 +643,7 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	""" load the analysis parameters given in shot_info.csv and hohlraum.txt file
 	    :param folder: the absolute or relative path to the directory with the data we're considering
 	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
-	    :raise FileNotFoundError: if the hohlraum.txt file hasn't been created but this is a NIF shot
+	    :raise HohlraumFileError: if the hohlraum.txt file hasn't been created but this is a NIF shot
 	"""
 	# start by taking any relevant information from shot_info.csv
 	params: dict[str, Any] = {}
@@ -672,7 +673,7 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 		hohlraum_codes = f.readlines()
 	# NIF shots usually have hohlraeume, so complain if it looks like the user forgot to add it
 	if nif_shot and len(hohlraum_codes) == 0:
-		raise FileNotFoundError(f"you need to fill out `{os.path.join(os.getcwd(), folder, 'hohlraum.txt')}` with the "
+		raise HohlraumFileError(f"you need to fill out `{os.path.join(os.getcwd(), folder, 'hohlraum.txt')}` with the "
 		                        f"hohlraum information.  if there is no hohlraum, just put 'none'.")
 	if len(hohlraum_codes) == 1 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum
 		hohlraum_codes = []
@@ -703,7 +704,7 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 					thickness, _, material = re.fullmatch(
 						r"([0-9.]+)([uμ]m)?([A-Za-z0-9-]+)", layer_code).groups()
 				except AttributeError:
-					raise ValueError(f"I can't read '{layer_code}'.")
+					raise HohlraumFileError(f"I can't read the hohlraum code '{layer_code}'.")
 				layers.append((float(thickness), material))
 		params["hohlraum"][key] = layers
 
@@ -735,7 +736,7 @@ def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound:
 	"""
 	spectrum = spectrum[(spectrum[:, 0] > lower_bound) & (spectrum[:, 0] < upper_bound), :]
 	if spectrum.size == 0:
-		raise RuntimeError("the shock peak is too close to the edge for us to even try to see a compression peak")
+		raise FitError("the shock peak is too close to the edge for us to even try to see a compression peak")
 	rainge = np.ptp(spectrum[:, 0])
 	center = np.mean(spectrum[:, 0])
 
@@ -745,7 +746,7 @@ def fit_skew_gaussian(spectrum: NDArray[float], lower_bound: float, upper_bound:
 			p0=(abs(np.max(spectrum[:, 1]))*rainge, center, rainge/4),
 			bounds=(0, inf), absolute_sigma=True)
 	except (ValueError, RuntimeError) as e:
-		raise RuntimeError(f"the shock peak could not be fit because {e}")
+		raise FitError(f"the shock peak could not be fit because {e}")
 
 	return ((values[0], sqrt(covariances[0, 0]), sqrt(covariances[0, 0])),
 	        (values[1], sqrt(covariances[1, 1]), sqrt(covariances[1, 1])),
@@ -812,6 +813,21 @@ class FixedOrderFormatter(ScalarFormatter):
 	def _set_orderOfMagnitude(self, _):
 		"""Ovre-riding this to avoid having orderOfMagnitude reset elsewhere"""
 		self.orderOfMagnitude = self._order_of_mag
+
+
+class FitError(Exception):
+	""" the error to throw when you can't find a good curve fit """
+	pass
+
+
+class HohlraumFileError(Exception):
+	""" the error to throw when there's a problem with hohlraum.txt """
+	pass
+
+
+class MetadataNotFoundError(Exception):
+	""" the error to throw when a file doesn't contain enuff information """
+	pass
 
 
 if __name__ == "__main__":
