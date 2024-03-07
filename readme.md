@@ -74,7 +74,7 @@ you'll need the Python requirements, which are all on PyPI.
 pip install -r requirements.txt
 ~~~
 
-you'll also need the stopping power library that is hosted in the StopPow repository.
+you'll also need the stopping power library that is hosted in the [StopPow](https://github.com/PSFC-HEDP/StopPow) repository.
 this is where it gets tricky.
 here are Graeme's instructions for installing on Linux:
 
