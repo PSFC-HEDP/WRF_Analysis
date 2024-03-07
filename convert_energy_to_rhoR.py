@@ -11,7 +11,7 @@ def convert_energy_to_rhoR(
 		shell_temperature: float, secondary: bool,
 		gold: float, tantalum: float, uranium: float, aluminum: float):
 	""" print out the ρR that approximately corresponds to a given measured D3He-p energy, given some hohlraum parameters.
-	    :param final_energy: the final energy of the D3He protons (MeV)
+	    :param final_energy: the final energy of the D3He protons or a filename containing them (MeV)
 	    :param shell_material: the material of the capsule shell ("HDC", "SiO2", or "CH")
 	    :param shell_density: the density of the imploded shell plasma (g/cm^3)
 	    :param shell_temperature: the electron temperature of the imploded shell plasma (keV)
@@ -55,9 +55,13 @@ def convert_energy_to_rhoR(
 def main():
 	parser = argparse.ArgumentParser(
 		prog="python convert_energy_to_rhoR.py",
-		description = "return the ρR that approximately corresponds to a given measured D3He-p energy, given some hohlraum parameters.")
+		description = "return the ρR that approximately corresponds to a given measured D3He-p energy, given some "
+		              "hohlraum parameters.")
 	parser.add_argument("energy", type=str,
-	                    help="the final energy of the D3He protons, in MeV, or a file containing a list of such final energies")
+	                    help="the final energy of the D3He protons, in MeV, or a file containing a list of such "
+	                         "final energies (if it's a file, each line should contain either just the energy, the "
+	                         "energy followed by its uncertainty, or the energy followed by its lower and upper "
+	                         "uncertainties)")
 	parser.add_argument("--shell_material", type=str,
 	                    help="the material of the capsule shell (HDC, SiO2, or CH)")
 	parser.add_argument("--shell_density", type=float,
@@ -73,7 +77,8 @@ def main():
 	parser.add_argument("--aluminum", type=float, default=0,
 	                    help="the amount of tantalum the particles passed through, in μm")
 	parser.add_argument("--secondary", action="store_true",
-	                    help="to treat the protons as secondary reactions (in which case the assumed mean birth energy is 15.0 MeV instead of 14.7)")
+	                    help="to treat the protons as secondary reactions (in which case the assumed mean birth energy "
+	                         "is 15.0 MeV instead of 14.7)")
 	args = parser.parse_args()
 
 	try:
