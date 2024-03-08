@@ -81,19 +81,21 @@ note that you can skip this part if you only want to make plots of the spectra.
 here are Graeme's instructions for installing on Linux:
 
 1. get gsl version 1.x (not 2.x)
+    - `cd gsl`
     - `./configure`
     - `make`
     - `make check`
     - `make install`
-2. get [SWIG](https://www.swig.org/download.html) (tested with v 3.something)
-3. get [WRF_Analysis](https://github.com/PSFC-HEDP/WRF_Analysis)
-4. StopPow:
-    - get stoppow from github
-    - `cd python_swig`
+3. get [SWIG](https://www.swig.org/download.html) (tested with v 3.something)
+4. get [WRF_Analysis](https://github.com/PSFC-HEDP/WRF_Analysis)
+5. StopPow:
+    - get StopPow from GitHub
+    - `cd StopPow/python_swig`
     - `make`
-    - move `_StopPow.so` AND `StopPow.py` (from `python_swig/dist`) to `src/`
-5. run WRF:
-    - move `main.py` to the root WRF_Analysis folder (that is, `src/../`)
+    - move `_StopPow.so` AND `StopPow.py` (from `StopPow/python_swig/dist/`) to `WRF_Analysis/src/`
+6. run WRF:
+    - this step was necessary for Graeme but not Joe so if you can't find `main.py` try just ignoring it.
+    - move `main.py` to the root WRF_Analysis folder
     - `python3 main.py`
 
 this can also be run on Windows, but it's harder because the tools for compiling gsl aren't as readily available.
