@@ -431,7 +431,7 @@ def read_analysis_file(folder: str, filepath: str,
 		elif re.fullmatch(r'134\d{5}|G[0-2]\d{2}', identifier):
 			wrf_number = identifier
 		elif re.fullmatch(r'(LEFT|RIGHT|TOP|BOTTOM|MIDDLE|FULL)', identifier):
-			tag = identifier
+			tag = identifier.lower()
 
 	if shot_number is None:
 		raise MetadataNotFoundError(f"the filename is incomplete; there's no shot number in {identifiers}")
