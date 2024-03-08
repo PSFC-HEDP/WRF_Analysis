@@ -547,12 +547,13 @@ def read_analysis_file(folder: str, filepath: str,
 	plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 	plt.xlabel("Energy after hohlraum wall (MeV)" if any_hohlraum else "Energy (MeV)")
 	plt.ylabel("Yield (MeV⁻¹)")
-	if tag != '':
-		plt.title(f"{line_of_site}, position {position} ({tag})")
-	elif position != "":
-		plt.title(f"{line_of_site}, position {position}")
+	if position != "":
+		title = f"{line_of_site}, {position}"
 	else:
-		plt.title(f"{shot_number}, {line_of_site}")
+		title = f"{shot_number}, {line_of_site}"
+	if tag != '':
+		title += f" ({tag})"
+	plt.title(title)
 	plt_set_locators()
 	plt.tight_layout()
 	plt.savefig(filepath+'_spectrum.png', dpi=300)
