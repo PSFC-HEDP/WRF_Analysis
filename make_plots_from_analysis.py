@@ -70,7 +70,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 					try:
 						analyses.append(read_analysis_file(
 							folder, os.path.join(subfolder, filename), show_plots, command_line_options))
-					except HohlraumFileError as e:
+					except (HohlraumFileError, MetadataNotFoundError) as e:
 						print(e)
 						return
 
@@ -411,7 +411,7 @@ def read_analysis_file(folder: str, filepath: str,
 	    :param command_line_parameters: any ρR calculation information specified on the command line
 	    :return: an Analysis object summarizing the analysis file
 	    :raise HohlraumFileError: if hohlraum.txt is missing or invalid
-	    :raise IncompleteFilenameError: if the analysis filename is missing some of the necessary metadata
+	    :raise MetadataNotFoundError: if the analysis filename is missing some of the necessary metadata
 	"""
 	# read the filename for top-level metadata
 	shot_day, shot_number, line_of_site, position, wrf_number = None, None, None, None, None
@@ -424,7 +424,7 @@ def read_analysis_file(folder: str, filepath: str,
 			shot_day = identifier
 		elif re.fullmatch(r'O?1?\d{5}', identifier):
 			shot_number = identifier
-		elif re.fullmatch(r'(DIM-?)?(0+-0+|0?90-(0?78|124|315))|TIM[1-6](-(4|8|12))?|(NDI-)?P2', identifier):
+		elif re.fullmatch(r'(DIM-?)?(0+-0+|0?90-(0?78|124|315))|TIM[1-6](-(4|8|12))?|(NDI-)?P2|NDI', identifier):
 			line_of_site = identifier
 		elif re.fullmatch(r'((POS|Pos)-?)?[1-4]|(4|8|12):00', identifier):
 			position = identifier[-1]
@@ -434,9 +434,9 @@ def read_analysis_file(folder: str, filepath: str,
 			tag = identifier
 
 	if shot_number is None:
-		raise MetadataNotFoundError(f"no shot number found in {identifiers}")
+		raise MetadataNotFoundError(f"the filename is incomplete; there's no shot number in {identifiers}")
 	if line_of_site is None:
-		raise MetadataNotFoundError(f"no line of sight found in {identifiers}")
+		raise MetadataNotFoundError(f"the filename is incomplete; there's no line of sight in {identifiers}")
 	if re.fullmatch(r"TIM[1-6]-(4|8|12)", line_of_site):  # extract the position from the line of site if relevant
 		line_of_site, position = re.fullmatch(r"(TIM[1-6])-(4|8|12)", line_of_site).group(1, 2)
 	elif re.fullmatch(r"\D*\d+-\d+", line_of_site): # standardize the DIM names if they're too long
