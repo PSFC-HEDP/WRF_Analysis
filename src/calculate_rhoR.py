@@ -7,9 +7,18 @@ import numpy as np
 from numpy import inf
 from scipy import integrate
 
-from src.Material import plasma_conditions
-from src.StopPow import StopPow_LP
-from src.rhoR_Analysis import rhoR_Analysis
+# if Alex's C stuff isn't working, catch the error here so the rest of the program can keep functioning
+try:
+	from src.Material import plasma_conditions
+	from src.StopPow import StopPow_LP
+	from src.rhoR_Analysis import rhoR_Analysis
+except ImportError:
+	LIBRARY_IMPORTED = False
+	plasma_conditions = None
+	StopPow_LP = None
+	rhoR_Analysis = None
+else:
+	LIBRARY_IMPORTED = True
 
 # a type that represents the thickness and material of a layer
 Layer = tuple[float, str]
@@ -30,7 +39,10 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
 		:raise ValueError: if not enuff information is available to make an inference
 	"""
-	if shot_name.startswith("O"): # if it's an omega shot
+	if not LIBRARY_IMPORTED:
+		raise ValueError("the stopping power library couldn't be imported")
+
+	elif shot_name.startswith("O"): # if it's an omega shot
 		if shot_name not in rhoR_objects:
 			if "ablator material" not in params:
 				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material with '--shell_material=_'.")

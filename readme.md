@@ -74,8 +74,10 @@ you'll need the Python requirements, which are all on PyPI.
 pip install -r requirements.txt
 ~~~
 
-you'll also need the stopping power library that is hosted in the StopPow repository.
+if you want to calculate ρRs, you'll also need the stopping power library that is hosted in the StopPow repository.
 this is where it gets tricky.
+note that you can skip this part if you only want to make plots of the spectra.
+
 here are Graeme's instructions for installing on Linux:
 
 1. get gsl version 1.x (not 2.x)
