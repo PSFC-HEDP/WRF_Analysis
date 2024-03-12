@@ -107,6 +107,7 @@ unfortunately unlike in step 2 you must pass the full name of the folder and not
 
 if it's a NIF shot, it will use the info in `shot_info.csv` along with Alex's geometric implosion model to infer ρR.
 if it's an OMEGA shot, that information is not available, so you'll need to specify shell conditions.
+I recommend running a LILAC simulation to identify reasonable values.
 the `MATERIAL` can be "CH", "CH2", "HDC", "SiO2", or "Be".
 the `DENSITY` should be given in g/cm³, and the `TEMPERATURE` is the electron temperature in keV.
 the calculation it then does is much simpler than for NIF shots;

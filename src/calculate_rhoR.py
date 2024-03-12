@@ -84,6 +84,15 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 	elif shot_name.startswith("N"): # if it's a NIF shot
 		# use Alex's fancy implosion stopping model
 		if shot_name not in rhoR_objects:
+			if "shell density" in params:
+				print("just so you know, I'm not using the shell density you provided; I'm inferring it from "
+				      "`shot_info.csv` and Alex's model.")
+			if "shell electron temperature" in params:
+				print("just so you know, I'm not using the shell electron temperature you provided; I'm inferring "
+				      "it from `shot_info.csv` and Alex's model.")
+			if params["secondary"]:
+				print(f"fyi passing `--secondary` is not necessary for NIF shots; I can tell from `shot_info.csv` "
+				      f"that this is {'primary' if params['helium-3 fraction'] > 0 else 'secondary'} data.")
 			try:
 				rhoR_objects[shot_name] = rhoR_Analysis(
 					shell_mat   = params['ablator material'],
