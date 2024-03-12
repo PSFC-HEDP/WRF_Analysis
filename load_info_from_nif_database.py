@@ -552,8 +552,9 @@ def download_webdav_file(shot_number: str, path: str,
 			print(f"downloading `{path}`...")
 			user_has_been_warned = True
 		elif current_time - start_time > timeout:
-			raise TimeoutError(f"I couldn't get `{url}`. this may be because `{downloads_folder}` is not your "
-			                   f"default downloads directory, or because you're not on the LLNL VPN.")
+			raise TimeoutError(f"I couldn't get `{url}`. this may be because `{downloads_folder}` is not your default"
+			                   f"downloads directory (use `--downloads=...` to change that), or because you're not on "
+			                   f"the LLNL VPN.")
 		else:
 			time.sleep(0.2)
 	time.sleep(0.2)  # give it a sec after it appears, to ensure it's populated
@@ -709,8 +710,10 @@ def main():
 	                    help="the approximate DD yield of the implosion in keV, if it's not on WebDav yet")
 	parser.add_argument("--DD_temperature", type=float, default=nan,
 	                    help="the approximate nTOF-measured ion temperature of the implosion, if it's not on WebDav yet")
-	parser.add_argument("--downloads", type=str, default="%USERPROFILE%\\Downloads\\" if os.name == "nt" else "~/Downloads/",
-	                    help="the default directory where files downloaded from your default browser go")
+	default_downloads = "%USERPROFILE%\\Downloads\\" if os.name == "nt" else "~/Downloads/"
+	parser.add_argument("--downloads", type=str, default=default_downloads,
+	                    help=f"the default directory where files downloaded from your default browser go (I'm guessing "
+	                         f"it's `{default_downloads}` so I'll look there if you omit this argument)")
 	args = parser.parse_args()
 
 	try:
