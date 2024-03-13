@@ -549,10 +549,10 @@ def download_webdav_file(shot_number: str, path: str,
 		if os.path.isfile(downloaded_filepath):
 			break
 		elif not user_has_been_warned and current_time - start_time > DOWNLOAD_WARN_TIME:
-			print(f"downloading `{path}`...")
+			print(f"downloading `{path}`...")  # let the user know what's up if it seems to be taking a while
 			user_has_been_warned = True
 		elif current_time - start_time > timeout:
-			raise TimeoutError(f"I couldn't get `{url}`. this may be because `{downloads_folder}` is not your default"
+			raise TimeoutError(f"I couldn't get `{url}`. this may be because `{downloads_folder}` is not your default "
 			                   f"downloads directory (use `--downloads=...` to change that), or because you're not on "
 			                   f"the LLNL VPN.")
 		else:
@@ -657,11 +657,11 @@ def evaluate_directory(directory: str) -> str:
 
 def normalize_shot_number(shot_number: str) -> str:
 	""" take a NIF shot number in a variety of formats and return an equivalent NXXXXXX-00X-999 version
-	    :param shot_number: the N number of this shot, possibly incomplete
+	    :param shot_number: the N number of this shot, possibly incomplete or followed by other stuff
 	    :return: the complete 12-digit N number
 	    :raise ValueError: if shot_number isn’t formatted like any kind of shot number
 	"""
-	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3}))?(-999)?( [A-Za-z0-9_-]+)?", shot_number)
+	parsing = re.fullmatch(r"N?([0-9]{6})(-([0-9]{3})(-999)?)?", shot_number)
 	if parsing is None:
 		raise ValueError(f"I could not parse the shot number {shot_number!r}. "
 		                 f"It should follow the N210808-001(-999) format.")

@@ -16,7 +16,6 @@ from matplotlib.ticker import ScalarFormatter
 from numpy.typing import NDArray
 from scipy import optimize
 
-from load_info_from_nif_database import normalize_shot_number
 from src.calculate_rhoR import perform_hohlraum_correction, calculate_rhoR, Layer, Peak, np_Peak, Quantity, np_Quantity
 
 # matplotlib.use("qtagg")
@@ -56,7 +55,7 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 
 	# first, load the analyzed data
 	for i, folder_name in enumerate(folders): # for each specified folder
-		folder = os.path.join(ROOT, folder_name)
+		folder = os.path.join(ROOT, folder_name, "")
 		if not os.path.isdir(folder):
 			print(f"No such folder: `{folder}`")
 			return
@@ -520,7 +519,7 @@ def read_analysis_file(folder: str, filepath: str,
 		good_compression_fit = False
 
 	# load info from hohlraum.txt and the shot table
-	parameters = load_rhoR_parameters(folder)
+	parameters = load_rhoR_parameters(folder, f"{shot_day}-{shot_number}")
 	parameters.update(command_line_parameters)
 	any_hohlraum = any(parameters["hohlraum"].values())
 	any_clipping_here = any(indicator in filepath for indicator in parameters["clipping"])
@@ -575,7 +574,7 @@ def read_analysis_file(folder: str, filepath: str,
 
 	# do the ρR analysis for both the shock and compression peak
 	try:
-		rhoR = calculate_rhoR(mean, shot_day+shot_number, parameters)
+		rhoR = calculate_rhoR(mean, f"{shot_day}-{shot_number}", parameters)
 	except ValueError as e:
 		print(f"setting ρR to nan because {e}")
 		rhoR = (nan, nan, nan)
@@ -585,7 +584,7 @@ def read_analysis_file(folder: str, filepath: str,
 			                            (compression_yield, compression_mean, compression_sigma))
 		try:
 			compression_rhoR = calculate_rhoR(
-				compression_mean, shot_day+shot_number, parameters)
+				compression_mean, f"{shot_day}-{shot_number}", parameters)
 		except ValueError:
 			compression_rhoR = (nan, nan, nan)
 	else:
@@ -641,31 +640,33 @@ def assign_label(item: np_Analysis, multiple_days: bool, multiple_shots: bool) -
 	return shot_label, analysis_label
 
 
-def load_rhoR_parameters(folder: str) -> dict[str, Any]:
-	""" load the analysis parameters given in shot_info.csv and hohlraum.txt file
+def load_rhoR_parameters(folder: str, shot_number: str) -> dict[str, Any]:
+	""" load all analysis parameters available from shot_info.csv and hohlraum.txt
 	    :param folder: the absolute or relative path to the directory with the data we're considering
+	    :param shot_number: the NIF shot's N number if it's a NIF shot, something starting with "O" if it's an OMEGA shot
 	    :return: a dictionary containing values for 'ablator thickness', 'hohlraum', and a bunch of other stuff.
 	    :raise HohlraumFileError: if the hohlraum.txt file hasn't been created but this is a NIF shot
 	"""
 	# start by taking any relevant information from shot_info.csv
 	params: dict[str, Any] = {}
-	try:
-		nif_shot_number = normalize_shot_number(os.path.basename(folder))
-	except ValueError:
-		nif_shot = False
-	else:
-		nif_shot = True
+	if shot_number.startswith("N"):
+		shot_number = shot_number + "-999"  # make sure to normalize the shot number first
 		nif_shot_table = pd.read_csv(
 			"shot_info.csv", skipinitialspace=True, index_col="shot number", dtype={})
-		shot_info = nif_shot_table.loc[nif_shot_number]
-		for key in ["ablator radius", "ablator thickness", "ablator material",
-		            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
-			if not pd.isnull(shot_info[key]):
-				params[key] = shot_info[key]
+		if shot_number in nif_shot_table.index:
+			# collect the relevant information from shot_info.csv
+			shot_info = nif_shot_table.loc[shot_number]
+			for key in ["ablator radius", "ablator thickness", "ablator material",
+			            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
+				if not pd.isnull(shot_info[key]):
+					params[key] = shot_info[key]
 
-		# calculate the converged shell thickness
-		if "shell thickness" not in params:
-			params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
+			# calculate the converged shell thickness
+			if "shell thickness" not in params and "ablator thickness" in params:
+				params["shell thickness"] = params["ablator thickness"]*40.0/200.0  # from "Alex's paper" (idk which)
+
+		else:
+			print(f"there was no information about NIF shot {shot_number} in `shot_info.csv`.")
 
 	# read hohlraum.txt if it exists
 	if not os.path.isfile(os.path.join(folder, "hohlraum.txt")):
@@ -674,7 +675,7 @@ def load_rhoR_parameters(folder: str) -> dict[str, Any]:
 	with open(os.path.join(folder, "hohlraum.txt"), encoding="utf-8") as f:
 		hohlraum_codes = f.readlines()
 	# NIF shots usually have hohlraeume, so complain if it looks like the user forgot to add it
-	if nif_shot and len(hohlraum_codes) == 0:
+	if shot_number.startswith("N") and len(hohlraum_codes) == 0:
 		raise HohlraumFileError(f"you need to fill out `{os.path.join(os.getcwd(), folder, 'hohlraum.txt')}` with the "
 		                        f"hohlraum information.  if there is no hohlraum, just put 'none'.")
 	if len(hohlraum_codes) == 1 and hohlraum_codes[0].lower().strip() == "none":  # this is the explicit way to indicate no hohlraum

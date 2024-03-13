@@ -34,7 +34,7 @@ traveller spreadsheets it can find and automaticly generate multiple files.
 
 before calling this script you must be on the LLNL VPN and have created a subfolder for the relevant shot in `data/`.
 that subfolder must have the shot's six- or nine-digit N number in the name (with or without the "-999"),
-but it can also have other stuff (like you can name the folder "N231227 I_MJDD_PDD_WF" and that's fine).
+but it can also have other stuff before or after (like you can name the folder "shot N231227 I_MJDD_PDD_WF" and that's fine).
 you must also download the traveler spreadsheet(s) for the shot and put them in that folder.
 they can be in subfolders (like if you want to have a subfolder for each line of sight) and that's fine.
 
