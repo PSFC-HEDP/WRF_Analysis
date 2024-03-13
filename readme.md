@@ -162,6 +162,21 @@ and distinguish the resulting analysis files by putting
 in the filenames.
 the code will notice these tags and include them in the plots and tables to uniquely identify each analysis.
 
+there's a way to make a plot that will compare the performance of many shots in a series,
+but it's currently not very well automated.
+what you do is you create a folder for a shot series rather than for a single shot,
+and you put a text file in it for every shot in that series.
+the text file should be named the shot's nine-digit N number,
+and contain a table of numbers where each line is one WRF
+and the columns are DIM, position, yield, yield uncertainty, energy, energy uncertainty, ρR, and ρR uncertainty.
+you can also have pipes, colons, or plus-minus symbols in the middle and they'll be parsed as spaces
+(this makes it so you can usually copy the table printed to the console into these text files).
+what the code does is treat this as multiple ANALYSIS.csv files with pre-computed ρRs.
+so you can call `make_plots_from_analysis.py` on a folder with a bunch of these text files
+instead of a folder with a bunch of ANALYSIS.csv files for one shot like you normally would,
+and it will make the same scatter plots it always does but comparing multiple shots.
+agen, it wouldn't be to hard to make this all fully automatic, but whatever it's fine for now.
+
 ## Installation
 
 you'll need the Python requirements, which are all on PyPI.
