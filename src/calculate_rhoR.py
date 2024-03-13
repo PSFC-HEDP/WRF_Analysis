@@ -32,18 +32,21 @@ np_Peak = np.dtype([("yield", np_Quantity), ("mean", np_Quantity), ("sigma", np_
 rhoR_objects: dict[str, Any] = {}
 
 
-def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]) -> Quantity:
+def calculate_rhoR(mean_energy: Quantity, shot_number: str, params: dict[str, Any]) -> Quantity:
 	""" calculate the rhoR using whatever tecneke makes most sense.
 	    for a NIF shot, this will use Alex's fancy calculations.
 	    for an OMEGA shot, this will simply interpolate off a table loaded from disk.
 		return rhoR, error, hotspot_component, shell_component (mg/cm^2)
+		:param mean_energy: the value and uncertainty of the peak energy that will be converted to a ρR
+		:param shot_number: a string unique to this shot that starts with either "N" or "O" depending on which facility this is
+		:param params: the dict of auxiliary information like the shell material and fill fraction
 		:raise ValueError: if not enuff information is available to make an inference
 	"""
 	if not LIBRARY_IMPORTED:
 		raise ValueError("the stopping power library couldn't be imported")
 
-	elif shot_name.startswith("O"): # if it's an omega shot
-		if shot_name not in rhoR_objects:
+	elif shot_number.startswith("O"): # if it's an omega shot
+		if shot_number not in rhoR_objects:
 			if "ablator material" not in params:
 				raise ValueError("to infer ρR on OMEGA shots, you need to specify the shell material with '--shell_material=_'.")
 			if "shell density" not in params:
@@ -55,11 +58,11 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 			# do a simple stopping power calculation through a uniform plasma
 			masses, charges, temperatures, densities = plasma_conditions(
 				params["ablator material"], params["shell density"], params["shell electron temperature"])
-			rhoR_objects[shot_name] = [
+			rhoR_objects[shot_number] = [
 				(1., StopPow_LP(1, 1, masses, charges, temperatures, densities))]  # the 1, 1 at the beginning specifies that these are protons
 			for density_factor in [0.5, 1.5]:
 				for temperature_factor in [0.5, 1.5]:
-					rhoR_objects[shot_name].append(
+					rhoR_objects[shot_number].append(
 						(density_factor, StopPow_LP(1, 1, masses, charges,
 						                            temperatures*temperature_factor,
 						                            densities*density_factor)))
@@ -72,7 +75,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 			elif energy <= 0:
 				guesses.append(inf)
 			else:
-				for density_factor, stopping_power in rhoR_objects[shot_name]: # then iterate thru all the other combinations of ρ and Te
+				for density_factor, stopping_power in rhoR_objects[shot_number]: # then iterate thru all the other combinations of ρ and Te
 					thickness = stopping_power.Thickness(birth_energy, energy)*1e-4  # (convert μm to cm)
 					density = density_factor*params["shell density"]
 					guesses.append(thickness*density/1e-3)  # convert
@@ -81,20 +84,20 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 		upper_error = np.max(guesses) - guesses[0]
 		return best_gess, lower_error, upper_error
 
-	elif shot_name.startswith("N"): # if it's a NIF shot
+	elif shot_number.startswith("N"): # if it's a NIF shot
 		# use Alex's fancy implosion stopping model
-		if shot_name not in rhoR_objects:
+		if shot_number not in rhoR_objects:
 			if "shell density" in params:
 				print("just so you know, I'm not using the shell density you provided; I'm inferring it from "
 				      "`shot_info.csv` and Alex's model.")
 			if "shell electron temperature" in params:
 				print("just so you know, I'm not using the shell electron temperature you provided; I'm inferring "
 				      "it from `shot_info.csv` and Alex's model.")
-			if params["secondary"]:
+			if params["secondary"] and "helium-3 fraction" in params:
 				print(f"fyi passing `--secondary` is not necessary for NIF shots; I can tell from `shot_info.csv` "
 				      f"that this is {'primary' if params['helium-3 fraction'] > 0 else 'secondary'} data.")
 			try:
-				rhoR_objects[shot_name] = rhoR_Analysis(
+				rhoR_objects[shot_number] = rhoR_Analysis(
 					shell_mat   = params['ablator material'],
 					Ri          = (params['ablator radius'] - params['ablator thickness'])*1e-4,  # convert to cm
 					Ri_err      = 0.1e-4,
@@ -114,13 +117,13 @@ def calculate_rhoR(mean_energy: Quantity, shot_name: str, params: dict[str, Any]
 				raise ValueError(f"inferring ρR on NIF shots requires that the {e} be in the shot_info.csv table")
 
 		# then calculate the ρR
-		analysis_object = rhoR_objects[shot_name]
+		analysis_object = rhoR_objects[shot_number]
 		rhoR, Rcm_value, error = analysis_object.Calc_rhoR(E1=mean_energy[0], dE=mean_energy[1])
 		# hotspot_component, shell_component, ablated_component = analysis_object.rhoR_Parts(Rcm_value)
 		return rhoR*1e3, error*1e3, error*1e3 # convert from g/cm2 to mg/cm2
 
 	else:
-		raise ValueError(f"I don't know what facility {shot_name} is supposed to be")
+		raise ValueError(f"I don't know what facility {shot_number} is supposed to be")
 
 
 def perform_hohlraum_correction(layers: list[Layer], after_wall: Peak) -> Peak:
