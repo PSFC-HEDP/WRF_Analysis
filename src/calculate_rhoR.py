@@ -12,7 +12,8 @@ try:
 	from src.Material import plasma_conditions
 	from src.StopPow import StopPow_LP
 	from src.rhoR_Analysis import rhoR_Analysis
-except ImportError:
+except ImportError as e:
+	print("the stopping power library couldn't be imported because of", e)
 	LIBRARY_IMPORTED = False
 	plasma_conditions = None
 	StopPow_LP = None
@@ -43,7 +44,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_number: str, params: dict[str, An
 		:raise ValueError: if not enuff information is available to make an inference
 	"""
 	if not LIBRARY_IMPORTED:
-		raise ValueError("the stopping power library couldn't be imported")
+		raise ValueError("the stopping power library wasn't imported")
 
 	elif shot_number.startswith("O"): # if it's an omega shot
 		if shot_number not in rhoR_objects:
