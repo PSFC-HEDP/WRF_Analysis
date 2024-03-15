@@ -57,7 +57,9 @@ If you're running on WSL, you might have difficulty working with the web-browser
 This can be fixed by setting the `BROWSER` environment variable to your windows web-browser.
 Here's an example:
 
-    export BROWSER=/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe
+~~~bash
+export BROWSER=/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe
+~~~
 
 You'll probably need to modify this for your setup.
 
