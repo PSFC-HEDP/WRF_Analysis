@@ -4,52 +4,47 @@ this code is meant to expedite the process of analyzing Wedge Range Filters (WRF
 
 ## Installation
 
-you'll need the Python requirements, which are all on PyPI.
+if you just want to download info from the NIF database and make plots of analyzed spectra, 
+all you'll need is the Python requirements, which are all on PyPI.
 ~~~bash
 pip install -r requirements.txt
 ~~~
 
 if you want to calculate ρRs, you'll also need the stopping power library that is hosted in the [StopPow](https://github.com/PSFC-HEDP/StopPow) repository.
-this is where it gets tricky.
-note that you can skip this part if you only want to make plots of the spectra.
+follow the installation instructions there.
+on Linux, in broad strokes, it looks like this:
 
-here are Graeme's instructions for installing on Linux:
+1. download, build, and install [GSL](https://www.gnu.org/software/gsl) version 1.16:
+   ```bash
+   cd ~/gsl-1.16/
+   ./configure
+   make
+   make install
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
+   ```
+2. download, build, and install [PCRE2](https://github.com/PCRE2Project/pcre2):
+   ```bash
+   cd ~/pcre2/
+   ./configure
+   make
+   make install
+   ```
+3. download, build, and install [SWIG](https://www.swig.org):
+   ```bash
+   cd ~/swig/
+   ./configure
+   make
+   make install
+   ```
+4. clone and build [StopPow](https://github.com/PSFC-HEDP/StopPow):
+   ```bash
+   cd ~/StopPow/python_swig/
+   make
+   mv dist/* ~/WRF_Analysis/src/
+   ```
 
-1. get gsl version 1.x (not 2.x)
-   - `cd gsl`
-   - `./configure`
-   - `make`
-   - `make check`
-   - `make install`
-2. get [SWIG](https://www.swig.org/download.html) (tested with v 3.something)
-3. get [WRF_Analysis](https://github.com/PSFC-HEDP/WRF_Analysis)
-4. StopPow:
-   - get StopPow from GitHub
-   - `cd StopPow/python_swig`
-   - `make`
-   - move `_StopPow.so` AND `StopPow.py` (from `StopPow/python_swig/dist/`) to `WRF_Analysis/src/`
-5. run WRF:
-   - this step was necessary for Graeme but not Joe so if you can't find `main.py` try just ignoring it.
-   - move `main.py` to the root WRF_Analysis folder
-   - `python3 main.py`
-
-this can also be run on Windows, but it's harder because the tools for compiling gsl aren't as readily available.
-basically, instead of `_StopPow.so`, you want to end up with the Windows verison,
-which is `_StopPow.lib`, and which must be compiled in Windows.
-I was abe to do this by getting GSL 1.x for Windows off the internet (I also had to find a copy of the GNU 1.16 source),
-compile that to a .def file (I didn't rite down how I did that, so maybe I just downloaded the .def file),
-and then compile that to the .lib using "Developer Command Prompt for VS 2019",
-which you may need to install (I think it comes with the Visual Studio compiler which I already had on my computer for some reason).
-I didn't write down the exact command, but you can probably just google it, since I think that's what I did.
-
-as a side note, I don't seem to have `_StopPow.lib` in my local copy of this repo but it still works,
-so idk what the deal with that is.
-I do have `_StopPow.cp39-win_amd64.pyc` (which came from making in the `StopPow/python_swig/` folder),
-so maybe that's a sufficient substitute for the .lib file.
-but I really could have sworn I rememberd creating the .lib file.
-How else would I have written the paragraph above this?
-maybe I deleted it...
-weerd.
+this can all be done on Windows, but it's harder because the tools for compiling GSL 1 aren't as readily available.
+see the instructions at [StopPow](https://github.com/PSFC-HEDP/StopPow) for more details.
 
 ### Running on WSL
 
