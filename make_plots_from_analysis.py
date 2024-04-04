@@ -133,18 +133,17 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 		           delimiter=",", comments="")
 
 	# save the spectra in a spreadsheet
-	workbook = openpyxl.Workbook()
-	worksheet = workbook.active
-	for i, (label, analysis) in enumerate(zip(labels, analyses)):
-		worksheet.cell(1, 4*i + 1).value = label.replace("\n", " ")
-		worksheet.merge_cells(start_row=1, end_row=1, start_column=4*i + 1, end_column=4*i + 3)
-		worksheet.cell(2, 4*i + 1).value = "Energy (MeV)"
-		worksheet.cell(2, 4*i + 2).value = "Spectrum (MeV^-1)"
-		worksheet.cell(2, 4*i + 3).value = "Error bar (MeV^-1)"
-		for j in range(analysis["spectrum"].shape[0]):
-			for k in range(analysis["spectrum"].shape[1]):
-				worksheet.cell(3 + j, 4*i + 1 + k).value = analysis["spectrum"][j, k]
-	workbook.save(os.path.join(base_directory, "WRF spectra.xlsx"))
+	for item, secondary_stuff in zip(analyses, secondary_analyses):
+		workbook = openpyxl.load_workbook("templates/spectrum.xlsx")
+		worksheet = workbook["Summary"]
+		worksheet.cell(2, 2).value = f"{item['shot_day']}-{item['shot_number']}-999"
+		worksheet.cell(3, 2).value = f"0{item['line_of_site']}:{item['position']}"
+		worksheet = workbook["!SPECTRUM_WF"]
+		for j in range(item["spectrum"].shape[0]):
+			for k in range(2):
+				worksheet.cell(5 + j, 1 + k).value = item["spectrum"][j, k]
+		filename = f"{item['shot_day']}-{item['shot_number']}-999 {item['line_of_site']} position {item['position']} WRF spectrum.xlsx"
+		workbook.save(os.path.join(base_directory, filename))
 
 	# save the condensed results in a spreadsheet for each folder
 	workbooks = {}
