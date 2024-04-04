@@ -506,9 +506,9 @@ def read_analysis_file(folder: str, filepath: str,
 		compression_fit = None
 	if compression_fit is not None:
 		compression_yield, compression_mean, compression_sigma = compression_fit
-		good_compression_fit = (compression_yield[0] > yeeld[0] and
+		good_compression_fit = (compression_yield[0] > 3*yeeld[0] and
 		                        compression_mean[0] > spectrum[0][0] and
-		                        compression_mean[0] < mean[0])
+		                        compression_mean[0] < mean[0] - 2)
 		if not good_compression_fit:
 			compression_yield, compression_mean, compression_sigma = \
 				(nan, inf, inf), (nan, inf, inf), (nan, inf, inf)
