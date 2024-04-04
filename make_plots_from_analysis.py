@@ -542,6 +542,7 @@ def read_analysis_file(folder: str, filepath: str,
 	             yerr=spectrum[:, 2],
 	             fmt='.', color='#000000', elinewidth=1, markersize=6)
 	plt.axis([4, 17, min(0, np.min(spectrum[:, 1] + spectrum[:, 2])), np.max(spectrum[:, 1] + spectrum[:, 2])])
+	plt_set_locators()
 	plt.xticks(np.arange(4, 18))
 	plt.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
 	plt.xlabel("Energy after hohlraum wall (MeV)" if any_hohlraum else "Energy (MeV)")
@@ -553,7 +554,6 @@ def read_analysis_file(folder: str, filepath: str,
 	if tag != '':
 		title += f" ({tag})"
 	plt.title(title)
-	plt_set_locators()
 	plt.tight_layout()
 	plt.savefig(filepath+'_spectrum.png', dpi=300)
 	plt.savefig(filepath+'_spectrum.eps')
