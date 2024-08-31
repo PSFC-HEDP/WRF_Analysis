@@ -41,10 +41,11 @@ SecondaryAnalysis = tuple[Quantity, Quantity]
 np_SecondaryAnalysis = np.dtype([("rhoR", np_Quantity), ("temperature", np_Quantity)])
 
 
-def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_options: dict[str, Any]):
+def make_plots_from_analysis(folders: list[str], fit_compression_peak: bool, show_plots: bool, command_line_options: dict[str, Any]):
 	""" take the analysis .csv files created by AnalyzeCR39 in a given series of folders, and
 	    generate a bunch of plots and tables summarizing the information therein.
 	    :param folders: a list of subdirectories in data/ to search for analysis results
+	    :param fit_compression_peak: whether it makes sense to look for another peak to the left of the main one
 	    :param show_plots: whether to show the plots as they’re generated in addition to saving them to disk
 	    :param command_line_options: additional values specified in the original command
 	"""
@@ -68,7 +69,8 @@ def make_plots_from_analysis(folders: list[str], show_plots: bool, command_line_
 				elif re.fullmatch(r'.*ANALYSIS.*\.csv', filename): # if it is an analysis file
 					try:
 						analyses.append(read_analysis_file(
-							folder, os.path.join(subfolder, filename), show_plots, command_line_options))
+							folder, os.path.join(subfolder, filename),
+							fit_compression_peak, show_plots, command_line_options))
 					except (HohlraumFileError, MetadataNotFoundError) as e:
 						print(e)
 						return
@@ -401,10 +403,11 @@ def read_shot_summary_file(filepath: str) -> list[Analysis]:
 
 
 def read_analysis_file(folder: str, filepath: str,
-                       show_plots: bool, command_line_parameters: dict[str, Any]) -> Analysis:
+                       fit_compression_peak: bool, show_plots: bool, command_line_parameters: dict[str, Any]) -> Analysis:
 	""" read an analysis file that came out of AnalyzeCR39 and pull out the key details in an Analysis struct
 	    :param folder: the main folder to which this analysis file belongs
 	    :param filepath: the relative or absolute path to the analysis file
+	    :param fit_compression_peak: whether it makes sense to look for a compression peak to the left of the main one
 	    :param show_plots: whether to show the plot that's generated in addition to saving it to disk
 	    :param command_line_parameters: any ρR calculation information specified on the command line
 	    :return: an Analysis object summarizing the analysis file
@@ -496,7 +499,7 @@ def read_analysis_file(folder: str, filepath: str,
 	spectrum = spectrum[2:, :] # remove the two lowest bins because Fredrick’s program calculates them incorrectly
 
 	# try to fit the compression peak
-	if gaussian_fit:
+	if gaussian_fit and fit_compression_peak:
 		try:
 			compression_fit = \
 				fit_skew_gaussian(spectrum, 0, mean[0] - 2*sigma[0])
@@ -789,6 +792,10 @@ def main():
 		"--secondary", action="store_true",
 		help="to treat the protons as secondary reactions (in which case the assumed mean birth energy is 15.0 MeV instead of 14.7)")
 	parser.add_argument(
+		"--suppress_compression_fit", action="store_true",
+		help="to turn off the otherwise automatic feature where it looks for and fits the spectrum below the main peak to a skew gaussian"
+	)
+	parser.add_argument(
 		"--show", action="store_true",
 		help="to show the plots as they're generated in addition to saving them in the subdirectory."
 	)
@@ -803,7 +810,7 @@ def main():
 		options["shell electron temperature"] = args.shell_temperature
 	options["secondary"] = args.secondary
 
-	make_plots_from_analysis(args.folders.split(","), args.show, options)
+	make_plots_from_analysis(args.folders.split(","), not args.suppress_compression_fit, args.show, options)
 
 
 class FixedOrderFormatter(ScalarFormatter):

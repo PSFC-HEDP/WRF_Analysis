@@ -154,7 +154,7 @@ if you used Patrick's secondary analysis code to get fuel ρRs, you can also put
 when you call the script, you basicly only need the folder name if it's a NIF shot or if you don't care about ρR,
 but you need to supply a bunch of additional information to get ρR for an OMEGA shot.
 ~~~
-python make_plots_from_analysis.py "FOLDERS" [--shell_material=MATERIAL --shell_density=DENSITY --shell_temperature=TEMPERATURE [--secondary]] [--show]
+python make_plots_from_analysis.py "FOLDERS" [--shell_material=MATERIAL --shell_density=DENSITY --shell_temperature=TEMPERATURE [--secondary]] [--suppress_compression_fit] [--show]
 ~~~
 
 you can pass multiple folders by making `FOLDERS` a comma-separated list,
@@ -169,6 +169,11 @@ the `DENSITY` should be given in g/cm³, and the `TEMPERATURE` is the electron t
 the calculation it then does is much simpler than for NIF shots;
 it assumes a uniform shell plasma of the given conditions and calculates how thick it would have to be.
 if it's a pure D implosion, make sure to add the `--secondary` flag to tell it to use a mean birth energy of 15.0 MeV instead of 14.7 MeV.
+
+by default if AnalyzeCR39 fit a gaussian peak, it will try to fit a skew gaussian peak to the left of that.
+if it succeeds, it will call it the compression peak and add it to the spectrum plot.
+for some spectral shapes, doing this doesn't make sense, and thus having that skew gaussian in the spectrum plot is misleading.
+thus, you can suppress this behavior with the `--suppress_compression_fit` flag.
 
 if you want you can also include `--show` to display the plots on the screen.
 by default it just saves them to the first folder that was passed without showing them.

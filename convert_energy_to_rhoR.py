@@ -62,11 +62,11 @@ def main():
 	                         "final energies (if it's a file, each line should contain either just the energy, the "
 	                         "energy followed by its uncertainty, or the energy followed by its lower and upper "
 	                         "uncertainties)")
-	parser.add_argument("--shell_material", type=str,
+	parser.add_argument("--shell_material", type=str, required=True,
 	                    help="the material of the capsule shell (HDC, SiO2, or CH)")
-	parser.add_argument("--shell_density", type=float,
+	parser.add_argument("--shell_density", type=float, required=True,
 	                    help="the density of the imploded shell plasma (g/cm³)")
-	parser.add_argument("--shell_temperature", type=float,
+	parser.add_argument("--shell_temperature", type=float, required=True,
 	                    help="the electron temperature of the imploded shell plasma (keV)")
 	parser.add_argument("--gold", type=float, default=0,
 	                    help="the amount of gold the particles passed through, in μm")
