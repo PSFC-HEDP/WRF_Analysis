@@ -565,11 +565,19 @@ def read_analysis_file(folder: str, filepath: str,
 	plt.close()
 
 	# figure out the hohlraum correction for this LOS and position
-	if '90' in line_of_site and any(parameters["hohlraum"].values()) > 0:
-		if position in parameters["hohlraum"]:
-			hohlraum_layers = parameters["hohlraum"][position]
-		else:
-			hohlraum_layers = parameters["hohlraum"][""]
+	if '00-00' in line_of_site:
+		hohlraum_layers = []
+	elif any(parameters["hohlraum"].values()):
+		number_of_matches = 0
+		hohlraum_layers = None
+		for key in parameters["hohlraum"].keys():
+			if key in line_of_site or key in position or key in tag:
+				hohlraum_layers = parameters["hohlraum"][key]
+				number_of_matches += 1
+		if number_of_matches < 1:
+			raise HohlraumFileError(f"I couldn't find a key in hohlraum.txt that matches {line_of_site}:{position} ({tag}).")
+		elif number_of_matches > 1:
+			raise HohlraumFileError(f"I found multiple keys in hohlraum.txt that matches {line_of_site}:{position} ({tag}).")
 	else:
 		hohlraum_layers = []
 	yeeld, mean, sigma = perform_hohlraum_correction(hohlraum_layers, (yeeld, mean, sigma))
