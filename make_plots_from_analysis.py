@@ -419,7 +419,7 @@ def read_analysis_file(folder: str, filepath: str,
 	tag = ''
 	identifiers = re.split(r"[_/\\ ]", filepath.upper())
 	for identifier in reversed(identifiers):
-		if re.fullmatch(r'N\d{6}-?\d{3}-?999', identifier):
+		if re.fullmatch(r'N\d{6}-\d{3}-999', identifier):
 			shot_day, shot_number, _ = identifier.split('-')
 		elif re.fullmatch(r'OM?2\d{5}', identifier):
 			shot_day = identifier
