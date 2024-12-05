@@ -238,7 +238,7 @@ def load_traveler_spreadsheet_info(shot_number: str, shot_subfolder: str,
 				# or else read the snout config
 				else:
 					# cut out unnecessary qualifiers
-					full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-DS(BOTH)?)?(-DIXI)?(-NRLOS)?([ ,].*)?", cell)
+					full_match = re.fullmatch(r"([\w0-9-]+-[0-9.X]+)(-[0-9]*[\w]+)?([ ,].*)?", cell)
 					if not full_match:
 						raise SpreadsheetFormatError(f"there's something incomprehensible about the snout config {cell!r}.")
 					snout_config = full_match.group(1)

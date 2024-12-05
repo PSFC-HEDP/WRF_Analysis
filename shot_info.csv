@@ -73,3 +73,6 @@ N240320-001-999,casey21,2.25e+13,3.7,HDC,78.238,1127.4,3.3361,DU,67% D + 33% He3
 N240326-001-999,yeamans1,3.7669e+12,4.0399,CH,133.41,1479.8,0,,100% D,1156,1,0,N_Sdev_Neutron_Xray_S01a,Source Development,neutron source development,Neutron
 N240519-001-999,mariscal2,2.51e+13,4.14,CH,135.74,1472.4,0,,100% D,1860.8,1,0,N_Sdev_Neutron_Xray_S05a,Source Development,neutron source development,Neutron
 N240521-003-999,ralph5,2.5509e+13,4.1323,HDC,83.253,1181.9,3.3013,DU,67% D + 33% He3,19590,0.6667,0.3333,I_Stag_Sym_HohlScan_S03a,Stagnation,,Symcap
+N241014-001-999,ralph5,3.7522e+13,4.3748,HDC,87.115,1135.6,3.3307,DU,67% D + 33% He3,19640,0.6667,0.3333,I_Stag_Sym_HyECpl_S10a,Stagnation,Stagnation,Symcap
+N241031-001-999,tommasini2,2.2e+13,3.95,HDC,77.86,1127.1,3.3445,DU,67% D + 33% He3,19752,0.6667,0.3333,I_Comprs_Sym_SQN_S06a,Compression,,Symcap
+N241124-002-999,mariscal2,7e+12,6.2,CH,0,0,0,,100% D,1230.9,1,0,N_Sdev_Neutron_Xray_S07a,Source Development,,Neutron
