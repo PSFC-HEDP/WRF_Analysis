@@ -14,6 +14,7 @@ class rhoR_Model(object):
     """3-part (shell, fuel, ablated mass) rhoR model. Arguments taken here are primarily shot-dependent initial conditions.
 
     :param shell_mat: (optional) the shell material to use {default='CH'}
+    :param shell_rho: (optional) the shell density to use [g/cm^3] {default=1.1}
     :param Ri: (optional) initial shell inner radius [cm] {default=0.09}
     :param Ro: (optional) initial shell outer radius [cm] {default=0.11}
     :param fD: (optional) deuterium atomic fraction in the fuel [fractional] {default=0.3}
@@ -46,12 +47,14 @@ class rhoR_Model(object):
     steps = 100  # steps in radius per region
 
     def __init__(self,
-                 shell_mat, Ri, Ro, fD, f3He, P0,
+                 shell_mat, shell_rho, Ri, Ro, fD, f3He, P0,
                  Te_Gas, Te_Shell, Te_Abl, Te_Mix,
                  rho_Abl_Max, rho_Abl_Min, rho_Abl_Scale,
                  f_Mix, t_Shell, f_Remain,
                  E0, dEdx_model='LP'):
         """Initialize the rhoR model."""
+        if shell_rho <= 0:
+            raise ValueError("the ablator density must be positive.")
         if Ri <= 0 or Ro <= 0:
             raise ValueError("the capsule dimensions must be positive.")
         if fD < 0 or f3He < 0 or P0 < 0:
@@ -65,7 +68,7 @@ class rhoR_Model(object):
         if t_Shell <= 0 or f_Remain < 0 or E0 <= 0:
             raise ValueError("you passd something negative.  idk which one.")
 
-        self.shell = Material(shell_mat)
+        self.shell = Material(shell_mat, shell_rho)
         self.Ri = Ri
         self.Ro = Ro
         self.fD = fD

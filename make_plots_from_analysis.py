@@ -666,7 +666,7 @@ def load_rhoR_parameters(folder: str, shot_number: str) -> dict[str, Any]:
 		if shot_number in nif_shot_table.index:
 			# collect the relevant information from shot_info.csv
 			shot_info = nif_shot_table.loc[shot_number]
-			for key in ["ablator radius", "ablator thickness", "ablator material",
+			for key in ["ablator radius", "ablator thickness", "ablator material", "ablator density",
 			            "fill pressure", "deuterium fraction", "helium-3 fraction"]:
 				if not pd.isnull(shot_info[key]):
 					params[key] = shot_info[key]

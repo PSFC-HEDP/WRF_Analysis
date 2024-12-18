@@ -8,12 +8,6 @@ __material_composition__ = {'CH': {'C': 1.000, 'H': 1.352, 'O': .012},
                             'HDC': {'C': 1},
                             'SiO2': {'Si': 1, 'O': 2}}
 
-__material_rho__ = {'CH': 1.084,
-                    'CH2': 1.084,
-                    'HDC': 3.5,
-                    'SiO2': 2.56,
-                    'Be': 1.85}
-
 __element_A__ = {'H': 1,
                  'Be': 9,
                  'C': 12,
@@ -35,7 +29,7 @@ from src.StopPow import DoubleVector
 
 
 class Material:
-    def __init__(self, specifier: str):
+    def __init__(self, specifier: str, rho: float):
         """ figure out the stopping-power-relevant material properties given
             a specification string.  the string should be hyphen-separated
             values, where each value is an optional number (the molecular
@@ -87,9 +81,7 @@ class Material:
             else:
                 raise KeyError(f"I did not recognize the material '{compound}'")
 
-            # take the density of the first component
-            if the_last_one:
-                self.rho = __material_rho__[compound]
+        self.rho = rho
 
         # lookup A and Z from the elemental symbols
         total_abundance = np.sum(abundance)
@@ -111,7 +103,7 @@ def plasma_conditions(material_specifier: str, density: float, temperature: floa
         :return: the arrays containing the properties of each species (including electrons):
                  mass (Da), charge (e), temperature (keV), and number density (cm^-3)
     """
-    material = Material(material_specifier)
+    material = Material(material_specifier, density)
     ion_density = density/(material.AvgA*mp)
     electron_density = ion_density*material.AvgZ
     num_species = len(material.Z) + 1

@@ -100,6 +100,7 @@ def calculate_rhoR(mean_energy: Quantity, shot_number: str, params: dict[str, An
 			try:
 				rhoR_objects[shot_number] = rhoR_Analysis(
 					shell_mat   = params['ablator material'],
+					shell_rho   = params['ablator density'],
 					Ri          = (params['ablator radius'] - params['ablator thickness'])*1e-4,  # convert to cm
 					Ri_err      = 0.1e-4,
 					Ro          = params['ablator radius']*1e-4,  # convert to cm
