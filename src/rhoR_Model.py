@@ -52,10 +52,17 @@ class rhoR_Model(object):
                  f_Mix, t_Shell, f_Remain,
                  E0, dEdx_model='LP'):
         """Initialize the rhoR model."""
-        if Ri <= 0 or Ro <= 0 or fD < 0 or f3He < 0 or P0 < 0 or \
-                Te_Gas <= 0 or Te_Shell <= 0 or Te_Abl <= 0 or Te_Mix <= 0 or \
-                rho_Abl_Max <= 0 or rho_Abl_Min <= 0 or rho_Abl_Scale <= 0 or \
-                f_Mix < 0 or t_Shell <= 0 or f_Remain < 0 or E0 <= 0:
+        if Ri <= 0 or Ro <= 0:
+            raise ValueError("the capsule dimensions must be positive.")
+        if fD < 0 or f3He < 0 or P0 < 0:
+            raise ValueError("the gas fill can't be negative.")
+        if Te_Gas <= 0 or Te_Shell <= 0 or Te_Abl <= 0 or Te_Mix <= 0:
+            raise ValueError("the electron temperature has to be positive.")
+        if rho_Abl_Max <= 0 or rho_Abl_Min <= 0 or rho_Abl_Scale <= 0:
+            raise ValueError("the density limits must all be positive.")
+        if f_Mix < 0 or f_Remain < 0:
+            raise ValueError("the implosion distribution fractions can't be negative.")
+        if t_Shell <= 0 or f_Remain < 0 or E0 <= 0:
             raise ValueError("you passd something negative.  idk which one.")
 
         self.shell = Material(shell_mat)
