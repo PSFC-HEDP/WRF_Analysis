@@ -1,0 +1,67 @@
+NIF  C_SHPKR                                                                                              11/18/24 07:47  PAGE 1
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369490  LRU Location: TC000-000-1-SNOUT
+Experiment ID: I_Stag_Sym_HyECpl_S11                     FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237449
+Line: 0001  Item: 1015360571                              Rev   AA                     Type: STK             Cost Method: STD
+                  HGXD4-H-1200-6.35-DS with 2 WRFs
+SEIBAN:
+Open Date : 11/18/2024  Release Date  : 11/18/2024 Order Qty:           1.0000    Nettable?: Y   BOM Used  : W
+Start Date: 11/25/2024  Mfg Close Date:            Compl Qty:                     Movable? : Y   RTG Used  : W   Priority   :
+Due Date  : 12/02/2024  Fin Close Date:            Scrap Qty:                     Rework?  :     Sched Code: B   Duplicate? :
+Deliv Date: 11/28/2024
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+   80    1000530178                             Y      1.0000   ATLASBRACKETS   Y    Y    Y                  1.0000 
+         ATLAS Bracket kit 0-0 rotated
+
+
+   10    AAA10-108020-08                        Y      1.0000   AUX1            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   70    AAA10-108020-08                        Y      1.0000   AUX2            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   30    AAA11-119458-01                        Y      1.0000   AUXBRACKET      Y    Y    Y                  1.0000 
+         INSTALLATION KIT, WRF/PCD, 500 LOS
+
+
+   50    AAA10-102783                           Y      1.0000   BASKET1              Y    Y                  1.0000 
+         CASSETTE ASSY, FILTER,DIAGNOSTIC ASSY
+
+
+   40    1015319990                             Y      1.0000   KBASE1          Y    Y    Y                  1.0000 
+         FILTER, 5 AP, Ge/Mo/V/Cu, 500um CTR POLY, AP SR IP
+
+
+   20    1015319924                             Y      1.0000   NSCAP1          Y    Y    Y                  1.0000 
+         KIT, ARRAY, 188X 10um PH, 500um POLYC, 2.5mm DS
+
+
+   60    AAA15-103500                           Y      1.0000   SNOUTCONFIG     Y    Y    Y                  1.0000 
+         STA, 1200IP X 6.35ID, DS CAP
+
+
+         * = Unreleased Drawing
+
+-------------------------------------------------------- Item Routing -------------------------------------------------------------
+       Alt T            Work                          <---------- Machine -----------> # of <----------- Labor ------------> Crew
+ Oper   Op P Function  Center   Setup Qty    UM Pacer Setup Time   Run Time   Cost Ctr Mach  Setup Time  Run Time   Cost Ctr Size
+NIF  C_SHPKR                                                                                              11/18/24 07:47  PAGE 2
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369490  LRU Location: TC000-000-1-SNOUT
+Experiment ID: I_Stag_Sym_HyECpl_S11                     FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237449
+ ----  --- - -------- -------- ------------- -- ----- ----------- ----------- -------- ---- ----------- ----------- -------- ------
+   10      I TDFASSY  DIAG
+
+             ---Schd Data ---   Rtg Seq:         Qty Orient: Y Overlap Qty:                      %           Move Time:

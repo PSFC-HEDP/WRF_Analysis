@@ -1,0 +1,80 @@
+NIF  C_SHPKR                                                                                              11/18/24 07:55  PAGE 1
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369491  LRU Location: TC090-078-1-SNOUT
+Experiment ID: I_Stag_Sym_HyECpl_S11                     FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237450
+Line: 0001  Item: 1015360576                              Rev   AA                     Type: STK             Cost Method: STD
+                  HGXD4-HA-1200-6.35-270DPA w/ARIANE, 3 WRFs
+SEIBAN:
+Open Date : 11/18/2024  Release Date  : 11/18/2024 Order Qty:           1.0000    Nettable?: Y   BOM Used  : W
+Start Date: 11/25/2024  Mfg Close Date:            Compl Qty:                     Movable? : Y   RTG Used  : W   Priority   :
+Due Date  : 12/02/2024  Fin Close Date:            Scrap Qty:                     Rework?  :     Sched Code: B   Duplicate? :
+Deliv Date: 11/28/2024
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+   70    1013578965                             Y      1.0000   ARIANENSCAP     Y    Y    Y                  1.0000 
+         ARRAY, 12.7ID, 499X Pt PH, 110/240/565um Ti, 2mm P
+
+
+  100    1001611984                             Y      1.0000   ATLASBRACKETS        Y    Y                  1.0000 
+         ATLAS Bracket kit 90-78 rotated
+
+
+   30    AAA10-108020-08                        Y      1.0000   AUX1            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   90    AAA10-108020-08                        Y      1.0000   AUX3            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   80    AAA10-108020-08                        Y      1.0000   AUX4            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   10    AAA11-119458-01                        Y      1.0000   AUXBRACKET      Y    Y    Y                  1.0000 
+         INSTALLATION KIT, WRF/PCD, 500 LOS
+
+
+   40    AAA10-102783                           Y      1.0000   BASKET1              Y    Y                  1.0000 
+         CASSETTE ASSY, FILTER,DIAGNOSTIC ASSY
+
+
+   60    1000935385                             Y      1.0000   KBASE1          Y    Y    Y                  1.0000 
+         FILTER ASSY, 5 AP, Ti ROSS, AP SR IP
+
+
+   20    1013320930                             Y      1.0000   NSCAP1          Y    Y    Y                  1.0000 
+         KIT, ARRAY, 244X 10/140um PH, 500um POLYC, 1.9mm D
+
+
+   50    1013249010                             Y      1.0000   SNOUTCONFIG     Y    Y    Y                  1.0000 
+NIF  C_SHPKR                                                                                              11/18/24 07:55  PAGE 2
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369491  LRU Location: TC090-078-1-SNOUT
+Experiment ID: I_Stag_Sym_HyECpl_S11                     FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237450
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+         STA, 1200IP, 6.35ID DS, 12.7ID A270 DP CAP, ROT
+
+
+         * = Unreleased Drawing
+
+-------------------------------------------------------- Item Routing -------------------------------------------------------------
+       Alt T            Work                          <---------- Machine -----------> # of <----------- Labor ------------> Crew
+ Oper   Op P Function  Center   Setup Qty    UM Pacer Setup Time   Run Time   Cost Ctr Mach  Setup Time  Run Time   Cost Ctr Size
+ ----  --- - -------- -------- ------------- -- ----- ----------- ----------- -------- ---- ----------- ----------- -------- ------
+   10      I TDFASSY  DIAG
+
+             ---Schd Data ---   Rtg Seq:         Qty Orient: Y Overlap Qty:                      %           Move Time:

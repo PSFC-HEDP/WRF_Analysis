@@ -1,0 +1,56 @@
+NIF  C_SHPKR                                                                                              12/05/24 10:29  PAGE 1
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD370816  LRU Location: TC090-078-1-SNOUT
+Experiment ID: D_Nuc_Sym_ElecScr_S06                     FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 238386
+Line: 0001  Item: 1015620416                              Rev   AA                     Type: STK             Cost Method: STD
+                  HGXD4-H-1200-6.35-DS with WRF,MagSpec2 and PTOF3
+SEIBAN:
+Open Date : 12/05/2024  Release Date  : 12/05/2024 Order Qty:           1.0000    Nettable?: Y   BOM Used  : W
+Start Date: 12/10/2024  Mfg Close Date:            Compl Qty:                     Movable? : Y   RTG Used  : I   Priority   :
+Due Date  : 12/18/2024  Fin Close Date:            Scrap Qty:                     Rework?  :     Sched Code: B   Duplicate? :
+Deliv Date: 12/12/2024
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+   90    1001611984                             Y      1.0000   ATLASBRACKETS        Y    Y                  1.0000 
+         ATLAS Bracket kit 90-78 rotated
+
+
+   50    AAA10-108020-08                        Y      1.0000   AUX1            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   70    1006780997                             Y      1.0000   AUX2            Y    Y    Y                  1.0000 
+         NIF MAGNETIC SPECTROMETER, -9MM OFFSET
+
+
+   10    1002379998                             Y      1.0000   AUX3            Y    Y    Y                  1.0000 
+         PToF, TYPE 4, 1mm DIA CVD, 50um Ta, 100um Au
+
+
+   30    AAA11-119458-01                        Y      1.0000   AUXBRACKET      Y    Y    Y                  1.0000 
+         INSTALLATION KIT, WRF/PCD, 500 LOS
+
+
+   20    AAA10-102783                           Y      1.0000   BASKET1              Y    Y                  1.0000 
+         CASSETTE ASSY, FILTER,DIAGNOSTIC ASSY
+
+
+   80    1000935385                             Y      1.0000   KBASE1          Y    Y    Y                  1.0000 
+         FILTER ASSY, 5 AP, Ti ROSS, AP SR IP
+
+
+   40    AAA15-103494                           Y      1.0000   NSCAP1          Y    Y    Y                  1.0000 
+         KIT ASSY, ARRAY, 188X 10um PH, 1.5mm DS,XRAY DIAGN
+
+
+   60    AAA15-103500                           Y      1.0000   SNOUTCONFIG     Y    Y    Y                  1.0000 
+         STA, 1200IP X 6.35ID, DS CAP
+
+
+         * = Unreleased Drawing

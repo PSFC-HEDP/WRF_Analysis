@@ -1,0 +1,67 @@
+NIF  C_SHPKR                                                                                              11/12/24 13:35  PAGE 1
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369017  LRU Location: TC090-078-1-SNOUT
+Experiment ID: N_Sdev_Neutron_Xray_S07                   FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237103
+Line: 0001  Item: 1007560546                              Rev   AA                     Type: STK             Cost Method: STD
+                  HGXD4-H-640-25.4 with 2 WRFs
+SEIBAN:
+Open Date : 11/12/2024  Release Date  : 11/12/2024 Order Qty:           1.0000    Nettable?: Y   BOM Used  : W
+Start Date: 11/15/2024  Mfg Close Date:            Compl Qty:                     Movable? : Y   RTG Used  : W   Priority   :
+Due Date  : 11/24/2024  Fin Close Date:            Scrap Qty:                     Rework?  :     Sched Code: B   Duplicate? :
+Deliv Date: 11/21/2024
+
+-------------------------------------------------------- Bill Of Material ---------------------------------------------------------
+Useq Alt Component                      Rev    ASM    Qty Per    Smart    Oper Make Comm Prt Balloon  Required Qty     Issued Qty
+         Description                                              Loc          Phan                   Committed Qty    Short Qty
+---- --- ------------------------------------- --- ----------- ---------- ---- ---- ---- --- -------- -------------- --------------
+   80    1001611984                             Y      1.0000   ATLASBRACKETS        Y    Y                  1.0000 
+         ATLAS Bracket kit 90-78 rotated
+
+
+   20    AAA10-108020-08                        Y      1.0000   AUX1            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   70    AAA10-108020-08                        Y      1.0000   AUX2            Y    Y    Y                  1.0000 
+         ASSEMBLY, WRF-SST, TABULATED,WRF GXD ASSEMBLY
+
+
+   60    AAA11-119458-01                        Y      1.0000   AUXBRACKET      Y    Y    Y                  1.0000 
+         INSTALLATION KIT, WRF/PCD, 500 LOS
+
+
+   40    AAA10-102783                           Y      1.0000   BASKET1              Y    Y                  1.0000 
+         CASSETTE ASSY, FILTER,DIAGNOSTIC ASSY
+
+
+   50    AAA14-105246                           Y      1.0000   KBASE1          Y    Y    Y                  1.0000 
+         FILTER, ROSS, 34X34AP TR IP, 25um Be,XRAY DIAGNOST
+
+
+   30    1007489152                             Y      1.0000   NSCAP1          Y    Y    Y                  1.0000 
+         ARRAY, PH/COL, 25.4ID, 32X 25um PH
+
+
+   10    AAA10-115328                           Y      1.0000   SNOUTCONFIG     Y    Y    Y                  1.0000 
+         STA, 640 IP X 25.4 ID, HGXI
+
+
+         * = Unreleased Drawing
+
+-------------------------------------------------------- Item Routing -------------------------------------------------------------
+       Alt T            Work                          <---------- Machine -----------> # of <----------- Labor ------------> Crew
+ Oper   Op P Function  Center   Setup Qty    UM Pacer Setup Time   Run Time   Cost Ctr Mach  Setup Time  Run Time   Cost Ctr Size
+NIF  C_SHPKR                                                                                              11/12/24 13:35  PAGE 2
+
+                 Master Location: NPC                      Shop Packets
+LP-00-01  NIF Programs                                   WO:          PHGXD369017  LRU Location: TC090-078-1-SNOUT
+Experiment ID: N_Sdev_Neutron_Xray_S07                   FFO ID: 
+TOP LEVEL SNOUT
+RO:                       IO: 237103
+ ----  --- - -------- -------- ------------- -- ----- ----------- ----------- -------- ---- ----------- ----------- -------- ------
+   10      I TDFASSY  DIAG
+
+             ---Schd Data ---   Rtg Seq:         Qty Orient: Y Overlap Qty:                      %           Move Time:

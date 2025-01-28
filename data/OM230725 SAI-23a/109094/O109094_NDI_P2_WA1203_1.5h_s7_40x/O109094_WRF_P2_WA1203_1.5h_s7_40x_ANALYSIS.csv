@@ -1,5 +1,5 @@
 WRF ANALYSIS
-Date & time = ,2023-10-05, 16:30
+Date & time = ,2025-01-28, 09:43
 Display format=,3
 Program version:,2021-05-25
 
@@ -13,27 +13,27 @@ Back x0; x1; y0; y1 (cm) =,62,71,0,60,
 C; e; Dmax; dDmax; Dscale =,35,15
 Dlow; Dhigh; Dauto; Elims =,0.00,200.00,no
 
-DvE fit: c; dc; red. Chi^2 =, 1.200,0.400,14.81
+DvE fit: c; dc; red. Chi^2 =, 1.200,0.400,4.50
 
-Fit limits (MeV):,9.000,11.000,
+Fit limits (MeV):,7.000,15.000,
 Evaluation limits (MeV):,0.000,0.000,
 
 ,Mean,Sigma,Yield
 ,(MeV),(MeV),(4 pi)
 
 Value (gaussian fit):,  - ,  - ,  - 
-Value (raw stats):, 10.742,0.324,1.860e+06
+Value (raw stats):, 11.188,1.208,4.378e+06
 Uncertainties
-    Random:, 1.004,1.361,297.03%
-    Systematic calib:, 0.063,0.000,0.00%
+    Random:, 1.230,3.606,277.52%
+    Systematic calib:, 0.061,0.000,0.00%
 
 Itemized random 
  uncertainties
-     Counting & fit:, 0.851,1.339,116.03%
-     DvE:, 0.528,0.245,273.42%
-     Dmax:, 0.050,0.000,2.28%
+     Counting & fit:, 1.120,3.494,79.70%
+     DvE:, 0.504,0.890,265.82%
+     Dmax:, 0.025,0.000,1.09%
      WRF nonlinearity:, 0.017,0.000,0.00%
-     Cal. & processing:, 0.040,0.000,0.00%
+     Cal. & processing:, 0.038,0.000,0.00%
 
 PROTON SPECTRUM
 Energy 	 Yield/MeV 	Stat. Error
