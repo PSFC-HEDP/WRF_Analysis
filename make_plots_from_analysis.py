@@ -421,7 +421,7 @@ def read_analysis_file(folder: str, filepath: str,
 	for identifier in reversed(identifiers):
 		if re.fullmatch(r'N\d{6}-\d{3}-999', identifier):
 			shot_day, shot_number, _ = identifier.split('-')
-		elif re.fullmatch(r'OM?2\d{5}', identifier):
+		elif re.fullmatch(r'OM\d{6}', identifier):
 			shot_day = identifier
 		elif re.fullmatch(r'O?1?\d{5}', identifier):
 			shot_number = identifier
@@ -434,6 +434,8 @@ def read_analysis_file(folder: str, filepath: str,
 		elif re.fullmatch(r'(LEFT|RIGHT|TOP|BOTTOM|MIDDLE|FULL)', identifier):
 			tag = identifier.lower()
 
+	if shot_day is None:
+		raise MetadataNotFoundError(f"the filename is incomplete; there's no shot day in {identifiers}")
 	if shot_number is None:
 		raise MetadataNotFoundError(f"the filename is incomplete; there's no shot number in {identifiers}")
 	if line_of_site is None:

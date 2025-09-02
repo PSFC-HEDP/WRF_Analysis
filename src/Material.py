@@ -5,10 +5,12 @@ import re
 # see the __init__ docstring for more information
 __material_composition__ = {'CH': {'C': 1.000, 'H': 1.352, 'O': .012},
                             'CH2': {'C': 1, 'H': 2},
+                            'CD': {'C': 1, 'D': 1.5},
                             'HDC': {'C': 1},
                             'SiO2': {'Si': 1, 'O': 2}}
 
 __element_A__ = {'H': 1,
+                 'D': 2,
                  'Be': 9,
                  'C': 12,
                  'O': 16,
@@ -17,6 +19,7 @@ __element_A__ = {'H': 1,
                  'W': 183.8}
 
 __element_Z__ = {'H': 1,
+                 'D': 1,
                  'Be': 4,
                  'C': 6,
                  'O': 8,

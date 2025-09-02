@@ -195,7 +195,7 @@ in that case, there's a handy lightweight script that just calls the ρR part of
 python convert_energy_to_rhoR.py ENERGY --shell_material=MATERIAL --shell_density=DENSITY --shell_temperature=TEMPERATURE [--secondary]
 ~~~
 where `ENERGY` is either the energy in MeV or the name of a file that contains multiple energies in MeV.
-if you pass a file, you can also use include error bars by passing a file with two columns.
+if you pass a file, you can also use include error bars by passing a file with two space-separated columns.
 you can even use asymmetric error bars!
 just pass a file with three columns (mean energy, lower uncertainty, upper uncertainty).
 
